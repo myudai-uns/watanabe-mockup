@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>渡辺謄写堂 業務管理システム 機能要件一覧（ご確認用）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #1A1A1A;
+    background: #F5F5F5;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .page {
+    max-width: 210mm;
+    margin: 20px auto;
+    background: white;
+    padding: 16mm 14mm;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  /* ヘッダー */
+  .header {
+    border-bottom: 4px solid #E87825;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .doc-title { font-size: 24px; font-weight: 900; }
+  .doc-subtitle { font-size: 12px; color: #707070; margin-top: 4px; }
+  .meta {
+    text-align: right;
+    font-size: 11px;
+    color: #3A3A3A;
+  }
+  .client {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  /* イントロ */
+  .intro {
+    background: #FFF4EC;
+    border-left: 4px solid #E87825;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+  .intro h2 { font-size: 14px; margin-bottom: 6px; }
+  .intro ul { padding-left: 20px; }
+  .intro li { margin-bottom: 4px; }
+
+  /* 凡例 */
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-mark {
+    display: inline-block;
+    width: 22px; height: 22px;
+    border: 1.5px solid #1A1A1A;
+    border-radius: 3px;
+    text-align: center;
+    line-height: 19px;
+    font-weight: 900;
+  }
+  .ph1 { background: #E87825; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .ph2 { background: #3F9D5E; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .ph3 { background: #707070; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+
+  /* セクション */
+  .section { margin-bottom: 28px; page-break-inside: avoid; }
+  .section-title {
+    background: #1A1A1A;
+    color: white;
+    padding: 8px 14px;
+    font-size: 16px;
+    font-weight: 900;
+    margin-bottom: 0;
+    border-radius: 4px 4px 0 0;
+  }
+  .section-desc {
+    background: #F5F5F5;
+    padding: 6px 14px;
+    font-size: 11px;
+    color: #707070;
+    border-bottom: 1px solid #E5E5E5;
+  }
+
+  /* テーブル */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+  th, td {
+    border: 1px solid #D5D5D5;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #F5F5F5;
+    font-weight: 700;
+    font-size: 10.5px;
+  }
+  td.no { text-align: center; font-family: monospace; font-weight: 700; width: 38px; }
+  td.func { font-weight: 700; width: 28%; }
+  td.desc { width: 38%; line-height: 1.5; }
+  td.phase { width: 50px; text-align: center; }
+  td.check { width: 22px; text-align: center; height: 24px; padding: 0; }
+  td.comment { width: 18%; min-width: 80px; }
+
+  .check-row {
+    background: #FAFAFA;
+  }
+  .col-headers {
+    font-size: 9.5px;
+    text-align: center;
+    color: #707070;
+  }
+
+  /* フッター */
+  .footer {
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 2px solid #1A1A1A;
+    font-size: 11px;
+  }
+  .signature-area {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+  }
+  .sig-box {
+    flex: 1;
+    border: 1px solid #B5B5B5;
+    padding: 10px;
+    border-radius: 4px;
+  }
+  .sig-label { font-size: 10px; color: #707070; font-weight: 700; }
+  .sig-line {
+    border-bottom: 1px solid #1A1A1A;
+    height: 40px;
+    margin-top: 8px;
+  }
+
+  /* 印刷用 */
+  @media print {
+    body { background: white; }
+    .page {
+      max-width: 100%;
+      margin: 0;
+      padding: 10mm 8mm;
+      box-shadow: none;
+    }
+    .no-print { display: none; }
+    .section { page-break-inside: avoid; }
+    .section-title { background: #1A1A1A !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .ph1, .ph2, .ph3 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  /* 印刷ボタン */
+  .print-bar {
+    position: sticky;
+    top: 0;
+    background: #1A1A1A;
+    color: white;
+    padding: 12px 20px;
+    text-align: right;
+    z-index: 100;
+    margin: -20px auto 20px;
+    max-width: 210mm;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .print-btn {
+    background: #E87825;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .print-btn:hover { background: #B85D16; }
+
+  /* TOC */
+  .toc {
+    background: #FAFAFA;
+    border: 1px solid #E5E5E5;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+  .toc h3 { font-size: 13px; margin-bottom: 6px; }
+  .toc ul { padding-left: 20px; columns: 2; column-gap: 24px; }
+  .toc li { padding: 2px 0; }
+</style>
+</head>
+<body>
+
+<div class="print-bar no-print">
+  <button class="print-btn" onclick="window.print()">🖨 このページを印刷</button>
+  <span style="margin-left: 16px; font-size: 11px;">A4縦・両面印刷推奨</span>
+</div>
+
+<div class="page">
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="doc-title">業務管理システム 機能要件一覧</div>
+        <div class="doc-subtitle">ご確認用ドキュメント / 該当欄に〇✗△を記入し、ご返送ください</div>
+      </div>
+      <div class="meta">
+        <div>作成: 2026-04-28</div>
+        <div>作成元: Unsee（三上・増子）</div>
+        <div>バージョン: 1.0</div>
+      </div>
+    </div>
+    <div class="client">株式会社 渡辺謄写堂 渡辺 修一 様</div>
+  </div>
+
+  <!-- イントロ -->
+  <div class="intro">
+    <h2>📋 本書の目的</h2>
+    <ul>
+      <li>4月21日のお打ち合わせ内容を踏まえ、構築する機能の一覧を整理しました。</li>
+      <li>各機能について <b>「必要 ◯」「不要 ✗」「調整希望 △」</b> をご記入ください。</li>
+      <li>調整・追加のご要望は「コメント」欄にご記入ください。</li>
+      <li>本書をもって機能スコープを確定し、Bubbleエンジニアの実装着手に進みます。</li>
+    </ul>
+  </div>
+
+  <!-- 凡例 -->
+  <div class="legend">
+    <div class="legend-item"><span class="ph1">P1</span> Phase 1（最優先・5〜7月）</div>
+    <div class="legend-item"><span class="ph2">P2</span> Phase 2（B製版統合・8月）</div>
+    <div class="legend-item"><span class="ph3">P3</span> Phase 3（帳簿・納品書・9月以降）</div>
+    <div class="legend-item"><span class="legend-mark">◯</span>必要</div>
+    <div class="legend-item"><span class="legend-mark">✗</span>不要</div>
+    <div class="legend-item"><span class="legend-mark">△</span>調整希望</div>
+  </div>
+
+  <!-- 目次 -->
+  <div class="toc">
+    <h3>📑 目次</h3>
+    <ul>
+      <li>1. 受注管理</li>
+      <li>2. 顧客管理</li>
+      <li>3. 見積書</li>
+      <li>4. 工場進捗管理</li>
+      <li>5. 帳票・印刷</li>
+      <li>6. ユーザー・権限</li>
+      <li>7. マスタ管理</li>
+      <li>8. データ管理</li>
+      <li>9. 通知・リマインド</li>
+      <li>10. 経営分析（将来）</li>
+    </ul>
+  </div>
+
+  <!-- ============ 1. 受注管理 ============ -->
+  <div class="section">
+    <div class="section-title">1. 受注管理</div>
+    <div class="section-desc">お問い合わせ受付から受注確定までの起票・編集・検索を一元管理します</div>
+    <table>
+      <thead>
+        <tr>
+          <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+          <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+          <th>コメント</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="no">1.1</td><td class="func">受注新規起票</td><td class="desc">電話・来客・FAX・メールの受付内容を画面で入力。受注番号を自動採番</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.2</td><td class="func">顧客選択・新規登録</td><td class="desc">既存顧客から選択 or その場で新規顧客を登録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.3</td><td class="func">明細の複数行入力</td><td class="desc">「用紙A 300枚 + 用紙B 500枚」など1案件で複数明細OK</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.4</td><td class="func">用紙の選択</td><td class="desc">よく使う紙はドロップダウンから即選択、特殊紙は「その他」で自由入力</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.5</td><td class="func">インクパターン選択</td><td class="desc">カラー両面/片面・モノクロ両面/片面・特色1色両面/片面 の6パターン</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.6</td><td class="func">加工オプション</td><td class="desc">ミシン（1本/2本）・折（2つ折/3つ折）・穴（天2ケ/左2ケ）・ナンバリング・野鳥式・ラミネート</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.7</td><td class="func">乗り方向</td><td class="desc">天乗・左乗の選択</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.8</td><td class="func">数量の自由入力</td><td class="desc">100/500/1000 など定型だけでなく420部などの半端数も可</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.9</td><td class="func">納期の3パターン</td><td class="desc">指定日 / 期間（◯日〜◯日）/ 出次第</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.10</td><td class="func">受注番号自動採番</td><td class="desc">YYMMDD-NNN形式（例: 260424-001）。同日2件目から連番</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.11</td><td class="func">受注一覧</td><td class="desc">全受注の一覧表示。日付順並び替え</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.12</td><td class="func">受注の検索・絞り込み</td><td class="desc">顧客名・受注番号・受付日・納期・ステータスで絞り込み</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.13</td><td class="func">受注詳細・編集</td><td class="desc">起票後の内容変更（数量変更・仕様変更）に対応</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.14</td><td class="func">ステータス管理</td><td class="desc">受注 → 製版中 → 印刷中 → 完成 → 納品済 → 完了</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.15</td><td class="func">変更履歴の自動記録</td><td class="desc">いつ・誰が・何を変更したかを自動で記録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.16</td><td class="func">受注の取消・削除</td><td class="desc">キャンセル時のステータス変更や論理削除</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.17</td><td class="func">フリーメモ欄</td><td class="desc">案件ごとに自由記述メモを残せる</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">1.18</td><td class="func">追加注文（増刷）</td><td class="desc">既存案件に対して数量追加（例: +100枚）の取り扱い</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 2. 顧客管理 ============ -->
+  <div class="section">
+    <div class="section-title">2. 顧客管理</div>
+    <div class="section-desc">お得意様・地域別の顧客マスタ管理と過去発注の活用</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">2.1</td><td class="func">顧客一覧</td><td class="desc">登録顧客の一覧表示・検索</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.2</td><td class="func">顧客詳細情報</td><td class="desc">会社名/個人名・住所・電話・FAX・メール・担当・備考</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.3</td><td class="func">種別管理</td><td class="desc">「お得意様」「地域顧客」の区分</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.4</td><td class="func">地域別管理</td><td class="desc">亀谷 / 元町 / 東和 / 岩代 / 市街 / その他（正式リストは別途確認）</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.5</td><td class="func">累計発注・売上集計</td><td class="desc">顧客ごとの累計発注件数・累計売上を自動表示</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.6</td><td class="func">過去発注からのコピー再注</td><td class="desc">「前回と同じで」の依頼に1クリックで仕様流用</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.7</td><td class="func">顧客別の過去案件履歴</td><td class="desc">ある顧客の全案件を時系列で確認</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">2.8</td><td class="func">仕様での絞り込み検索</td><td class="desc">「フミス紙の名刺だった案件」などの仕様検索</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 3. 見積書 ============ -->
+  <div class="section">
+    <div class="section-title">3. 見積書</div>
+    <div class="section-desc">受注情報と完全連動した見積書の作成・PDF出力・送付</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">3.1</td><td class="func">受注から自動生成</td><td class="desc">受注画面の「見積書作成」ボタン1つで明細・金額が転記</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.2</td><td class="func">見積番号自動採番</td><td class="desc">Q-YYMMDD-NNN 形式で連番</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.3</td><td class="func">有効期限の自動設定</td><td class="desc">発行日の翌月末をデフォルト（変更可）</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.4</td><td class="func">PDFファイル出力</td><td class="desc">そのまま郵送・印刷可能なA4 PDFを生成</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.5</td><td class="func">メール送信</td><td class="desc">PDFを添付して顧客にメール送信（送信履歴も記録）</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.6</td><td class="func">Excel出力</td><td class="desc">非定型な見積でセルを直接編集したい場合用</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.7</td><td class="func">見積書ステータス管理</td><td class="desc">作成中 / 発行済 / 受諾 / 失注</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.8</td><td class="func">見積金額の手入力対応</td><td class="desc">自動計算した金額を手動で上書き可能</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.9</td><td class="func">受注票との双方向連動</td><td class="desc">片方変更すると自動でもう片方に反映（範囲は選択式）</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">3.10</td><td class="func">振込先情報・社印の表示</td><td class="desc">テンプレに会社情報・印影を組み込み</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 4. 工場進捗管理 ============ -->
+  <div class="section">
+    <div class="section-title">4. 工場進捗管理（C管理）</div>
+    <div class="section-desc">工場での印刷進捗をカンバン式で可視化・操作</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">4.1</td><td class="func">工場カンバン画面</td><td class="desc">待機 / 作業中 / 完成 / 出荷待ち の4列で進捗可視化</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.2</td><td class="func">ドラッグ&ドロップ操作</td><td class="desc">カードを左右にドラッグするだけでステータス変更</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.3</td><td class="func">工場ステータスと受注ステータスの同期</td><td class="desc">工場で「完成」にしたら受注側も「完成」に自動反映</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.4</td><td class="func">納期アラート</td><td class="desc">本日納期・明日納期のカードを赤字でハイライト</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.5</td><td class="func">開始・完了時刻の記録</td><td class="desc">作業開始/完了の自動タイムスタンプ</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.6</td><td class="func">実出来高の入力</td><td class="desc">予定数量と異なる場合の実出来高を記録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.7</td><td class="func">工場メモ</td><td class="desc">案件ごとに工場側からの備考を記録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.8</td><td class="func">完了担当の記録</td><td class="desc">どの工場担当者が完了させたかを記録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">4.9</td><td class="func">B（製版）側の管理画面</td><td class="desc">製版担当者用の独自管理画面（現行Excel相当の統合）</td><td class="phase"><span class="ph2">P2</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 5. 帳票・印刷 ============ -->
+  <div class="section">
+    <div class="section-title">5. 帳票・印刷</div>
+    <div class="section-desc">紙運用との両立。受注票・納品書・請求書の発行</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">5.1</td><td class="func">受注票印刷</td><td class="desc">A4横1枚のクリアファイル回覧用フォーマットで印刷</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">5.2</td><td class="func">受注票の3者サイン欄</td><td class="desc">製版（B）/印刷（C）/納品会計（A）の確認欄を印字</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">5.3</td><td class="func">納品書発行</td><td class="desc">納品時に発行する納品書（PDF・印刷）</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">5.4</td><td class="func">請求書発行</td><td class="desc">請求書の発行（PDF・印刷・メール送付）</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">5.5</td><td class="func">領収書発行</td><td class="desc">現金支払い時の領収書発行</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">5.6</td><td class="func">帳簿（売上管理）</td><td class="desc">案件ごとの売上記録、未発行伝票・未入金管理</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">5.7</td><td class="func">伝票・入金状況管理</td><td class="desc">「伝票出した/未発行」「入金済/未入金」のチェック</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 6. ユーザー・権限 ============ -->
+  <div class="section">
+    <div class="section-title">6. ユーザー・権限</div>
+    <div class="section-desc">4名（A統括/B製版/C工場/経理）の役割別アクセス制御</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">6.1</td><td class="func">ユーザログイン</td><td class="desc">メール・パスワードによるログイン</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">6.2</td><td class="func">役割の管理</td><td class="desc">A_統括 / B_製版 / C_工場 / 経理 の4役割</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">6.3</td><td class="func">役割別の権限制御</td><td class="desc">A_統括は全権、B/Cは担当範囲のみ編集可</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">6.4</td><td class="func">複数人同時利用</td><td class="desc">4名が別端末から同時にログイン・操作可能</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">6.5</td><td class="func">パスワードリセット</td><td class="desc">忘れたパスワードの再設定（メール送信）</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">6.6</td><td class="func">ユーザの追加・無効化</td><td class="desc">A_統括が新規ユーザを招待・退職者を無効化</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">6.7</td><td class="func">経理ユーザの利用</td><td class="desc">お母様は対象外想定。会長または別1名が対応</td><td class="phase"><span class="ph2">P2</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 7. マスタ管理 ============ -->
+  <div class="section">
+    <div class="section-title">7. マスタ管理</div>
+    <div class="section-desc">用紙・加工オプション・計算ルールの一元管理</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">7.1</td><td class="func">用紙マスタ登録</td><td class="desc">紙質・色・厚さ・サイズ・単価を登録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">7.2</td><td class="func">メジャー紙の優先表示</td><td class="desc">よく使う紙はドロップダウン上部に固定表示</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">7.3</td><td class="func">特殊紙の自由入力</td><td class="desc">マスタにない紙は「その他」で自由記述可能</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">7.4</td><td class="func">用紙単価の更新</td><td class="desc">物価変動時の単価変更（手動 or CSV一括）</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">7.5</td><td class="func">加工オプションの単価管理</td><td class="desc">ミシン・折・穴等の加工費単価を設定</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">7.6</td><td class="func">定型品の自動計算ルール</td><td class="desc">名刺・封筒など頻出品目の数量別単価を登録</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">7.7</td><td class="func">CSVマスタ一括取込</td><td class="desc">用紙・顧客マスタを一括でCSVから取り込み</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 8. データ管理 ============ -->
+  <div class="section">
+    <div class="section-title">8. データ管理・検索</div>
+    <div class="section-desc">過去データの活用とバックアップ</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">8.1</td><td class="func">過去案件の高速検索</td><td class="desc">顧客名・日付・仕様で過去案件を瞬時に呼び出し</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">8.2</td><td class="func">受注データのCSV出力</td><td class="desc">月次・年次集計の元データを書き出し</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">8.3</td><td class="func">JSON全データ書出</td><td class="desc">バックアップ・移行用のフルバックアップ</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">8.4</td><td class="func">日次自動バックアップ</td><td class="desc">毎日自動でクラウドバックアップ取得</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">8.5</td><td class="func">既存データの移行</td><td class="desc">現行帳簿・Excelデータの新システム取込（直近1年分）</td><td class="phase"><span class="ph2">P2</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">8.6</td><td class="func">変更履歴アーカイブ</td><td class="desc">古い変更履歴の自動アーカイブ</td><td class="phase"><span class="ph2">P2</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 9. 通知・リマインド ============ -->
+  <div class="section">
+    <div class="section-title">9. 通知・リマインド</div>
+    <div class="section-desc">忘れ・抜け漏れを防ぐ自動通知</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">9.1</td><td class="func">ダッシュボードKPI</td><td class="desc">本日納品/進行中/納期3日以内/今月売上を一目で表示</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">9.2</td><td class="func">本日納品予定の自動メール</td><td class="desc">毎朝8時に本日納品予定リストをメール通知</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">9.3</td><td class="func">納期接近アラート</td><td class="desc">納期3日以内の未完成案件を画面でハイライト</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">9.4</td><td class="func">最近の変更履歴一覧</td><td class="desc">誰が何を変更したかをダッシュボードで確認</td><td class="phase"><span class="ph1">P1</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">9.5</td><td class="func">未発行伝票リマインド</td><td class="desc">納品済だが伝票未発行の案件を週次通知</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">9.6</td><td class="func">未入金リマインド</td><td class="desc">請求済だが未入金の案件を週次通知</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">9.7</td><td class="func">納期超過レポート</td><td class="desc">毎週月曜に納期超過案件をメール</td><td class="phase"><span class="ph2">P2</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ 10. 経営分析 ============ -->
+  <div class="section">
+    <div class="section-title">10. 経営分析（将来機能）</div>
+    <div class="section-desc">時間が空いた後の戦略立案支援</div>
+    <table>
+      <thead><tr>
+        <th>No.</th><th>機能</th><th>内容</th><th>Phase</th>
+        <th class="col-headers">◯</th><th class="col-headers">✗</th><th class="col-headers">△</th>
+        <th>コメント</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="no">10.1</td><td class="func">月次売上集計</td><td class="desc">月別の受注件数・売上をグラフ表示</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">10.2</td><td class="func">エリア別売上分析</td><td class="desc">地域ごとの売上構成・推移</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">10.3</td><td class="func">案件別原価・粗利</td><td class="desc">用紙原価から案件単位の粗利を自動算出</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">10.4</td><td class="func">顧客別売上ランキング</td><td class="desc">優良顧客・離反顧客の早期把握</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+        <tr><td class="no">10.5</td><td class="func">紙種別の使用量分析</td><td class="desc">どの紙がよく使われるかの傾向把握</td><td class="phase"><span class="ph3">P3</span></td><td class="check"></td><td class="check"></td><td class="check"></td><td class="comment"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- フッター -->
+  <div class="footer">
+    <h3 style="font-size: 14px; margin-bottom: 8px;">📮 ご記入後の返送方法</h3>
+    <ul style="padding-left: 20px;">
+      <li>本書を印刷の上、各機能に ◯ / ✗ / △ をご記入ください</li>
+      <li>調整・追加要望は「コメント」欄にご記入ください</li>
+      <li>記入完了後、写真撮影 or スキャンしてメール送付 / FAX / 直接お渡し のいずれかでご返送ください</li>
+      <li>ご質問はいつでもお電話・メールでお気軽にご連絡ください</li>
+    </ul>
+
+    <div class="signature-area">
+      <div class="sig-box">
+        <div class="sig-label">渡辺謄写堂 ご確認</div>
+        <div class="sig-line"></div>
+        <div style="font-size: 10px; color: #707070; margin-top: 4px;">日付・氏名</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-label">Unsee 受領</div>
+        <div class="sig-line"></div>
+        <div style="font-size: 10px; color: #707070; margin-top: 4px;">日付・受領者</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid #E5E5E5; font-size: 10px; color: #707070; text-align: center;">
+      Unsee（株式会社アンシー） / development@unsee-able.com / 三上・増子<br>
+      渡辺謄写堂 業務管理システム 機能要件一覧 v1.0 / 2026-04-28
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
