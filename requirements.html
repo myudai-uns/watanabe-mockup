@@ -55,9 +55,9 @@
     align-items: center;
   }
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .ph1-tag { background: #E87825; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
-  .ph2-tag { background: #3F9D5E; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
-  .ph3-tag { background: #707070; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+  .ph1-tag { background: #E87825; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; display: inline-block; }
+  .ph2-tag { background: #3F9D5E; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; display: inline-block; }
+  .ph3-tag { background: #707070; color: white; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; display: inline-block; }
 
   /* セクション */
   .section { margin-bottom: 28px; page-break-inside: avoid; }
@@ -91,29 +91,28 @@
     vertical-align: top;
   }
   th { background: #F5F5F5; font-weight: 700; font-size: 10.5px; }
-  td.no { text-align: center; font-family: monospace; font-weight: 700; width: 40px; }
-  td.func { font-weight: 700; width: 26%; }
-  td.desc { width: 38%; line-height: 1.5; }
-  td.phase { width: 60px; text-align: center; }
-  td.comment {
-    width: 26%;
-    min-width: 120px;
-    background: #FAFCFF;
+  td.no { text-align: center; font-family: monospace; font-weight: 700; width: 5%; }
+  td.func { font-weight: 700; width: 25%; }
+  td.desc { width: 60%; line-height: 1.5; }
+  td.phase { width: 10%; text-align: center; }
+
+  /* 編集可能要素 */
+  [contenteditable="true"] {
+    transition: background 0.12s, outline 0.12s;
     cursor: text;
+    border-radius: 2px;
   }
-  td.comment[contenteditable="true"] { transition: background 0.12s; }
-  td.comment[contenteditable="true"]:hover { background: #F0F8FF; }
-  td.comment[contenteditable="true"]:focus {
+  [contenteditable="true"]:hover {
+    background: #F0F8FF;
+  }
+  [contenteditable="true"]:focus {
     outline: 2px solid #E87825;
-    outline-offset: -2px;
+    outline-offset: 1px;
     background: white;
   }
-  td.comment:empty::before {
-    content: '✏️ クリックで入力';
-    color: #B5B5B5;
-    font-size: 10px;
-    font-style: italic;
-  }
+  /* セクションタイトルは色維持 */
+  .section-title[contenteditable="true"]:hover { background: #2A2A2A; }
+  .section-title[contenteditable="true"]:focus { background: #1A1A1A; outline-color: #FCD34D; }
 
   /* フッター */
   .footer {
@@ -234,8 +233,7 @@
     .no-print, .action-bar, .modal-backdrop { display: none !important; }
     .section { page-break-inside: avoid; }
     .section-title, .ph1-tag, .ph2-tag, .ph3-tag { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    td.comment:empty::before { content: ''; }
-    td.comment { cursor: default; background: white; }
+    [contenteditable="true"] { background: white !important; outline: none !important; cursor: default; }
   }
 </style>
 </head>
@@ -250,7 +248,7 @@
     <button class="btn btn-ghost" onclick="App.importJson()">📂 取込</button>
     <button class="btn btn-danger" onclick="App.clearAll()">クリア</button>
   </div>
-  <span id="save-status" class="save-status">📝 編集可能（自動保存）</span>
+  <span id="save-status" class="save-status">📝 すべての文字を編集できます（自動保存）</span>
 </div>
 
 <input type="file" id="import-file" accept=".json" style="display:none">
@@ -261,226 +259,203 @@
   <div class="header">
     <div class="header-row">
       <div>
-        <div class="doc-title">業務管理システム 機能要件一覧</div>
-        <div class="doc-subtitle">ご確認用ドキュメント / コメント欄に直接ご入力いただけます（自動保存）</div>
+        <div class="doc-title ed">業務管理システム 機能要件一覧</div>
+        <div class="doc-subtitle ed">ご確認用ドキュメント / 文章をクリックすると直接編集できます（自動保存）</div>
       </div>
       <div class="meta">
         <div>作成: 2026-04-28</div>
         <div>作成元: Unsee（三上・増子）</div>
-        <div>バージョン: 1.2</div>
+        <div>バージョン: 1.3</div>
       </div>
     </div>
-    <div class="client">株式会社 渡辺謄写堂 渡辺 修一 様</div>
+    <div class="client ed">株式会社 渡辺謄写堂 渡辺 修一 様</div>
   </div>
 
   <!-- イントロ -->
   <div class="intro">
-    <h2>📋 本書の目的</h2>
+    <h2 class="ed">📋 本書の目的</h2>
     <ul>
-      <li>4月21日のお打ち合わせ内容を踏まえ、ご検討いただきたい機能を一覧化しました。</li>
-      <li>各機能の<b>「コメント」欄をクリックすると入力できます</b>。ご質問・ご要望・修正点を自由にご記入ください。</li>
-      <li>変更内容は<b>自動で保存</b>されます。後日続きから入力することも可能です。</li>
-      <li>記入完了後、画面右上「<b>📨 Unseeに送信</b>」ボタンでメール送信、または「💾 JSON書出」でファイル化してご返送ください。</li>
+      <li class="ed">4月21日のお打ち合わせ内容を踏まえ、ご検討いただきたい機能を一覧化しました。</li>
+      <li class="ed">機能名・内容説明・Phase など、<b>すべての文字をクリックして直接編集</b>できます。</li>
+      <li class="ed">変更内容は<b>自動で保存</b>されます。後日続きから編集することも可能です。</li>
+      <li class="ed">編集完了後、画面右上「<b>📨 Unseeに送信</b>」ボタンでメール送信、または「💾 JSON書出」でファイル化してご返送ください。</li>
     </ul>
   </div>
 
   <!-- 凡例 -->
   <div class="legend">
-    <div class="legend-item"><span class="ph1-tag">Phase 1</span> 最優先（5〜7月実装・8〜9月本格運用）</div>
-    <div class="legend-item"><span class="ph2-tag">Phase 2</span> 8月以降（B製版統合・既存データ移行等）</div>
-    <div class="legend-item"><span class="ph3-tag">Phase 3</span> 9月以降（帳簿・納品書・請求書等）</div>
+    <div class="legend-item"><span class="ph1-tag">Phase 1</span><span class="ed"> 最優先（5〜7月実装・8〜9月本格運用）</span></div>
+    <div class="legend-item"><span class="ph2-tag">Phase 2</span><span class="ed"> 8月以降（B製版統合・既存データ移行等）</span></div>
+    <div class="legend-item"><span class="ph3-tag">Phase 3</span><span class="ed"> 9月以降（帳簿・納品書・請求書等）</span></div>
   </div>
 
   <!-- 目次 -->
   <div class="toc">
-    <h3>📑 目次</h3>
+    <h3 class="ed">📑 目次</h3>
     <ul>
-      <li>1. 受注管理（18機能）</li>
-      <li>2. 顧客管理（8機能）</li>
-      <li>3. 見積書（10機能）</li>
-      <li>4. 工場進捗管理（9機能）</li>
-      <li>5. 帳票・印刷（7機能）</li>
-      <li>6. ユーザー・権限（7機能）</li>
-      <li>7. マスタ管理（7機能）</li>
-      <li>8. データ管理・検索（6機能）</li>
+      <li class="ed">1. 受注管理（18機能）</li>
+      <li class="ed">2. 顧客管理（8機能）</li>
+      <li class="ed">3. 見積書（10機能）</li>
+      <li class="ed">4. 工場進捗管理（9機能）</li>
+      <li class="ed">5. 帳票・印刷（7機能）</li>
+      <li class="ed">6. ユーザー・権限（7機能）</li>
+      <li class="ed">7. マスタ管理（7機能）</li>
+      <li class="ed">8. データ管理・検索（6機能）</li>
     </ul>
   </div>
 
   <!-- ============ 1. 受注管理 ============ -->
   <div class="section">
-    <div class="section-title">1. 受注管理</div>
-    <div class="section-desc">お問い合わせ受付から受注確定までの起票・編集・検索を一元管理</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">1. 受注管理</div>
+    <div class="section-desc ed">お問い合わせ受付から受注確定までの起票・編集・検索を一元管理</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">1.1</td><td class="func">受注新規起票</td><td class="desc">電話・来客・FAX・メールの受付内容を画面で入力。受注番号を自動採番</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.2</td><td class="func">顧客選択・新規登録</td><td class="desc">既存顧客から選択 or その場で新規顧客を登録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.3</td><td class="func">明細の複数行入力</td><td class="desc">「用紙A 300枚 + 用紙B 500枚」など1案件で複数明細OK</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.4</td><td class="func">用紙の選択</td><td class="desc">よく使う紙はドロップダウンから即選択、特殊紙は「その他」で自由入力</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.5</td><td class="func">インクパターン選択</td><td class="desc">カラー両面/片面・モノクロ両面/片面・特色1色両面/片面 の6パターン</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.6</td><td class="func">加工オプション</td><td class="desc">ミシン（1本/2本）・折（2つ折/3つ折）・穴（天2ケ/左2ケ）・ナンバリング・野鳥式・ラミネート</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.7</td><td class="func">乗り方向</td><td class="desc">天乗・左乗の選択</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.8</td><td class="func">数量の自由入力</td><td class="desc">100/500/1000 など定型だけでなく420部などの半端数も可</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.9</td><td class="func">納期の3パターン</td><td class="desc">指定日 / 期間（◯日〜◯日）/ 出次第</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.10</td><td class="func">受注番号自動採番</td><td class="desc">YYMMDD-NNN形式（例: 260424-001）。同日2件目から連番</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.11</td><td class="func">受注一覧</td><td class="desc">全受注の一覧表示。日付順並び替え</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.12</td><td class="func">受注の検索・絞り込み</td><td class="desc">顧客名・受注番号・受付日・納期・ステータスで絞り込み</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.13</td><td class="func">受注詳細・編集</td><td class="desc">起票後の内容変更（数量変更・仕様変更）に対応</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.14</td><td class="func">ステータス管理</td><td class="desc">受注 → 製版中 → 印刷中 → 完成 → 納品済</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.15</td><td class="func">変更履歴の自動記録</td><td class="desc">いつ・誰が・何を変更したかを自動で記録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.16</td><td class="func">受注の取消・削除</td><td class="desc">キャンセル時のステータス変更や論理削除</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.17</td><td class="func">フリーメモ欄</td><td class="desc">案件ごとに自由記述メモを残せる</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">1.18</td><td class="func">追加注文(増刷)</td><td class="desc">既存案件に対して数量追加（例: +100枚）の取り扱い</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">1.1</td><td class="func ed">受注新規起票</td><td class="desc ed">電話・来客・FAX・メールの受付内容を画面で入力。受注番号を自動採番</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.2</td><td class="func ed">顧客選択・新規登録</td><td class="desc ed">既存顧客から選択 or その場で新規顧客を登録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.3</td><td class="func ed">明細の複数行入力</td><td class="desc ed">「用紙A 300枚 + 用紙B 500枚」など1案件で複数明細OK</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.4</td><td class="func ed">用紙の選択</td><td class="desc ed">よく使う紙はドロップダウンから即選択、特殊紙は「その他」で自由入力</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.5</td><td class="func ed">インクパターン選択</td><td class="desc ed">カラー両面/片面・モノクロ両面/片面・特色1色両面/片面 の6パターン</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.6</td><td class="func ed">加工オプション</td><td class="desc ed">ミシン（1本/2本）・折（2つ折/3つ折）・穴（天2ケ/左2ケ）・ナンバリング・野鳥式・ラミネート</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.7</td><td class="func ed">乗り方向</td><td class="desc ed">天乗・左乗の選択</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.8</td><td class="func ed">数量の自由入力</td><td class="desc ed">100/500/1000 など定型だけでなく420部などの半端数も可</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.9</td><td class="func ed">納期の3パターン</td><td class="desc ed">指定日 / 期間（◯日〜◯日）/ 出次第</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.10</td><td class="func ed">受注番号自動採番</td><td class="desc ed">YYMMDD-NNN形式（例: 260424-001）。同日2件目から連番</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.11</td><td class="func ed">受注一覧</td><td class="desc ed">全受注の一覧表示。日付順並び替え</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.12</td><td class="func ed">受注の検索・絞り込み</td><td class="desc ed">顧客名・受注番号・受付日・納期・ステータスで絞り込み</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.13</td><td class="func ed">受注詳細・編集</td><td class="desc ed">起票後の内容変更（数量変更・仕様変更）に対応</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.14</td><td class="func ed">ステータス管理</td><td class="desc ed">受注 → 製版中 → 印刷中 → 完成 → 納品済</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.15</td><td class="func ed">変更履歴の自動記録</td><td class="desc ed">いつ・誰が・何を変更したかを自動で記録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.16</td><td class="func ed">受注の取消・削除</td><td class="desc ed">キャンセル時のステータス変更や論理削除</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.17</td><td class="func ed">フリーメモ欄</td><td class="desc ed">案件ごとに自由記述メモを残せる</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">1.18</td><td class="func ed">追加注文（増刷）</td><td class="desc ed">既存案件に対して数量追加（例: +100枚）の取り扱い</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 2. 顧客管理 ============ -->
   <div class="section">
-    <div class="section-title">2. 顧客管理</div>
-    <div class="section-desc">お得意様・地域別の顧客マスタ管理と過去発注の活用</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">2. 顧客管理</div>
+    <div class="section-desc ed">お得意様・地域別の顧客マスタ管理と過去発注の活用</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">2.1</td><td class="func">顧客一覧</td><td class="desc">登録顧客の一覧表示・検索</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.2</td><td class="func">顧客詳細情報</td><td class="desc">会社名/個人名・住所・電話・FAX・メール・担当・備考</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.3</td><td class="func">種別管理</td><td class="desc">「お得意様」「地域顧客」の区分</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.4</td><td class="func">地域別管理</td><td class="desc">亀谷 / 元町 / 東和 / 岩代 / 市街 / その他（正式リストは別途確認）</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.5</td><td class="func">累計発注・売上集計</td><td class="desc">顧客ごとの累計発注件数・累計売上を自動表示</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.6</td><td class="func">過去発注からのコピー再注</td><td class="desc">「前回と同じで」の依頼に1クリックで仕様流用</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.7</td><td class="func">顧客別の過去案件履歴</td><td class="desc">ある顧客の全案件を時系列で確認</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">2.8</td><td class="func">仕様での絞り込み検索</td><td class="desc">「フミス紙の名刺だった案件」などの仕様検索</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">2.1</td><td class="func ed">顧客一覧</td><td class="desc ed">登録顧客の一覧表示・検索</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.2</td><td class="func ed">顧客詳細情報</td><td class="desc ed">会社名/個人名・住所・電話・FAX・メール・担当・備考</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.3</td><td class="func ed">種別管理</td><td class="desc ed">「お得意様」「地域顧客」の区分</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.4</td><td class="func ed">地域別管理</td><td class="desc ed">亀谷 / 元町 / 東和 / 岩代 / 市街 / その他（正式リストは別途確認）</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.5</td><td class="func ed">累計発注・売上集計</td><td class="desc ed">顧客ごとの累計発注件数・累計売上を自動表示</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.6</td><td class="func ed">過去発注からのコピー再注</td><td class="desc ed">「前回と同じで」の依頼に1クリックで仕様流用</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.7</td><td class="func ed">顧客別の過去案件履歴</td><td class="desc ed">ある顧客の全案件を時系列で確認</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">2.8</td><td class="func ed">仕様での絞り込み検索</td><td class="desc ed">「フミス紙の名刺だった案件」などの仕様検索</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 3. 見積書 ============ -->
   <div class="section">
-    <div class="section-title">3. 見積書</div>
-    <div class="section-desc">受注情報と完全連動した見積書の作成・PDF出力・送付</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">3. 見積書</div>
+    <div class="section-desc ed">受注情報と完全連動した見積書の作成・PDF出力・送付</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">3.1</td><td class="func">受注から自動生成</td><td class="desc">受注画面の「見積書作成」ボタン1つで明細・金額が転記</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.2</td><td class="func">見積番号自動採番</td><td class="desc">Q-YYMMDD-NNN 形式で連番</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.3</td><td class="func">有効期限の自動設定</td><td class="desc">発行日の翌月末をデフォルト（変更可）</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.4</td><td class="func">PDFファイル出力</td><td class="desc">そのまま郵送・印刷可能なA4 PDFを生成</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.5</td><td class="func">メール送信</td><td class="desc">PDFを添付して顧客にメール送信（送信履歴も記録）</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.6</td><td class="func">Excel出力</td><td class="desc">非定型な見積でセルを直接編集したい場合用</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.7</td><td class="func">見積書ステータス管理</td><td class="desc">作成中 / 発行済 / 受諾 / 失注</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.8</td><td class="func">見積金額の手入力対応</td><td class="desc">自動計算した金額を手動で上書き可能</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.9</td><td class="func">受注票との双方向連動</td><td class="desc">片方変更すると自動でもう片方に反映（範囲は選択式）</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">3.10</td><td class="func">振込先情報・社印の表示</td><td class="desc">テンプレに会社情報・印影を組み込み</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">3.1</td><td class="func ed">受注から自動生成</td><td class="desc ed">受注画面の「見積書作成」ボタン1つで明細・金額が転記</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.2</td><td class="func ed">見積番号自動採番</td><td class="desc ed">Q-YYMMDD-NNN 形式で連番</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.3</td><td class="func ed">有効期限の自動設定</td><td class="desc ed">発行日の翌月末をデフォルト（変更可）</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.4</td><td class="func ed">PDFファイル出力</td><td class="desc ed">そのまま郵送・印刷可能なA4 PDFを生成</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.5</td><td class="func ed">メール送信</td><td class="desc ed">PDFを添付して顧客にメール送信（送信履歴も記録）</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.6</td><td class="func ed">Excel出力</td><td class="desc ed">非定型な見積でセルを直接編集したい場合用</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.7</td><td class="func ed">見積書ステータス管理</td><td class="desc ed">作成中 / 発行済 / 受諾 / 失注</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.8</td><td class="func ed">見積金額の手入力対応</td><td class="desc ed">自動計算した金額を手動で上書き可能</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.9</td><td class="func ed">受注票との双方向連動</td><td class="desc ed">片方変更すると自動でもう片方に反映（範囲は選択式）</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">3.10</td><td class="func ed">振込先情報・社印の表示</td><td class="desc ed">テンプレに会社情報・印影を組み込み</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 4. 工場進捗管理 ============ -->
   <div class="section">
-    <div class="section-title">4. 工場進捗管理（C管理）</div>
-    <div class="section-desc">工場での印刷進捗をカンバン式で可視化・操作</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">4. 工場進捗管理（C管理）</div>
+    <div class="section-desc ed">工場での印刷進捗をカンバン式で可視化・操作</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">4.1</td><td class="func">工場カンバン画面</td><td class="desc">待機 / 作業中 / 完成 / 出荷待ち の4列で進捗可視化</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.2</td><td class="func">ドラッグ&ドロップ操作</td><td class="desc">カードを左右にドラッグするだけでステータス変更</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.3</td><td class="func">工場/受注ステータスの同期</td><td class="desc">工場で「完成」にしたら受注側も「完成」に自動反映</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.4</td><td class="func">納期アラート</td><td class="desc">本日納期・明日納期のカードを赤字でハイライト</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.5</td><td class="func">開始・完了時刻の記録</td><td class="desc">作業開始/完了の自動タイムスタンプ</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.6</td><td class="func">実出来高の入力</td><td class="desc">予定数量と異なる場合の実出来高を記録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.7</td><td class="func">工場メモ</td><td class="desc">案件ごとに工場側からの備考を記録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.8</td><td class="func">完了担当の記録</td><td class="desc">どの工場担当者が完了させたかを記録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">4.9</td><td class="func">B（製版）側の管理画面</td><td class="desc">製版担当者用の独自管理画面（現行Excel相当の統合）</td><td class="phase"><span class="ph2-tag">P2</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">4.1</td><td class="func ed">工場カンバン画面</td><td class="desc ed">待機 / 作業中 / 完成 / 出荷待ち の4列で進捗可視化</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.2</td><td class="func ed">ドラッグ&ドロップ操作</td><td class="desc ed">カードを左右にドラッグするだけでステータス変更</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.3</td><td class="func ed">工場/受注ステータスの同期</td><td class="desc ed">工場で「完成」にしたら受注側も「完成」に自動反映</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.4</td><td class="func ed">納期アラート</td><td class="desc ed">本日納期・明日納期のカードを赤字でハイライト</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.5</td><td class="func ed">開始・完了時刻の記録</td><td class="desc ed">作業開始/完了の自動タイムスタンプ</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.6</td><td class="func ed">実出来高の入力</td><td class="desc ed">予定数量と異なる場合の実出来高を記録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.7</td><td class="func ed">工場メモ</td><td class="desc ed">案件ごとに工場側からの備考を記録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.8</td><td class="func ed">完了担当の記録</td><td class="desc ed">どの工場担当者が完了させたかを記録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">4.9</td><td class="func ed">B（製版）側の管理画面</td><td class="desc ed">製版担当者用の独自管理画面（現行Excel相当の統合）</td><td class="phase"><span class="ph2-tag">P2</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 5. 帳票・印刷 ============ -->
   <div class="section">
-    <div class="section-title">5. 帳票・印刷</div>
-    <div class="section-desc">紙運用との両立。受注票・納品書・請求書の発行</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">5. 帳票・印刷</div>
+    <div class="section-desc ed">紙運用との両立。受注票・納品書・請求書の発行</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">5.1</td><td class="func">受注票印刷</td><td class="desc">A4横1枚のクリアファイル回覧用フォーマットで印刷</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">5.2</td><td class="func">受注票の3者サイン欄</td><td class="desc">製版（B）/印刷（C）/納品会計（A）の確認欄を印字</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">5.3</td><td class="func">納品書発行</td><td class="desc">納品時に発行する納品書（PDF・印刷）</td><td class="phase"><span class="ph3-tag">P3</span></td><td class="comment"></td></tr>
-      <tr><td class="no">5.4</td><td class="func">請求書発行</td><td class="desc">請求書の発行（PDF・印刷・メール送付）</td><td class="phase"><span class="ph3-tag">P3</span></td><td class="comment"></td></tr>
-      <tr><td class="no">5.5</td><td class="func">領収書発行</td><td class="desc">現金支払い時の領収書発行</td><td class="phase"><span class="ph3-tag">P3</span></td><td class="comment"></td></tr>
-      <tr><td class="no">5.6</td><td class="func">帳簿（売上管理）</td><td class="desc">案件ごとの売上記録、未発行伝票・未入金管理</td><td class="phase"><span class="ph3-tag">P3</span></td><td class="comment"></td></tr>
-      <tr><td class="no">5.7</td><td class="func">伝票・入金状況管理</td><td class="desc">「伝票出した/未発行」「入金済/未入金」のチェック</td><td class="phase"><span class="ph3-tag">P3</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">5.1</td><td class="func ed">受注票印刷</td><td class="desc ed">A4横1枚のクリアファイル回覧用フォーマットで印刷</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">5.2</td><td class="func ed">受注票の3者サイン欄</td><td class="desc ed">製版（B）/印刷（C）/納品会計（A）の確認欄を印字</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">5.3</td><td class="func ed">納品書発行</td><td class="desc ed">納品時に発行する納品書（PDF・印刷）</td><td class="phase"><span class="ph3-tag">P3</span></td></tr>
+      <tr><td class="no ed">5.4</td><td class="func ed">請求書発行</td><td class="desc ed">請求書の発行（PDF・印刷・メール送付）</td><td class="phase"><span class="ph3-tag">P3</span></td></tr>
+      <tr><td class="no ed">5.5</td><td class="func ed">領収書発行</td><td class="desc ed">現金支払い時の領収書発行</td><td class="phase"><span class="ph3-tag">P3</span></td></tr>
+      <tr><td class="no ed">5.6</td><td class="func ed">帳簿（売上管理）</td><td class="desc ed">案件ごとの売上記録、未発行伝票・未入金管理</td><td class="phase"><span class="ph3-tag">P3</span></td></tr>
+      <tr><td class="no ed">5.7</td><td class="func ed">伝票・入金状況管理</td><td class="desc ed">「伝票出した/未発行」「入金済/未入金」のチェック</td><td class="phase"><span class="ph3-tag">P3</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 6. ユーザー・権限 ============ -->
   <div class="section">
-    <div class="section-title">6. ユーザー・権限</div>
-    <div class="section-desc">4名（A統括/B製版/C工場/経理）の役割別アクセス制御</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">6. ユーザー・権限</div>
+    <div class="section-desc ed">4名（A統括/B製版/C工場/経理）の役割別アクセス制御</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">6.1</td><td class="func">ユーザログイン</td><td class="desc">メール・パスワードによるログイン</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">6.2</td><td class="func">役割の管理</td><td class="desc">A_統括 / B_製版 / C_工場 / 経理 の4役割</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">6.3</td><td class="func">役割別の権限制御</td><td class="desc">A_統括は全権、B/Cは担当範囲のみ編集可</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">6.4</td><td class="func">複数人同時利用</td><td class="desc">4名が別端末から同時にログイン・操作可能</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">6.5</td><td class="func">パスワードリセット</td><td class="desc">忘れたパスワードの再設定（メール送信）</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">6.6</td><td class="func">ユーザの追加・無効化</td><td class="desc">A_統括が新規ユーザを招待・退職者を無効化</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">6.7</td><td class="func">経理ユーザの利用</td><td class="desc">お母様は対象外想定。会長または別1名が対応</td><td class="phase"><span class="ph2-tag">P2</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">6.1</td><td class="func ed">ユーザログイン</td><td class="desc ed">メール・パスワードによるログイン</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">6.2</td><td class="func ed">役割の管理</td><td class="desc ed">A_統括 / B_製版 / C_工場 / 経理 の4役割</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">6.3</td><td class="func ed">役割別の権限制御</td><td class="desc ed">A_統括は全権、B/Cは担当範囲のみ編集可</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">6.4</td><td class="func ed">複数人同時利用</td><td class="desc ed">4名が別端末から同時にログイン・操作可能</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">6.5</td><td class="func ed">パスワードリセット</td><td class="desc ed">忘れたパスワードの再設定（メール送信）</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">6.6</td><td class="func ed">ユーザの追加・無効化</td><td class="desc ed">A_統括が新規ユーザを招待・退職者を無効化</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">6.7</td><td class="func ed">経理ユーザの利用</td><td class="desc ed">お母様は対象外想定。会長または別1名が対応</td><td class="phase"><span class="ph2-tag">P2</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 7. マスタ管理 ============ -->
   <div class="section">
-    <div class="section-title">7. マスタ管理</div>
-    <div class="section-desc">用紙・加工オプション・計算ルールの一元管理</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">7. マスタ管理</div>
+    <div class="section-desc ed">用紙・加工オプション・計算ルールの一元管理</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">7.1</td><td class="func">用紙マスタ登録</td><td class="desc">紙質・色・厚さ・サイズ・単価を登録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">7.2</td><td class="func">メジャー紙の優先表示</td><td class="desc">よく使う紙はドロップダウン上部に固定表示</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">7.3</td><td class="func">特殊紙の自由入力</td><td class="desc">マスタにない紙は「その他」で自由記述可能</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">7.4</td><td class="func">用紙単価の更新</td><td class="desc">物価変動時の単価変更（手動 or CSV一括）</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">7.5</td><td class="func">加工オプションの単価管理</td><td class="desc">ミシン・折・穴等の加工費単価を設定</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">7.6</td><td class="func">定型品の自動計算ルール</td><td class="desc">名刺・封筒など頻出品目の数量別単価を登録</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">7.7</td><td class="func">CSVマスタ一括取込</td><td class="desc">用紙・顧客マスタを一括でCSVから取り込み</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">7.1</td><td class="func ed">用紙マスタ登録</td><td class="desc ed">紙質・色・厚さ・サイズ・単価を登録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">7.2</td><td class="func ed">メジャー紙の優先表示</td><td class="desc ed">よく使う紙はドロップダウン上部に固定表示</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">7.3</td><td class="func ed">特殊紙の自由入力</td><td class="desc ed">マスタにない紙は「その他」で自由記述可能</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">7.4</td><td class="func ed">用紙単価の更新</td><td class="desc ed">物価変動時の単価変更（手動 or CSV一括）</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">7.5</td><td class="func ed">加工オプションの単価管理</td><td class="desc ed">ミシン・折・穴等の加工費単価を設定</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">7.6</td><td class="func ed">定型品の自動計算ルール</td><td class="desc ed">名刺・封筒など頻出品目の数量別単価を登録</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">7.7</td><td class="func ed">CSVマスタ一括取込</td><td class="desc ed">用紙・顧客マスタを一括でCSVから取り込み</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
     </tbody></table>
   </div>
 
   <!-- ============ 8. データ管理 ============ -->
   <div class="section">
-    <div class="section-title">8. データ管理・検索</div>
-    <div class="section-desc">過去データの活用とバックアップ</div>
-    <table><thead><tr>
-      <th>No.</th><th>機能</th><th>内容</th><th>Phase</th><th>コメント</th>
-    </tr></thead>
+    <div class="section-title ed">8. データ管理・検索</div>
+    <div class="section-desc ed">過去データの活用とバックアップ</div>
+    <table><thead><tr><th>No.</th><th>機能</th><th>内容</th><th>Phase</th></tr></thead>
     <tbody>
-      <tr><td class="no">8.1</td><td class="func">過去案件の高速検索</td><td class="desc">顧客名・日付・仕様で過去案件を瞬時に呼び出し</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">8.2</td><td class="func">受注データのCSV出力</td><td class="desc">月次・年次集計の元データを書き出し</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">8.3</td><td class="func">JSON全データ書出</td><td class="desc">バックアップ・移行用のフルバックアップ</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">8.4</td><td class="func">日次自動バックアップ</td><td class="desc">毎日自動でクラウドバックアップ取得</td><td class="phase"><span class="ph1-tag">P1</span></td><td class="comment"></td></tr>
-      <tr><td class="no">8.5</td><td class="func">既存データの移行</td><td class="desc">現行帳簿・Excelデータの新システム取込（直近1年分）</td><td class="phase"><span class="ph2-tag">P2</span></td><td class="comment"></td></tr>
-      <tr><td class="no">8.6</td><td class="func">変更履歴アーカイブ</td><td class="desc">古い変更履歴の自動アーカイブ</td><td class="phase"><span class="ph2-tag">P2</span></td><td class="comment"></td></tr>
+      <tr><td class="no ed">8.1</td><td class="func ed">過去案件の高速検索</td><td class="desc ed">顧客名・日付・仕様で過去案件を瞬時に呼び出し</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">8.2</td><td class="func ed">受注データのCSV出力</td><td class="desc ed">月次・年次集計の元データを書き出し</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">8.3</td><td class="func ed">JSON全データ書出</td><td class="desc ed">バックアップ・移行用のフルバックアップ</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">8.4</td><td class="func ed">日次自動バックアップ</td><td class="desc ed">毎日自動でクラウドバックアップ取得</td><td class="phase"><span class="ph1-tag">P1</span></td></tr>
+      <tr><td class="no ed">8.5</td><td class="func ed">既存データの移行</td><td class="desc ed">現行帳簿・Excelデータの新システム取込（直近1年分）</td><td class="phase"><span class="ph2-tag">P2</span></td></tr>
+      <tr><td class="no ed">8.6</td><td class="func ed">変更履歴アーカイブ</td><td class="desc ed">古い変更履歴の自動アーカイブ</td><td class="phase"><span class="ph2-tag">P2</span></td></tr>
     </tbody></table>
-  </div>
-
-  <!-- 全体コメント欄 -->
-  <div class="section">
-    <div class="section-title">📝 全体コメント・追加要望</div>
-    <div class="section-desc">本書全体に対するご意見・追加要望はこちらに</div>
-    <div id="overall-comment" contenteditable="true" style="min-height:120px; border:1px solid #D5D5D5; padding:12px; background:#FAFCFF; font-size:13px; line-height:1.7; border-radius:0 0 4px 4px;"></div>
   </div>
 
   <!-- フッター -->
   <div class="footer">
-    <h3 style="font-size: 14px; margin-bottom: 8px;">📮 ご返送方法</h3>
+    <h3 style="font-size: 14px; margin-bottom: 8px;" class="ed">📮 ご返送方法</h3>
     <ol style="padding-left: 20px;">
-      <li>各機能のコメント欄をクリックしてご記入ください（自動保存されます）</li>
-      <li>記入完了後、画面右上の「📨 Unseeに送信」ボタンを押してメール送信</li>
-      <li>または「💾 JSON書出」でファイル保存してメール添付・USB等でご返送</li>
-      <li>印刷したい場合は「🖨 印刷」ボタンで紙出力もできます</li>
+      <li class="ed">文章の任意の部分をクリックして編集してください（自動保存されます）</li>
+      <li class="ed">編集完了後、画面右上の「📨 Unseeに送信」ボタンを押してメール送信</li>
+      <li class="ed">または「💾 JSON書出」でファイル保存してメール添付・USB等でご返送</li>
+      <li class="ed">印刷したい場合は「🖨 印刷」ボタンで紙出力もできます</li>
     </ol>
 
     <div class="signature-area">
@@ -498,7 +473,7 @@
 
     <div style="margin-top: 24px; padding-top: 12px; border-top: 1px solid #E5E5E5; font-size: 10px; color: #707070; text-align: center;">
       Unsee（株式会社アンシー） / development@unsee-able.com / 三上・増子<br>
-      渡辺謄写堂 業務管理システム 機能要件一覧 v1.2 / 2026-04-28
+      渡辺謄写堂 業務管理システム 機能要件一覧 v1.3 / 2026-04-28
     </div>
   </div>
 
@@ -508,7 +483,7 @@
 <div class="modal-backdrop" id="send-modal">
   <div class="modal-box">
     <h2>📨 Unseeに送信</h2>
-    <p style="font-size:13px; margin-bottom:12px;">下記内容をUnseeに送信します。「メールアプリで開く」を押すと、メーラーが起動して自動でメール本文に貼り付けます。</p>
+    <p style="font-size:13px; margin-bottom:12px;">下記内容をUnseeに送信します。「メールアプリで開く」を押すとメーラーが起動します。長文の場合は「📋 内容コピー」で本文に貼り付けてください。</p>
     <pre id="send-preview"></pre>
     <div class="modal-actions">
       <button class="btn btn-ghost" style="background:#E5E5E5; color:#1A1A1A" onclick="App.closeSendDialog()">キャンセル</button>
@@ -520,26 +495,17 @@
 
 <script>
 const App = {
-  KEY: 'watanabe_requirements_v3',
+  KEY: 'watanabe_requirements_v4',
   saveTimer: null,
 
   init() {
-    this.attachHandlers();
-    this.restore();
-  },
-
-  attachHandlers() {
-    // コメント欄
-    document.querySelectorAll('td.comment').forEach(cell => {
-      cell.contentEditable = 'true';
-      cell.addEventListener('input', () => this.scheduleSave());
-      cell.addEventListener('blur', () => this.save());
+    // 全 .ed 要素に編集機能を付与し、安定IDを発行
+    document.querySelectorAll('.ed').forEach((el, i) => {
+      el.contentEditable = 'true';
+      el.dataset.editId = 'ed-' + i;
+      el.addEventListener('input', () => this.scheduleSave());
+      el.addEventListener('blur', () => this.save());
     });
-
-    // 全体コメント
-    const oc = document.getElementById('overall-comment');
-    oc.addEventListener('input', () => this.scheduleSave());
-    oc.addEventListener('blur', () => this.save());
 
     // インポート
     document.getElementById('import-file').addEventListener('change', (e) => {
@@ -557,8 +523,9 @@ const App = {
       reader.readAsText(f);
     });
 
-    // 終了時の最終保存
     window.addEventListener('beforeunload', () => this.save());
+
+    this.restore();
   },
 
   scheduleSave() {
@@ -568,15 +535,11 @@ const App = {
   },
 
   save() {
-    const state = { rows: {}, overall: '', saved_at: new Date().toISOString() };
-    document.querySelectorAll('tbody tr').forEach(tr => {
-      const noCell = tr.querySelector('td.no');
-      if (!noCell) return;
-      const no = noCell.textContent.trim();
-      const comment = tr.querySelector('td.comment')?.innerText.trim() || '';
-      if (comment) state.rows[no] = { comment };
+    const cells = {};
+    document.querySelectorAll('[data-edit-id]').forEach(el => {
+      cells[el.dataset.editId] = el.innerHTML;
     });
-    state.overall = document.getElementById('overall-comment').innerText.trim();
+    const state = { cells, saved_at: new Date().toISOString() };
     localStorage.setItem(this.KEY, JSON.stringify(state));
     const t = new Date();
     this.showStatus(`✓ 保存済み ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}`, 'ok');
@@ -587,18 +550,11 @@ const App = {
     if (!raw) return;
     let state;
     try { state = JSON.parse(raw); } catch (e) { return; }
-    if (!state.rows) return;
-
-    document.querySelectorAll('tbody tr').forEach(tr => {
-      const noCell = tr.querySelector('td.no');
-      if (!noCell) return;
-      const no = noCell.textContent.trim();
-      const data = state.rows[no];
-      if (!data) return;
-      const cc = tr.querySelector('td.comment');
-      if (cc && data.comment) cc.innerText = data.comment;
+    if (!state.cells) return;
+    document.querySelectorAll('[data-edit-id]').forEach(el => {
+      const v = state.cells[el.dataset.editId];
+      if (v != null) el.innerHTML = v;
     });
-    if (state.overall) document.getElementById('overall-comment').innerText = state.overall;
   },
 
   showStatus(msg, type) {
@@ -625,11 +581,9 @@ const App = {
   },
 
   clearAll() {
-    if (!confirm('全ての記入内容を削除しますか？\nこの操作は取り消せません。')) return;
+    if (!confirm('編集内容をすべてクリアして初期状態に戻しますか？\nこの操作は取り消せません。')) return;
     localStorage.removeItem(this.KEY);
-    document.querySelectorAll('td.comment').forEach(c => c.innerText = '');
-    document.getElementById('overall-comment').innerText = '';
-    this.showStatus('🗑 クリア完了', 'ok');
+    location.reload();
   },
 
   buildSummary() {
@@ -639,39 +593,23 @@ const App = {
     lines.push('');
 
     document.querySelectorAll('.section').forEach(sec => {
-      const title = sec.querySelector('.section-title')?.textContent;
+      const title = sec.querySelector('.section-title')?.innerText.trim();
+      const desc = sec.querySelector('.section-desc')?.innerText.trim();
       if (!title) return;
-      const tbody = sec.querySelector('tbody');
-      if (!tbody) return;
+      lines.push('## ' + title);
+      if (desc) lines.push('   ' + desc);
 
-      const rowOutputs = [];
-      tbody.querySelectorAll('tr').forEach(tr => {
-        const no = tr.querySelector('td.no')?.textContent.trim();
-        const func = tr.querySelector('td.func')?.textContent.trim();
-        if (!no) return;
-        const phase = tr.querySelector('td.phase')?.textContent.trim() || '';
-        const comment = tr.querySelector('td.comment')?.innerText.trim() || '';
-        if (comment) {
-          rowOutputs.push(`  [${phase}] ${no} ${func}\n     コメント: ${comment}`);
-        }
+      sec.querySelectorAll('tbody tr').forEach(tr => {
+        const no = tr.querySelector('td.no')?.innerText.trim() || '';
+        const func = tr.querySelector('td.func')?.innerText.trim() || '';
+        const desc = tr.querySelector('td.desc')?.innerText.trim() || '';
+        const phase = tr.querySelector('td.phase')?.innerText.trim() || '';
+        lines.push(`  [${phase}] ${no} ${func}`);
+        if (desc) lines.push(`         ${desc}`);
       });
-      if (rowOutputs.length) {
-        lines.push('--- ' + title + ' ---');
-        lines.push(...rowOutputs);
-        lines.push('');
-      }
+      lines.push('');
     });
 
-    const overall = document.getElementById('overall-comment').innerText.trim();
-    if (overall) {
-      lines.push('--- 全体コメント・追加要望 ---');
-      lines.push(overall);
-      lines.push('');
-    }
-
-    if (lines.length <= 3) {
-      lines.push('（コメント記入なし）');
-    }
     return lines.join('\n');
   },
 
@@ -691,7 +629,7 @@ const App = {
     const max = 1800;
     let url;
     if (encoded.length > max) {
-      url = `mailto:development@unsee-able.com?subject=${subject}&body=${encodeURIComponent('（ご回答が長いため、本文は別途コピー&ペーストしてください。「📋 内容コピー」ボタンで全文コピーできます）\n\n')}`;
+      url = `mailto:development@unsee-able.com?subject=${subject}&body=${encodeURIComponent('（ご回答が長いため、本文は別途コピー&ペーストしてください）\n\n')}`;
       alert('回答が長いため、メーラーには件名のみ自動入力されます。\n「📋 内容コピー」ボタンで全文をコピーし、メール本文に貼り付けてください。');
     } else {
       url = `mailto:development@unsee-able.com?subject=${subject}&body=${encoded}`;
