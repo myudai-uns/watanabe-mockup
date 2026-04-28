@@ -448,14 +448,51 @@
 
 <script>
 const App = {
-  KEY: 'watanabe_requirements_v4',
+  KEY: 'watanabe_requirements_v5',
   saveTimer: null,
 
+  // 安定IDを生成（位置ではなく要素の識別子に基づく）
+  buildStableId(el, fallbackIdx) {
+    // テーブルセル: section-N + 行のNo. + クラス名
+    const tr = el.closest('tr');
+    if (tr && el.tagName === 'TD') {
+      const sectionEl = el.closest('.section');
+      const sections = Array.from(document.querySelectorAll('.section'));
+      const sectionIdx = sections.indexOf(sectionEl);
+      const noCell = tr.querySelector('td.no');
+      const noText = noCell ? noCell.textContent.trim().replace(/\s+/g, '') : 'r' + Array.from(tr.parentNode.children).indexOf(tr);
+      let cellClass = 'cell';
+      if (el.classList.contains('no')) cellClass = 'no';
+      else if (el.classList.contains('func')) cellClass = 'func';
+      else if (el.classList.contains('desc')) cellClass = 'desc';
+      else if (el.classList.contains('phase')) cellClass = 'phase';
+      return `s${sectionIdx}-${noText}-${cellClass}`;
+    }
+    // セクションタイトル/説明
+    if (el.classList.contains('section-title') || el.classList.contains('section-desc')) {
+      const sectionEl = el.closest('.section');
+      const sections = Array.from(document.querySelectorAll('.section'));
+      const sectionIdx = sections.indexOf(sectionEl);
+      const t = el.classList.contains('section-title') ? 'title' : 'desc';
+      return `s${sectionIdx}-${t}`;
+    }
+    // ヘッダー要素
+    if (el.classList.contains('doc-title')) return 'h-title';
+    if (el.classList.contains('doc-subtitle')) return 'h-subtitle';
+    if (el.classList.contains('client')) return 'h-client';
+    // legend
+    if (el.parentElement && el.parentElement.classList.contains('legend-item')) {
+      const items = Array.from(document.querySelectorAll('.legend-item'));
+      return 'legend-' + items.indexOf(el.parentElement);
+    }
+    // フォールバック
+    return 'fb-' + fallbackIdx;
+  },
+
   init() {
-    // 全 .ed 要素に編集機能を付与し、安定IDを発行
     document.querySelectorAll('.ed').forEach((el, i) => {
       el.contentEditable = 'true';
-      el.dataset.editId = 'ed-' + i;
+      el.dataset.editId = this.buildStableId(el, i);
       el.addEventListener('input', () => this.scheduleSave());
       el.addEventListener('blur', () => this.save());
     });
