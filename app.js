@@ -26,6 +26,16 @@ const HOLE_POSITIONS   = ['なし','天2ケ','左2ケ'];
 const PRINT_DIRECTIONS = ['天乗','左乗'];
 const SEND_METHODS     = ['郵送','メール','LINE','直接手渡し'];
 const PROCESSING_PRICE = { mishin: 500, folding: 800, hole: 300, numbering: 1500, yacho: 1200, lamination: 2000 };
+const DATA_STATUS      = ['持込', 'ゼロから作成', '未受領'];
+const TAX_RATES        = [10, 8];
+const TAG_PRESETS      = [
+  { name: '急ぎ',     color: '#EF4444' },
+  { name: 'リピート', color: '#3F9D5E' },
+  { name: 'ご祝儀',   color: '#FBBF24' },
+  { name: '特殊紙',   color: '#8B5CF6' },
+  { name: '重要顧客', color: '#E87825' },
+];
+const CONTACT_TYPES    = ['電話', '来客', 'メール', 'LINE', 'FAX'];
 
 // ========= Seed Data =========
 const TODAY = '2026-04-24';
@@ -64,6 +74,19 @@ const SEED_DATA = {
   quotes: [],
   factory_records: [],
   change_logs: [],
+  contact_logs: [
+    { id: 'cl_seed1', customer_id: 'c1', logged_at: '2026-04-20T11:00:00', contact_type: '電話', summary: '名刺の追加発注について。次回4月末に500枚再注文予定とのこと', user_id: 'u1' },
+    { id: 'cl_seed2', customer_id: 'c4', logged_at: '2026-04-15T14:30:00', contact_type: '来客', summary: '5月の体育祭プログラム1000部 仕様確認 持込データあり', user_id: 'u1' },
+  ],
+  settings: {
+    invoice_number: 'T1234567890123',
+    company_name: '有限会社 渡辺謄写堂',
+    company_address: '〒964-0000 福島県二本松市XXX',
+    company_phone: '0243-XX-XXXX',
+    bank_info: 'お振込先：二本松信金 本店 普通 1234567 ワタナベトウシャドウ',
+    holidays: ['2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-08-13','2026-08-14','2026-08-15','2026-12-29','2026-12-30','2026-12-31'],
+    tags_master: TAG_PRESETS.map(t => ({ ...t })),
+  },
 };
 
 // ========= Seed Orders (20件) =========
@@ -81,6 +104,11 @@ function buildSeedOrders() {
     status: o.status,
     memo: o.memo || '',
     total_amount: o.total_amount,
+    data_status: o.data_status || '持込',
+    discount_amount: o.discount_amount || 0,
+    discount_reason: o.discount_reason || '',
+    tags: o.tags || [],
+    attachments: o.attachments || [],
     created_by_id: 'u1',
     created_at: o.received_date + 'T09:00:00',
     updated_at: o.received_date + 'T09:00:00',
@@ -101,17 +129,18 @@ function buildSeedOrders() {
     numbering_to: opts.numbering_to || null,
     yacho_style: !!opts.yacho_style,
     lamination: !!opts.lamination,
+    tax_rate: opts.tax_rate || 10,
     unit_price: opts.unit_price || null,
     subtotal: opts.subtotal || null,
     item_notes: opts.item_notes || '',
   });
   const orders = [
     // 今日 (4/24) - active
-    { order_number: '260424-001', customer_id: 'c1', received_date: '2026-04-24', delivery_date_start: '2026-04-24', status: '印刷中', total_amount: 5500, memo: '前回と同仕様', items: [ it('p5', 500, '4Cx4C', { subtotal: 5000 }) ] },
-    { order_number: '260424-002', customer_id: 'c6', received_date: '2026-04-24', delivery_date_start: '2026-05-10', status: '受注', total_amount: 18800, items: [ it('p9', 1000, '1Cx0', { subtotal: 18000 }) ] },
-    { order_number: '260424-003', customer_id: 'c5', received_date: '2026-04-24', delivery_date_start: '2026-04-25', status: '受注', total_amount: 3300, items: [ it('p6', 300, '4Cx4C', { subtotal: 3000 }) ] },
+    { order_number: '260424-001', customer_id: 'c1', received_date: '2026-04-24', delivery_date_start: '2026-04-24', status: '印刷中', total_amount: 5500, memo: '前回と同仕様', tags: ['リピート','重要顧客'], data_status: '持込', items: [ it('p5', 500, '4Cx4C', { subtotal: 5000 }) ] },
+    { order_number: '260424-002', customer_id: 'c6', received_date: '2026-04-24', delivery_date_start: '2026-05-10', status: '受注', total_amount: 18800, data_status: 'ゼロから作成', items: [ it('p9', 1000, '1Cx0', { subtotal: 18000 }) ] },
+    { order_number: '260424-003', customer_id: 'c5', received_date: '2026-04-24', delivery_date_start: '2026-04-25', status: '受注', total_amount: 3300, tags: ['急ぎ'], data_status: '未受領', items: [ it('p6', 300, '4Cx4C', { subtotal: 3000 }) ] },
     // 昨日 (4/23)
-    { order_number: '260423-007', customer_id: 'c2', received_date: '2026-04-23', delivery_date_start: '2026-04-24', status: '印刷中', total_amount: 38200, items: [ it('p1', 2000, '4Cx4C', { subtotal: 35000 }) ] },
+    { order_number: '260423-007', customer_id: 'c2', received_date: '2026-04-23', delivery_date_start: '2026-04-24', status: '印刷中', total_amount: 38200, tags: ['急ぎ','重要顧客'], discount_amount: 2000, discount_reason: 'お得意様割引', data_status: '持込', items: [ it('p1', 2000, '4Cx4C', { subtotal: 35000 }) ] },
     { order_number: '260423-005', customer_id: 'c4', received_date: '2026-04-23', delivery_date_start: '2026-05-15', status: '製版中', total_amount: 128000, memo: '手引き製本', items: [ it('p4', 1000, '1Cx1C', { subtotal: 120000, folding: '2つ折' }) ] },
     { order_number: '260423-009', customer_id: 'c7', received_date: '2026-04-23', delivery_date_start: '2026-04-30', status: '受注', total_amount: 8800, items: [ it('p3', 500, '4Cx4C', { subtotal: 8000 }) ] },
     // 一昨日 (4/22)
@@ -293,6 +322,55 @@ const DB = {
   findFactoryRecord(order_id) {
     return this.data.factory_records.find(f => f.order_id === order_id);
   },
+  // Contact logs
+  addContactLog(customer_id, contact_type, summary) {
+    const log = {
+      id: this.nextId('clg'),
+      customer_id, contact_type, summary,
+      logged_at: new Date().toISOString(),
+      user_id: App.currentUserId,
+    };
+    if (!this.data.contact_logs) this.data.contact_logs = [];
+    this.data.contact_logs.push(log);
+    this.log('Customer', customer_id, `連絡履歴追加: ${contact_type}`);
+    this.save();
+    return log;
+  },
+  contactLogsFor(customer_id) {
+    return (this.data.contact_logs || [])
+      .filter(l => l.customer_id === customer_id)
+      .sort((a,b) => (b.logged_at||'').localeCompare(a.logged_at||''));
+  },
+  // Settings
+  settings() {
+    if (!this.data.settings) this.data.settings = clone(SEED_DATA.settings);
+    return this.data.settings;
+  },
+  updateSettings(patch) {
+    Object.assign(this.settings(), patch);
+    this.save();
+  },
+  // Tags
+  tagsMaster() { return this.settings().tags_master || []; },
+  // Holiday helpers
+  isHoliday(iso) {
+    const s = this.settings();
+    if ((s.holidays || []).includes(iso)) return true;
+    const d = new Date(iso);
+    const dow = d.getDay();
+    return dow === 0 || dow === 6; // 土日
+  },
+  businessDaysBetween(fromIso, toIso) {
+    let n = 0;
+    const cur = new Date(fromIso);
+    const end = new Date(toIso);
+    while (cur < end) {
+      const iso = cur.toISOString().slice(0, 10);
+      if (!this.isHoliday(iso)) n++;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return n;
+  },
 };
 
 // ========= Helpers =========
@@ -324,6 +402,11 @@ const fmt = {
     if (o.delivery_type === 'range') return `${fmt.date(o.delivery_date_start)}〜${fmt.date(o.delivery_date_end)}`;
     return fmt.date(o.delivery_date_start);
   },
+  tagBadge(name) {
+    const t = DB.tagsMaster().find(x => x.name === name) || { color: '#707070' };
+    return `<span style="display:inline-block;background:${t.color};color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:3px;white-space:nowrap;">${esc(name)}</span>`;
+  },
+  tags(arr) { return (arr || []).map(t => fmt.tagBadge(t)).join(''); },
 };
 
 function calcItemPrice(item) {
@@ -344,6 +427,31 @@ function calcItemPrice(item) {
 }
 function calcOrderTotal(items) {
   return items.reduce((sum, it) => sum + (calcItemPrice(it).subtotal), 0);
+}
+function calcOrder(items, discount = 0) {
+  const subtotal = calcOrderTotal(items);
+  const breakdown = {};
+  items.forEach(it => {
+    const rate = it.tax_rate || 10;
+    const sub = calcItemPrice(it).subtotal || 0;
+    if (!breakdown[rate]) breakdown[rate] = { rate, subtotal: 0, tax: 0 };
+    breakdown[rate].subtotal += sub;
+  });
+  const afterDiscount = Math.max(0, subtotal - (discount || 0));
+  const ratio = subtotal > 0 ? afterDiscount / subtotal : 1;
+  Object.values(breakdown).forEach(b => {
+    b.subtotal = Math.round(b.subtotal * ratio);
+    b.tax = Math.round(b.subtotal * b.rate / 100);
+  });
+  const totalTax = Object.values(breakdown).reduce((s, b) => s + b.tax, 0);
+  return {
+    subtotal,
+    discount: discount || 0,
+    after_discount: afterDiscount,
+    tax_breakdown: Object.values(breakdown).sort((a, b) => b.rate - a.rate),
+    total_tax: totalTax,
+    total: afterDiscount + totalTax,
+  };
 }
 
 // ========= Toast =========
@@ -502,19 +610,23 @@ Screens.dashboard = {
 
 // ---------- Orders List ----------
 Screens.orders = {
-  filter: { q: '', status: '', from: '', to: '' },
+  filter: { q: '', status: '', from: '', to: '', tag: '' },
   render() {
     const all = DB.all('orders').slice().sort((a,b) => (b.received_date || '').localeCompare(a.received_date || ''));
     const f = this.filter;
     const filtered = all.filter(o => {
       if (f.q) {
         const cust = fmt.customer(o.customer_id);
-        const searchStr = `${o.order_number} ${cust} ${o.memo}`.toLowerCase();
+        // 全文検索: メモ・明細メモ・顧客備考も対象
+        const customerObj = DB.find('customers', o.customer_id);
+        const itemNotes = (o.items || []).map(it => `${it.item_notes || ''} ${it.paper_other_memo || ''} ${fmt.paper(it.paper_id)}`).join(' ');
+        const searchStr = `${o.order_number} ${cust} ${o.memo || ''} ${itemNotes} ${customerObj?.notes || ''} ${(o.tags || []).join(' ')} ${o.discount_reason || ''}`.toLowerCase();
         if (!searchStr.includes(f.q.toLowerCase())) return false;
       }
       if (f.status && o.status !== f.status) return false;
       if (f.from && o.received_date < f.from) return false;
       if (f.to && o.received_date > f.to) return false;
+      if (f.tag && !(o.tags || []).includes(f.tag)) return false;
       return true;
     });
     return `
@@ -523,7 +635,7 @@ Screens.orders = {
         <a href="#order/new" class="bg-brand hover:bg-brand-dark text-white px-5 py-2 rounded font-bold shadow-sm">+ 新規受注起票</a>
       </div>
       <div class="bg-white p-4 rounded shadow-sm mb-4 grid grid-cols-6 gap-3 text-sm" id="filter-bar">
-        <div class="col-span-2"><label class="block text-xs font-bold mb-1">検索（顧客名・受注番号・メモ）</label><input id="f-q" class="w-full border rounded px-2 py-1.5" value="${esc(f.q)}"></div>
+        <div class="col-span-2"><label class="block text-xs font-bold mb-1">全文検索（顧客名・番号・メモ・明細・タグ）</label><input id="f-q" class="w-full border rounded px-2 py-1.5" value="${esc(f.q)}" placeholder="🔍 すべての項目を横断検索"></div>
         <div><label class="block text-xs font-bold mb-1">受付日 From</label><input type="date" id="f-from" class="w-full border rounded px-2 py-1.5" value="${esc(f.from)}"></div>
         <div><label class="block text-xs font-bold mb-1">〜 To</label><input type="date" id="f-to" class="w-full border rounded px-2 py-1.5" value="${esc(f.to)}"></div>
         <div><label class="block text-xs font-bold mb-1">ステータス</label>
@@ -532,7 +644,13 @@ Screens.orders = {
             ${ORDER_STATUSES.map(s => `<option ${f.status===s?'selected':''}>${s}</option>`).join('')}
           </select>
         </div>
-        <div class="flex items-end gap-2">
+        <div><label class="block text-xs font-bold mb-1">タグ</label>
+          <select id="f-tag" class="w-full border rounded px-2 py-1.5">
+            <option value="">すべて</option>
+            ${DB.tagsMaster().map(t => `<option ${f.tag===t.name?'selected':''}>${esc(t.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="flex items-end gap-2 col-span-6">
           <button id="btn-filter-clear" class="border px-3 py-1.5 rounded text-xs">クリア</button>
         </div>
       </div>
@@ -543,7 +661,7 @@ Screens.orders = {
         </div>
         <table class="w-full text-sm">
           <thead class="bg-ink-700/5"><tr class="text-left">
-            <th class="px-3 py-2">受注番号</th><th class="px-3 py-2">受付</th><th class="px-3 py-2">顧客</th><th class="px-3 py-2">品目</th><th class="px-3 py-2">納期</th><th class="px-3 py-2 text-right">金額</th><th class="px-3 py-2">状態</th>
+            <th class="px-3 py-2">受注番号</th><th class="px-3 py-2">受付</th><th class="px-3 py-2">顧客</th><th class="px-3 py-2">品目 / タグ</th><th class="px-3 py-2">納期</th><th class="px-3 py-2 text-right">金額</th><th class="px-3 py-2">状態</th>
           </tr></thead>
           <tbody>
             ${filtered.length === 0 ? `<tr><td colspan="7" class="text-center py-10 text-ink-500">該当なし</td></tr>` :
@@ -554,7 +672,7 @@ Screens.orders = {
                   <td class="px-3 py-2 font-mono text-xs">${esc(o.order_number)}</td>
                   <td class="px-3 py-2">${esc(fmt.date(o.received_date))}</td>
                   <td class="px-3 py-2">${esc(fmt.customer(o.customer_id))}</td>
-                  <td class="px-3 py-2 text-xs">${esc(fmt.paper(firstItem?.paper_id))} ${o.items.length > 1 ? `<span class="text-ink-500">他${o.items.length-1}件</span>` : ''}</td>
+                  <td class="px-3 py-2 text-xs">${esc(fmt.paper(firstItem?.paper_id))} ${o.items.length > 1 ? `<span class="text-ink-500">他${o.items.length-1}件</span>` : ''}${o.tags && o.tags.length ? `<div class="mt-1">${fmt.tags(o.tags)}</div>` : ''}</td>
                   <td class="px-3 py-2">${esc(fmt.delivery(o))}</td>
                   <td class="px-3 py-2 text-right font-mono">${fmt.money(o.total_amount)}</td>
                   <td class="px-3 py-2"><span class="st st-${esc(o.status)}">${esc(o.status)}</span></td>
@@ -571,14 +689,16 @@ Screens.orders = {
         status: $('#f-status').value,
         from: $('#f-from').value,
         to: $('#f-to').value,
+        tag: $('#f-tag')?.value || '',
       };
       App.render();
     };
-    ['#f-q','#f-status','#f-from','#f-to'].forEach(sel => {
+    ['#f-q','#f-status','#f-from','#f-to','#f-tag'].forEach(sel => {
       const el = $(sel);
       el && el.addEventListener('input', debounce(apply, 300));
+      el && el.addEventListener('change', apply);
     });
-    $('#btn-filter-clear')?.addEventListener('click', () => { this.filter = { q:'', status:'', from:'', to:'' }; App.render(); });
+    $('#btn-filter-clear')?.addEventListener('click', () => { this.filter = { q:'', status:'', from:'', to:'', tag:'' }; App.render(); });
   },
 };
 
@@ -597,6 +717,11 @@ Screens.order_new = {
       delivery_date_start: '',
       delivery_date_end: '',
       memo: '',
+      data_status: '持込',
+      discount_amount: 0,
+      discount_reason: '',
+      tags: [],
+      attachments: [],
       items: [ this.newItem() ],
     };
   },
@@ -616,6 +741,7 @@ Screens.order_new = {
       numbering_to: null,
       yacho_style: false,
       lamination: false,
+      tax_rate: 10,
       item_notes: '',
     };
   },
@@ -679,14 +805,53 @@ Screens.order_new = {
               </div>
               <div class="col-span-3">
                 <label class="block text-xs font-bold mb-1">納期</label>
-                <div class="flex gap-2 items-center text-sm">
+                <div class="flex gap-2 items-center text-sm flex-wrap">
                   ${DELIVERY_TYPES.map(dt => `
                     <label class="flex items-center gap-1"><input type="radio" name="dtype" value="${dt.value}" ${d.delivery_type===dt.value?'checked':''}>${dt.label}</label>`).join('')}
                   <input type="date" id="f-dstart" class="border rounded px-2 py-1.5 ml-2" value="${d.delivery_date_start||''}">
                   <span id="dend-wrap" style="display:${d.delivery_type==='range'?'inline':'none'}">
                     〜 <input type="date" id="f-dend" class="border rounded px-2 py-1.5" value="${d.delivery_date_end||''}">
                   </span>
+                  ${d.delivery_date_start && d.delivery_type !== 'asap' ? `<span class="text-xs text-ink-500 ml-2">営業日換算: <b>${DB.businessDaysBetween(TODAY, d.delivery_date_start)}日</b></span>` : ''}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 案件属性 -->
+          <div class="bg-white rounded shadow-sm">
+            <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold">案件属性</div>
+            <div class="p-4 grid grid-cols-3 gap-3 text-sm">
+              <div>
+                <label class="block text-xs font-bold mb-1">入稿データ</label>
+                <select id="f-data-status" class="w-full border rounded px-2 py-1.5">
+                  ${DATA_STATUS.map(s => `<option ${d.data_status===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">値引き金額</label>
+                <input type="number" id="f-discount" class="w-full border rounded px-2 py-1.5 text-right font-mono" min="0" step="100" value="${d.discount_amount||0}">
+              </div>
+              <div>
+                <label class="block text-xs font-bold mb-1">値引き理由</label>
+                <input type="text" id="f-discount-reason" class="w-full border rounded px-2 py-1.5" placeholder="お得意様割引 等" value="${esc(d.discount_reason||'')}">
+              </div>
+              <div class="col-span-3">
+                <label class="block text-xs font-bold mb-1">案件タグ</label>
+                <div class="flex flex-wrap gap-1.5">
+                  ${DB.tagsMaster().map(t => `
+                    <label class="cursor-pointer">
+                      <input type="checkbox" class="hidden tag-check" value="${esc(t.name)}" ${d.tags.includes(t.name)?'checked':''}>
+                      <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full border-2" style="border-color:${t.color}; ${d.tags.includes(t.name)?`background:${t.color};color:white;`:`color:${t.color};background:white;`}">${esc(t.name)}</span>
+                    </label>`).join('')}
+                </div>
+              </div>
+              <div class="col-span-3">
+                <label class="block text-xs font-bold mb-1">入稿データ・参考資料の添付</label>
+                <input type="file" id="f-attach" class="w-full border rounded px-2 py-1.5 text-sm" multiple>
+                ${(d.attachments||[]).length ? `<div class="mt-2 flex flex-wrap gap-1 text-xs">
+                  ${d.attachments.map((a, ai) => `<span class="bg-brand/10 text-brand px-2 py-1 rounded flex items-center gap-1">📎 ${esc(a.name)} <button class="text-red-500 font-bold btn-remove-attach" data-idx="${ai}">×</button></span>`).join('')}
+                </div>` : ''}
               </div>
             </div>
           </div>
@@ -715,15 +880,25 @@ Screens.order_new = {
           <div class="bg-white rounded shadow-sm">
             <div class="bg-brand text-white px-4 py-2 rounded-t font-bold">見積サマリー</div>
             <div class="p-4 text-sm space-y-2">
-              ${d.items.map((it, i) => {
-                const { subtotal } = calcItemPrice(it);
-                return `<div class="flex justify-between text-xs"><span>明細 #${i+1}</span><span class="font-mono">${fmt.money(subtotal)}</span></div>`;
-              }).join('')}
-              <hr>
-              <div class="flex justify-between"><span>小計</span><span class="font-mono font-bold">${fmt.money(total)}</span></div>
-              <div class="flex justify-between text-ink-500"><span>消費税（10%）</span><span class="font-mono">${fmt.money(Math.round(total * 0.1))}</span></div>
-              <hr>
-              <div class="flex justify-between text-lg"><span class="font-bold">合計</span><span class="font-black text-brand">${fmt.money(Math.round(total * 1.1))}</span></div>
+              ${(() => {
+                const calc = calcOrder(d.items, d.discount_amount || 0);
+                let html = '';
+                d.items.forEach((it, i) => {
+                  const { subtotal } = calcItemPrice(it);
+                  html += `<div class="flex justify-between text-xs"><span>明細 #${i+1}（${it.tax_rate||10}%）</span><span class="font-mono">${fmt.money(subtotal)}</span></div>`;
+                });
+                html += '<hr>';
+                html += `<div class="flex justify-between"><span>小計</span><span class="font-mono font-bold">${fmt.money(calc.subtotal)}</span></div>`;
+                if (calc.discount > 0) {
+                  html += `<div class="flex justify-between text-red-600"><span>値引き</span><span class="font-mono">-${fmt.money(calc.discount)}</span></div>`;
+                }
+                calc.tax_breakdown.forEach(b => {
+                  html += `<div class="flex justify-between text-ink-500"><span>消費税（${b.rate}%）</span><span class="font-mono">${fmt.money(b.tax)}</span></div>`;
+                });
+                html += '<hr>';
+                html += `<div class="flex justify-between text-lg"><span class="font-bold">合計</span><span class="font-black text-brand">${fmt.money(calc.total)}</span></div>`;
+                return html;
+              })()}
             </div>
           </div>
 
@@ -811,8 +986,12 @@ Screens.order_new = {
             <label class="flex items-center gap-1"><input type="checkbox" class="item-lam" data-idx="${i}" ${it.lamination?'checked':''}> ラミネート</label>
           </div>
         </div>
-        <div class="mt-2">
-          <input class="w-full border rounded px-2 py-1.5 text-sm item-note" data-idx="${i}" placeholder="この明細のメモ（任意）" value="${esc(it.item_notes)}">
+        <div class="mt-2 flex gap-2 items-center">
+          <label class="text-xs font-bold">税率</label>
+          <select class="border rounded px-1 py-0.5 text-xs item-tax" data-idx="${i}">
+            ${TAX_RATES.map(r => `<option value="${r}" ${it.tax_rate===r?'selected':''}>${r}%${r===8?' 軽減':' 標準'}</option>`).join('')}
+          </select>
+          <input class="flex-1 border rounded px-2 py-1.5 text-sm item-note" data-idx="${i}" placeholder="この明細のメモ（任意）" value="${esc(it.item_notes)}">
         </div>
       </div>`;
   },
@@ -842,6 +1021,7 @@ Screens.order_new = {
       $$('.item-num-to').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].numbering_to = e.target.value; }));
       $$('.item-yacho').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].yacho_style = e.target.checked; updateSummary(); }));
       $$('.item-lam').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].lamination = e.target.checked; updateSummary(); }));
+      $$('.item-tax').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].tax_rate = +e.target.value; updateSummary(); }));
       $$('.item-note').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].item_notes = e.target.value; }));
       $$('.btn-remove-item').forEach(el => el.addEventListener('click', (e) => { d.items.splice(+e.target.dataset.idx, 1); rerenderItems(); updateSummary(); }));
       $$('[data-copy-from]').forEach(el => el.addEventListener('click', (e) => {
@@ -878,6 +1058,32 @@ Screens.order_new = {
     $('#f-dstart')?.addEventListener('change', (e) => { d.delivery_date_start = e.target.value; });
     $('#f-dend')?.addEventListener('change', (e) => { d.delivery_date_end = e.target.value; });
     $('#f-memo')?.addEventListener('input', (e) => { d.memo = e.target.value; });
+    $('#f-data-status')?.addEventListener('change', (e) => { d.data_status = e.target.value; });
+    $('#f-discount')?.addEventListener('change', (e) => { d.discount_amount = +e.target.value || 0; updateSummary(); });
+    $('#f-discount-reason')?.addEventListener('input', (e) => { d.discount_reason = e.target.value; });
+    $$('.tag-check').forEach(el => el.addEventListener('change', (e) => {
+      const v = e.target.value;
+      if (e.target.checked) { if (!d.tags.includes(v)) d.tags.push(v); }
+      else { d.tags = d.tags.filter(t => t !== v); }
+      App.render();
+    }));
+    $('#f-attach')?.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      Promise.all(files.map(f => new Promise(res => {
+        const r = new FileReader();
+        r.onload = () => res({ name: f.name, type: f.type, size: f.size, data_url: r.result });
+        r.readAsDataURL(f);
+      }))).then(arr => {
+        d.attachments = (d.attachments || []).concat(arr);
+        toast(`${arr.length}件添付しました`, 'ok');
+        App.render();
+      });
+    });
+    $$('.btn-remove-attach').forEach(el => el.addEventListener('click', (e) => {
+      const idx = +e.target.dataset.idx;
+      d.attachments.splice(idx, 1);
+      App.render();
+    }));
     $('#btn-add-item')?.addEventListener('click', () => { d.items.push(this.newItem()); rerenderItems(); updateSummary(); });
     $('#btn-cancel')?.addEventListener('click', () => { if (confirm('入力内容を破棄しますか？')) { this.draft = null; location.hash = '#orders'; } });
     $('#btn-save')?.addEventListener('click', () => this.save());
@@ -929,13 +1135,12 @@ Screens.order_new = {
     if (!d.customer_id) { toast('顧客を選択してください', 'err'); return; }
     if (d.items.length === 0) { toast('明細を1件以上追加してください', 'err'); return; }
     if (d.delivery_type !== 'asap' && !d.delivery_date_start) { toast('納期日を指定してください', 'err'); return; }
-    // Set computed prices
     const items = d.items.map(it => {
       const c = calcItemPrice(it);
       return { ...it, id: 'it_' + Math.random().toString(36).slice(2, 8), unit_price: c.unit_price, subtotal: c.subtotal };
     });
-    const total = items.reduce((s, it) => s + it.subtotal, 0);
-    const order = DB.createOrder({ ...d, items, total_amount: Math.round(total * 1.1) });
+    const calc = calcOrder(items, d.discount_amount || 0);
+    const order = DB.createOrder({ ...d, items, total_amount: calc.total });
     this.draft = null;
     toast(`受注 ${order.order_number} を起票しました`, 'ok');
     location.hash = `#order/${order.id}`;
@@ -961,6 +1166,7 @@ Screens.order = {
             <span class="st st-${esc(o.status)} text-sm">${esc(o.status)}</span>
           </div>
           <p class="text-sm text-ink-500 mt-1">${esc(fmt.customer(o.customer_id))} / 受付 ${fmt.dateFull(o.received_date)} / 納期 ${fmt.delivery(o)}</p>
+          ${o.tags && o.tags.length ? `<div class="mt-2">${fmt.tags(o.tags)}</div>` : ''}
         </div>
         <div class="flex gap-2">
           <a href="#print/${o.id}" class="border px-3 py-2 rounded text-sm">📄 印刷ビュー</a>
@@ -980,8 +1186,11 @@ Screens.order = {
               <div><div class="text-xs text-ink-500 font-bold">受付日</div><div>${fmt.dateFull(o.received_date)}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">納期</div><div class="${o.delivery_date_start === TODAY ? 'text-red-600 font-bold' : ''}">${esc(fmt.delivery(o))}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">受付方法</div><div>${esc(o.reception_method)}</div></div>
+              <div><div class="text-xs text-ink-500 font-bold">入稿データ</div><div class="font-bold ${o.data_status === '未受領' ? 'text-red-600' : ''}">${esc(o.data_status || '—')}</div></div>
+              ${o.discount_amount > 0 ? `<div><div class="text-xs text-ink-500 font-bold">値引き</div><div class="font-bold text-red-600">-${fmt.money(o.discount_amount)}${o.discount_reason ? `<span class="text-xs text-ink-500 ml-1">(${esc(o.discount_reason)})</span>` : ''}</div></div>` : ''}
             </div>
             ${o.memo ? `<div class="mt-3 text-xs text-ink-500 font-bold">メモ</div><div class="bg-ink-700/5 p-2 rounded text-sm">${esc(o.memo)}</div>` : ''}
+            ${o.attachments && o.attachments.length ? `<div class="mt-3"><div class="text-xs text-ink-500 font-bold mb-1">添付ファイル（${o.attachments.length}件）</div><div class="flex flex-wrap gap-1">${o.attachments.map(a => `<a href="${a.data_url}" download="${esc(a.name)}" class="bg-brand/10 text-brand text-xs px-2 py-1 rounded font-bold hover:bg-brand/20">📎 ${esc(a.name)}</a>`).join('')}</div></div>` : ''}
           </div>
 
           <div class="bg-white rounded shadow-sm">
@@ -1180,15 +1389,16 @@ Screens.quote = {
                 <div class="text-2xl font-black text-brand border-b-2 border-brand inline-block">${fmt.money(q.total_amount)}<span class="text-xs">（税込）</span></div>
               </div>
               <div class="text-xs border p-2">
-                <div class="font-bold">株式会社 渡辺謄写堂</div>
-                <div>〒964-0000 福島県二本松市XXX</div>
-                <div>TEL: 0243-XX-XXXX</div>
+                <div class="font-bold">${esc(DB.settings().company_name || '株式会社 渡辺謄写堂')}</div>
+                <div>${esc(DB.settings().company_address || '')}</div>
+                <div>TEL: ${esc(DB.settings().company_phone || '')}</div>
+                <div class="mt-1 text-ink-700">登録番号: <b>${esc(DB.settings().invoice_number || '')}</b></div>
                 <div class="mt-1 text-lg text-right">印</div>
               </div>
             </div>
             <table class="w-full border-collapse text-xs">
               <thead class="bg-ink-900 text-white"><tr>
-                <th class="p-1 text-left">品名・仕様</th><th class="p-1 text-right">数量</th><th class="p-1 text-right">単価</th><th class="p-1 text-right">金額</th>
+                <th class="p-1 text-left">品名・仕様</th><th class="p-1 text-right">数量</th><th class="p-1 text-right">単価</th><th class="p-1 text-right">税率</th><th class="p-1 text-right">金額</th>
               </tr></thead>
               <tbody>
                 ${o.items.map(it => `
@@ -1196,11 +1406,21 @@ Screens.quote = {
                   <td class="p-1">${esc(fmt.paper(it.paper_id))}（${esc(fmt.ink(it.ink_pattern))}）</td>
                   <td class="p-1 text-right">${it.quantity}</td>
                   <td class="p-1 text-right">${fmt.money(it.unit_price)}</td>
+                  <td class="p-1 text-right">${it.tax_rate||10}%</td>
                   <td class="p-1 text-right">${fmt.money(it.subtotal)}</td>
                 </tr>`).join('')}
-                <tr class="border-b"><td class="p-1 text-ink-500" colspan="3">小計</td><td class="p-1 text-right">${fmt.money(Math.round(q.total_amount / 1.1))}</td></tr>
-                <tr class="border-b"><td class="p-1 text-ink-500" colspan="3">消費税（10%）</td><td class="p-1 text-right">${fmt.money(q.total_amount - Math.round(q.total_amount / 1.1))}</td></tr>
-                <tr class="font-bold bg-ink-700/5"><td class="p-1" colspan="3">合計</td><td class="p-1 text-right">${fmt.money(q.total_amount)}</td></tr>
+                ${(() => {
+                  const calc = calcOrder(o.items, o.discount_amount || 0);
+                  let html = `<tr class="border-b"><td class="p-1 text-ink-500" colspan="4">小計</td><td class="p-1 text-right">${fmt.money(calc.subtotal)}</td></tr>`;
+                  if (calc.discount > 0) {
+                    html += `<tr class="border-b text-red-600"><td class="p-1" colspan="4">値引き${o.discount_reason ? `（${esc(o.discount_reason)}）` : ''}</td><td class="p-1 text-right">-${fmt.money(calc.discount)}</td></tr>`;
+                  }
+                  calc.tax_breakdown.forEach(b => {
+                    html += `<tr class="border-b"><td class="p-1 text-ink-500" colspan="4">消費税（${b.rate}%対象 ${fmt.money(b.subtotal)}）</td><td class="p-1 text-right">${fmt.money(b.tax)}</td></tr>`;
+                  });
+                  html += `<tr class="font-bold bg-ink-700/5"><td class="p-1" colspan="4">合計（税込）</td><td class="p-1 text-right">${fmt.money(calc.total)}</td></tr>`;
+                  return html;
+                })()}
               </tbody>
             </table>
             <div class="mt-4 text-xs">
@@ -1265,7 +1485,8 @@ Screens.factory = {
                 </div>
                 <div class="font-bold mt-1 truncate">${esc(fmt.customer(o.customer_id))}</div>
                 <div class="text-xs text-ink-500 truncate">${esc(fmt.paper(o.items[0]?.paper_id))} ${o.items[0]?.quantity}枚</div>
-                <div class="text-xs text-ink-500 mt-1">状態: <span class="st st-${esc(o.status)}">${esc(o.status)}</span></div>
+                ${o.tags && o.tags.length ? `<div class="mt-1">${fmt.tags(o.tags)}</div>` : ''}
+                <div class="text-xs text-ink-500 mt-1">状態: <span class="st st-${esc(o.status)}">${esc(o.status)}</span>${o.data_status === '未受領' ? `<span class="ml-2 text-red-600 font-bold">⚠ データ未受領</span>` : ''}</div>
               </div>`;
             }).join('') || `<div class="text-center text-ink-500 text-xs py-8">（空）</div>`}
           </div>
@@ -1359,6 +1580,7 @@ Screens.customer = {
     if (!c) return `<div class="text-center py-16 text-ink-500">顧客が見つかりません</div>`;
     const own = DB.all('orders').filter(o => o.customer_id === id).sort((a,b) => (b.received_date||'').localeCompare(a.received_date||''));
     const total = own.reduce((s,o) => s + (o.total_amount || 0), 0);
+    const contacts = DB.contactLogsFor(id);
     return `
       <a href="#customers" class="text-ink-500 text-sm">← 一覧</a>
       <div class="bg-white rounded shadow-sm mb-4 mt-2">
@@ -1379,6 +1601,24 @@ Screens.customer = {
           <div class="p-3"><div class="text-xs font-bold text-ink-500">最終受注</div><div class="text-xl font-black">${own[0] ? fmt.dateFull(own[0].received_date) : '—'}</div></div>
         </div>
       </div>
+      <div class="bg-white rounded shadow-sm mb-4">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-bold">📞 連絡履歴 (${contacts.length}件)</h3>
+          <button id="btn-add-contact" class="bg-brand text-white px-3 py-1 rounded text-xs font-bold">+ 追加</button>
+        </div>
+        <ul class="text-sm divide-y max-h-60 overflow-auto">
+          ${contacts.length === 0 ? `<li class="px-4 py-4 text-ink-500 text-center text-xs">連絡履歴なし</li>` :
+            contacts.map(l => `
+            <li class="px-4 py-2">
+              <div class="flex justify-between text-xs text-ink-500">
+                <span><b>${esc(l.contact_type)}</b> · ${esc(fmt.user(l.user_id))}</span>
+                <span>${fmt.dateTime(l.logged_at)}</span>
+              </div>
+              <div>${esc(l.summary)}</div>
+            </li>`).join('')}
+        </ul>
+      </div>
+
       <div class="bg-white rounded shadow-sm">
         <div class="p-4 border-b"><h3 class="font-bold">過去発注履歴</h3></div>
         <table class="w-full text-sm">
@@ -1417,6 +1657,40 @@ Screens.customer = {
       location.hash = '#order/new';
       toast('仕様をコピーしました', 'ok');
     }));
+    $('#btn-add-contact')?.addEventListener('click', () => {
+      openModal(`
+        <div class="p-6">
+          <h2 class="text-xl font-black mb-4">📞 連絡履歴を追加</h2>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="block text-xs font-bold mb-1">連絡種別</label>
+              <select id="ct-type" class="w-full border rounded px-2 py-1.5">
+                ${CONTACT_TYPES.map(t => `<option>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">内容・要約</label>
+              <textarea id="ct-summary" class="w-full border rounded px-2 py-1.5" rows="4" placeholder="例: 名刺の追加発注について。次回4月末に500枚予定とのこと"></textarea>
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-4">
+            <button id="ct-cancel" class="border px-4 py-2 rounded">キャンセル</button>
+            <button id="ct-save" class="bg-brand text-white px-4 py-2 rounded font-bold">保存</button>
+          </div>
+        </div>
+      `, () => {
+        $('#ct-cancel').addEventListener('click', closeModal);
+        $('#ct-save').addEventListener('click', () => {
+          const type = $('#ct-type').value;
+          const summary = $('#ct-summary').value.trim();
+          if (!summary) { toast('内容を入力してください', 'err'); return; }
+          DB.addContactLog(id, type, summary);
+          closeModal();
+          App.render();
+          toast('連絡履歴を追加しました', 'ok');
+        });
+      });
+    });
   },
 };
 
