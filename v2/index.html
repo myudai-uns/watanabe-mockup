@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 業務管理システム v2.0 (Functional Mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { 'sans': ['Noto Sans JP', 'sans-serif'] },
+      colors: {
+        brand: { DEFAULT: '#E87825', dark: '#B85D16', light: '#FFF4EC' },
+        ok: { DEFAULT: '#3F9D5E', dark: '#2A7A44', light: '#E8F5EE' },
+        ink: { 900: '#1A1A1A', 700: '#3A3A3A', 500: '#707070', 300: '#B5B5B5' },
+      },
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Noto Sans JP', sans-serif; background: #F3F4F6; }
+  .nav-btn.active { background: #E87825; color: white; font-weight: 700; }
+  .scroll-pad { padding-bottom: 80px; }
+  [draggable=true] { cursor: grab; }
+  [draggable=true]:active { cursor: grabbing; }
+  .drag-over { background: rgba(232,120,37,0.2) !important; outline: 2px dashed #E87825; }
+  .drag-ghost { opacity: 0.4; }
+  /* Status badges */
+  .st { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .st-見積もり段階 { background: #C7D2FE; color: #1E3A8A; }
+  .st-受注 { background: #E5E7EB; color: #1A1A1A; }
+  .st-製版中 { background: #60A5FA; color: white; }
+  .st-校正中 { background: #A78BFA; color: white; }
+  .st-印刷中 { background: #FBBF24; color: #1A1A1A; }
+  .st-完成 { background: #3F9D5E; color: white; }
+  .st-納品済 { background: #1A1A1A; color: white; }
+  .st-キャンセル { background: #EF4444; color: white; }
+  .st-待機 { background: #9CA3AF; color: white; }
+  .st-作業中 { background: #FBBF24; color: #1A1A1A; }
+  .st-出荷待ち { background: #3B82F6; color: white; }
+  .st-納品済み { background: #1A1A1A; color: white; }
+  .st-経過 { background: #EF4444; color: white; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 60px; right: 20px; z-index: 100; }
+  .toast-item { background: #1A1A1A; color: white; padding: 10px 16px; border-radius: 6px; margin-top: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.2s; }
+  .toast-item.show { opacity: 1; transform: translateY(0); }
+  .toast-item.ok { background: #3F9D5E; }
+  .toast-item.err { background: #EF4444; }
+
+  /* Print */
+  @media print {
+    body { background: white; }
+    .no-print, header, aside, footer { display: none !important; }
+    main { padding: 0 !important; }
+    .print-page { page-break-after: always; }
+  }
+</style>
+</head>
+<body class="text-ink-900">
+
+<!-- HEADER -->
+<header class="bg-ink-900 text-white sticky top-0 z-50 no-print">
+  <div class="flex items-center justify-between px-6 py-3">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 bg-brand rounded flex items-center justify-center font-black text-lg">謄</div>
+        <div>
+          <div class="font-bold text-sm leading-tight">渡辺謄写堂</div>
+          <div class="text-xs text-ink-300 leading-tight">業務管理システム</div>
+        </div>
+      </div>
+      <span class="ml-4 px-2 py-0.5 bg-brand/20 text-brand text-xs rounded font-bold">v2.0 Functional Mockup</span>
+    </div>
+    <div class="flex items-center gap-3 text-sm">
+      <span class="text-ink-300">ログイン中:</span>
+      <select id="current-user" class="bg-ink-700 text-white px-2 py-1 rounded text-xs font-bold"></select>
+      <button id="btn-export" class="px-3 py-1 border border-white/30 rounded hover:bg-white/10 text-xs">データ書出</button>
+      <button id="btn-reset" class="px-3 py-1 border border-red-400/50 text-red-300 rounded hover:bg-red-500/20 text-xs">リセット</button>
+    </div>
+  </div>
+  <div class="bg-ink-700 px-6 py-2 flex flex-wrap gap-1 text-sm overflow-x-auto">
+    <a href="#dashboard" class="nav-btn px-3 py-1.5 rounded text-white hover:bg-ink-500" data-screen="dashboard">① ダッシュボード</a>
+    <a href="#orders" class="nav-btn px-3 py-1.5 rounded text-white hover:bg-ink-500" data-screen="orders">② 受注一覧</a>
+    <a href="#order/new" class="nav-btn px-3 py-1.5 rounded text-white hover:bg-ink-500" data-screen="order_new">③ 受注新規起票 ★</a>
+    <a href="#factory" class="nav-btn px-3 py-1.5 rounded text-white hover:bg-ink-500" data-screen="factory">⑥ 工場カンバン</a>
+    <a href="#customers" class="nav-btn px-3 py-1.5 rounded text-white hover:bg-ink-500" data-screen="customers">⑦ 顧客一覧</a>
+    <a href="#papers" class="nav-btn px-3 py-1.5 rounded text-white hover:bg-ink-500" data-screen="papers">用紙マスタ</a>
+  </div>
+</header>
+
+<div class="flex">
+  <aside class="w-52 bg-white border-r border-ink-300/30 min-h-[calc(100vh-96px)] py-4 no-print">
+    <nav class="flex flex-col gap-1 px-3 text-sm">
+      <a href="#dashboard" data-screen="dashboard" class="side-link px-3 py-2 rounded">ダッシュボード</a>
+      <a href="#orders" data-screen="orders" class="side-link px-3 py-2 rounded">受注管理</a>
+      <a href="#order/new" data-screen="order_new" class="side-link px-3 py-2 rounded font-bold">+ 新規受注</a>
+      <a href="#customers" data-screen="customers" class="side-link px-3 py-2 rounded">顧客管理</a>
+      <a href="#factory" data-screen="factory" class="side-link px-3 py-2 rounded">工場カンバン</a>
+      <div class="border-t my-2"></div>
+      <a href="#papers" data-screen="papers" class="side-link px-3 py-2 rounded text-ink-500">用紙マスタ</a>
+      <a href="#settings" data-screen="settings" class="side-link px-3 py-2 rounded text-ink-500">設定</a>
+    </nav>
+    <div class="mt-6 mx-3 p-3 bg-brand-light rounded text-xs">
+      <div class="font-bold mb-1">💡 使い方</div>
+      <p>データはブラウザに保存されます。ナビから画面遷移、受注起票や編集、カンバンでドラッグ操作ができます。</p>
+    </div>
+  </aside>
+
+  <main id="main" class="flex-1 scroll-pad p-6">
+    <!-- 動的に描画 -->
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer class="fixed bottom-0 left-0 right-0 bg-ink-900 text-white text-xs py-2 px-6 flex justify-between no-print z-40">
+  <span>渡辺謄写堂 業務管理システム / Functional Mockup v2.0 / 2026-05-15 Unsee</span>
+  <span id="stat-info">—</span>
+</footer>
+
+<!-- Toast container -->
+<div id="toast"></div>
+
+<!-- Modal container -->
+<div id="modal-root"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
