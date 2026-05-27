@@ -14,22 +14,26 @@
 
 // ========= Constants =========
 const INK_PATTERNS = [
-  { value: '4Cx4C',      label: 'カラー両面（4C×4C）',     mult: 1.00 },
-  { value: '4Cx0',       label: 'カラー片面（4C×0）',      mult: 0.65 },
-  { value: '1Cx1C',      label: 'モノクロ両面（1C×1C）',   mult: 0.45 },
-  { value: '1Cx0',       label: 'モノクロ片面（1C×0）',    mult: 0.30 },
-  { value: 'tokushoku_2m', label: '特色1色両面',            mult: 0.55 },
-  { value: 'tokushoku_1m', label: '特色1色片面',            mult: 0.38 },
+  { value: '4Cx4C',      label: 'カラー両面（4C×4C）',                 mult: 1.00 },
+  { value: '4Cx0',       label: 'カラー片面（4C×0）',                  mult: 0.65 },
+  { value: '1Cx1C',      label: 'モノクロ両面（1C×1C）',               mult: 0.45 },
+  { value: '1Cx0',       label: 'モノクロ片面（1C×0）',                mult: 0.30 },
+  { value: 'tokushoku_2m', label: '特色1色両面',                       mult: 0.55 },
+  { value: 'tokushoku_1m', label: '特色1色片面',                       mult: 0.38 },
+  // v2.15: 表裏異種インク
+  { value: '4Cx1C',      label: '片面カラー / 片面モノクロ（4C×1C）',   mult: 0.75 },
+  { value: '4Cx_toku',   label: '片面カラー / 片面特色1色（4C×特1C）',  mult: 0.80 },
+  { value: '1Cx_toku',   label: '片面モノクロ / 片面特色1色（1C×特1C）', mult: 0.50 },
 ];
 const ORDER_STATUSES    = ['見積もり段階','受注','製版中','校正中','印刷中','完成','納品済','キャンセル'];
 const FACTORY_STATUSES  = ['待機','作業中','完成','納品済み'];  // 「出荷待ち」→「納品済み」
 const AREAS             = ['亀谷','元町','東和','岩代','市街','その他'];
 const RECEPTION_METHODS = ['電話','来客','FAX','メール','LINE','その他'];
-// v2.2: ラベル変更（予定/必ず/範囲指定/仮）。値はそのまま維持
+// v2.13: ラベルを「予定/必ず/範囲指定/仮」に
 const DELIVERY_TYPES    = [
-  { value: 'single',    label: '予定' },        // 旧: 指定日
-  { value: 'asap',      label: '必ず' },        // 旧: 出来次第（必着の意）
-  { value: 'range',     label: '範囲指定' },    // 旧: 期間
+  { value: 'single',    label: '予定' },
+  { value: 'asap',      label: '必ず' },
+  { value: 'range',     label: '範囲指定' },
   { value: 'tentative', label: '仮' },
 ];
 const FOLDING_TYPES    = ['なし','2つ折','3つ折'];
@@ -39,7 +43,8 @@ const LAMINATION_OPTIONS = ['なし','PP貼り 艶あり','PP貼り 艶なし','
 const SEND_METHODS     = ['郵送','メール','LINE','直接手渡し'];
 const PROCESSING_PRICE = { mishin: 500, folding: 800, hole: 300, numbering: 1500, yacho: 1200, lamination: 2000 };
 const DATA_STATUS      = ['持込', 'ゼロから作成', '未受領'];
-const TAX_RATES        = [10, 8];
+// v2.5: 税率は一律10%（旧 TAX_RATES = [10, 8] は廃止）
+const TAX_RATE_FIXED   = 10;
 // 顧客分類: 種別（単一選択） v2.1
 const CUSTOMER_KINDS = ['地域・団体', '企業・個人'];
 // 値引き名目 (v2.2: 「広告料」を正式名称に置換)
@@ -67,14 +72,14 @@ const SEED_DATA = {
   customers: [
     { id: 'c1',  company_name: '株式会社 高拡散',       kind: '企業・個人', area: '亀谷', phone: '0243-55-0001', fax: '0243-55-0091', address: '二本松市亀谷1-2-3',    notes: '月次発注あり。前回と同仕様リピート多し' },
     { id: 'c2',  company_name: '昭和タクシー株式会社', kind: '企業・個人', area: '市街', phone: '0243-55-0002', fax: '0243-55-0092', address: '二本松市本町5-1',      notes: '' },
-    { id: 'c3',  company_name: '佐々木畳店',            kind: '企業・個人', area: '亀谷', phone: '0243-55-0003', fax: '',             address: '二本松市亀谷3-4-5',    notes: '' },
+    { id: 'c3',  company_name: '佐々木畳店',            kind: '企業・個人', area: '亀谷', phone: '0243-55-0003', fax: '0243-55-0093', address: '二本松市亀谷3-4-5',    notes: '' },
     { id: 'c4',  company_name: '福島県立 足立高等学校', kind: '地域・団体', area: '東和', phone: '0243-55-0004', fax: '0243-55-0094', address: '二本松市東和町8',      notes: '年度末の手引き大量発注あり' },
-    { id: 'c5',  company_name: 'ワンワールド株式会社', kind: '企業・個人', area: '市街', phone: '0243-55-0005', fax: '',             address: '二本松市本町2-1',      notes: '' },
+    { id: 'c5',  company_name: 'ワンワールド株式会社', kind: '企業・個人', area: '市街', phone: '0243-55-0005', fax: '0243-55-0095', address: '二本松市本町2-1',      notes: '' },
     { id: 'c6',  company_name: '郡山建設',              kind: '企業・個人', area: '市街', phone: '024-55-0006',  fax: '024-55-0096',  address: '郡山市駅前1-1',        notes: '' },
     { id: 'c7',  company_name: '福島中央病院',          kind: '地域・団体', area: '岩代', phone: '0243-55-0007', fax: '0243-55-0097', address: '二本松市岩代町10',     notes: '医療用フォーマット' },
     { id: 'c8',  company_name: '二本松市役所 元町支所', kind: '地域・団体', area: '元町', phone: '0243-55-0008', fax: '0243-55-0098', address: '二本松市元町15',       notes: '' },
     { id: 'c9',  individual_name: '山田 太郎',          kind: '企業・個人', area: '東和', phone: '090-1234-5678',fax: '',             address: '',                     notes: '個人名刺リピーター' },
-    { id: 'c10', company_name: 'みやざき食堂',          kind: '企業・個人', area: '東和', phone: '0243-55-0010', fax: '',             address: '',                     notes: 'メニュー表も依頼あり' },
+    { id: 'c10', company_name: 'みやざき食堂',          kind: '企業・個人', area: '東和', phone: '0243-55-0010', fax: '0243-55-0100', address: '',                     notes: 'メニュー表も依頼あり' },
   ],
   papers: [
     { id: 'p1',  paper_name: 'コート135kg 白 A4',         quality: 'コート',   color: '白',     thickness_kg: 135, paper_size: 'A4',   unit_price: 30, is_major: true },
@@ -199,6 +204,91 @@ function buildSeedOrders() {
 }
 SEED_DATA.orders = buildSeedOrders();
 
+// v2.11: ページネーション動作確認用ダミーデータ
+(function pushDummyData() {
+  // 顧客を 50件追加 (c11〜c60)
+  const kinds = ['地域・団体','企業・個人'];
+  const areas = ['亀谷','元町','東和','岩代','市街','その他'];
+  const surnames = ['田中','鈴木','佐藤','高橋','伊藤','渡辺','山本','中村','小林','加藤','吉田','山田','森','池田','橋本','石川','後藤','岡田','長谷川','村上'];
+  const bizSuffix = ['印刷所','商店','工房','製作所','スタジオ','事務所','整骨院','カフェ','美容室','クリニック','建設','設計','物産','商会','工業','サービス','保険','運送','酒店','薬局'];
+  for (let i = 11; i <= 60; i++) {
+    const isIndiv = i % 7 === 0;
+    const phone = `0243-55-${String(1000 + i).slice(1)}`;
+    const fax = i % 3 === 0 ? `0243-55-${String(1100 + i).slice(1)}` : '';
+    SEED_DATA.customers.push(
+      isIndiv ? {
+        id: 'c' + i,
+        individual_name: `${surnames[i % surnames.length]} ${['太郎','花子','次郎','美咲','健','由美','大輔','幸子'][i%8]}`,
+        kind: kinds[i % 2],
+        area: areas[i % areas.length],
+        phone, fax, address: '', notes: 'ダミー顧客',
+      } : {
+        id: 'c' + i,
+        company_name: `株式会社 ${surnames[i % surnames.length]}${bizSuffix[i % bizSuffix.length]}`,
+        kind: kinds[i % 2],
+        area: areas[i % areas.length],
+        phone, fax, address: `二本松市${areas[i % areas.length]}${i}-${i*2}`, notes: 'ダミー顧客',
+      }
+    );
+  }
+  // 受注を 45件追加 (合計63件)
+  const statuses = ['見積もり段階','受注','製版中','校正中','印刷中','完成','納品済'];
+  const inks = ['4Cx4C','4Cx0','1Cx1C','1Cx0'];
+  const titles = ['名刺リピート','チラシ','パンフレット','ポスター','封筒','請求書','カタログ','ラベル','メニュー表','年賀状','挨拶状','配布物','広報誌'];
+  for (let i = 1; i <= 45; i++) {
+    const dd = String(((i * 7) % 28) + 1).padStart(2, '0');
+    const mm = String(((i - 1) % 5) + 1).padStart(2, '0');
+    const qty = (i % 10 + 1) * 100;
+    const ext = qty * 10;
+    SEED_DATA.orders.push({
+      id: 'o_dummy' + i,
+      order_number: `26${mm}${dd}-${String(500 + i).slice(1)}`,
+      title: `${titles[i % titles.length]} ${qty}枚`,
+      customer_id: 'c' + (((i - 1) % 60) + 1),
+      received_date: `2026-${mm}-${dd}`,
+      received_by_id: 'u1',
+      reception_method: '電話',
+      delivery_type: 'single',
+      delivery_date_start: `2026-${mm}-${String(((i * 7) % 28) + 5 > 28 ? 28 : ((i * 7) % 28) + 5).padStart(2, '0')}`,
+      delivery_date_end: null,
+      status: statuses[i % statuses.length],
+      memo: '',
+      total_amount: Math.round(ext * 1.1),
+      data_status: '持込',
+      discount_amount: 0,
+      discount_reason: '',
+      discount_label_type: '値引き',
+      show_discount: false,
+      tags: [],
+      attachments: [],
+      created_by_id: 'u1',
+      created_at: `2026-${mm}-${dd}T09:00:00`,
+      updated_at: `2026-${mm}-${dd}T09:00:00`,
+      items: [{
+        id: 'it_dummy' + i,
+        type: 'normal',
+        title: `${titles[i % titles.length]} ${qty}枚`,
+        paper_id: SEED_DATA.papers[i % SEED_DATA.papers.length].id,
+        paper_other_memo: '',
+        quantity: qty,
+        ink_pattern: inks[i % inks.length],
+        folding: 'なし',
+        mishin_count: 0,
+        hole_position: 'なし',
+        nori_position: 'なし',
+        numbering_enabled: false,
+        numbering_from: null, numbering_to: null,
+        yacho_style: false,
+        lamination: 'なし',
+        tax_rate: 10,
+        subtotal: ext,
+        unit_price: Math.round(ext / qty),
+        item_notes: '',
+      }],
+    });
+  }
+})();
+
 // factory_records for orders (v2: 納品済も含める)
 SEED_DATA.factory_records = SEED_DATA.orders
   .filter(o => ['受注','製版中','校正中','印刷中','完成','納品済'].includes(o.status))
@@ -235,7 +325,7 @@ SEED_DATA.quotes = [
 
 // ========= DB Layer =========
 const DB = {
-  KEY: 'watanabe_db_v1',
+  KEY: 'watanabe_db_v2_11',  // v2.11: 仕様変更+ダミーデータ追加により旧データを無効化
   data: null,
   load() {
     const raw = localStorage.getItem(this.KEY);
@@ -360,12 +450,79 @@ const DB = {
     this.save();
     return c;
   },
-  // Quote (v2: 複数パターン対応)
+  // Quote (v2: 複数パターン対応 / v2.5: 明細ごと作成)
+  createQuoteForItem(order_id, item_id) {
+    const order = this.find('orders', order_id);
+    if (!order) return null;
+    const item = order.items.find(it => it.id === item_id);
+    if (!item) return null;
+    const existing = this.data.quotes.find(q => q.order_id === order_id && q.item_id === item_id);
+    if (existing) return existing;
+    const initialAmount = +item.subtotal || 0;
+    const q = {
+      id: this.nextId('q'),
+      quote_number: this.nextQuoteNumber(),
+      order_id, item_id,
+      issued_date: TODAY,
+      valid_until: addMonths(TODAY, 1),
+      total_amount: Math.round(initialAmount * 1.1),
+      send_method: 'メール',
+      status: '作成中',
+      memo: '',
+      patterns: [
+        { id: this.nextId('qp'), label: '基本案', amount: initialAmount, accepted: true,
+          show_discount: false, discount_amount: 0,
+          discount_label_type: '値引き', discount_label_text: '' },
+      ],
+    };
+    this.data.quotes.push(q);
+    this.log('Quote', q.id, `見積書作成 (${q.quote_number} / 明細#${order.items.findIndex(it=>it.id===item_id)+1})`);
+    this.save();
+    return q;
+  },
+  // v2.8: 1受注=1見積書、明細1件=パターン1件で自動同期
+  syncQuotePatterns(quote_id) {
+    const q = this.find('quotes', quote_id);
+    if (!q) return;
+    const order = this.find('orders', q.order_id);
+    if (!order) return;
+    if (!q.patterns) q.patterns = [];
+    const itemIds = new Set(order.items.map(it => it.id));
+    q.patterns = q.patterns.filter(p => itemIds.has(p.item_id));
+    const newPatterns = [];
+    order.items.forEach(it => {
+      const found = q.patterns.find(p => p.item_id === it.id);
+      if (found) {
+        newPatterns.push(found);
+      } else {
+        newPatterns.push({
+          id: this.nextId('qp'),
+          item_id: it.id,
+          label: it.title || '',
+          amount: +it.subtotal || 0,
+          accepted: false,
+          show_discount: false,
+          discount_amount: 0,
+          discount_label_type: '値引き',
+          discount_label_text: '',
+        });
+      }
+    });
+    // v2.9: いずれかが accepted=true でなければ先頭を採用
+    if (newPatterns.length > 0 && !newPatterns.some(p => p.accepted)) {
+      newPatterns[0].accepted = true;
+    }
+    q.patterns = newPatterns;
+    this.save();
+  },
   createQuote(order_id) {
     const order = this.find('orders', order_id);
     if (!order) return null;
-    const existing = this.data.quotes.find(q => q.order_id === order_id);
-    if (existing) return existing;
+    const existing = this.data.quotes.find(q => q.order_id === order_id && !q.item_id);
+    if (existing) {
+      this.syncQuotePatterns(existing.id);
+      return existing;
+    }
     const q = {
       id: this.nextId('q'),
       quote_number: this.nextQuoteNumber(),
@@ -376,18 +533,17 @@ const DB = {
       send_method: 'メール',
       status: '作成中',
       memo: '',
-      patterns: [
-        {
-          id: this.nextId('qp'),
-          label: '基本案',
-          amount: order.total_amount || 0,
-          accepted: true,
-          show_discount: (order.discount_amount || 0) > 0,
-          discount_amount: order.discount_amount || 0,
-          discount_label_type: order.discount_label_type || '値引き',
-          discount_label_text: order.discount_reason || '',
-        },
-      ],
+      patterns: order.items.map((it, i) => ({
+        id: this.nextId('qp'),
+        item_id: it.id,
+        label: it.title || '',
+        amount: +it.subtotal || 0,
+        accepted: i === 0,    // v2.9: 先頭を初期採用
+        show_discount: false,
+        discount_amount: 0,
+        discount_label_type: '値引き',
+        discount_label_text: '',
+      })),
     };
     this.data.quotes.push(q);
     this.log('Quote', q.id, `見積書作成 (${q.quote_number})`);
@@ -416,12 +572,21 @@ const DB = {
     const p = q.patterns.find(x => x.id === pattern_id);
     if (!p) return null;
     Object.assign(p, patch);
-    // 採用パターンの金額を quote.total_amount に同期 + Order.total_amount にも反映
+    // v2.7: 採用パターンの金額(外税)を quote.total_amount / 対象明細 subtotal / order.total_amount に同期
     const accepted = q.patterns.find(x => x.accepted);
     if (accepted) {
-      q.total_amount = accepted.amount;
+      const ext = (+accepted.amount) - (accepted.show_discount ? (+accepted.discount_amount||0) : 0);
+      const taxIncluded = Math.round(Math.max(0, ext) * (100 + TAX_RATE_FIXED) / 100);
+      q.total_amount = taxIncluded;
       const order = this.find('orders', q.order_id);
-      if (order) order.total_amount = accepted.amount;
+      if (order) {
+        const targetItemId = accepted.item_id;
+        if (targetItemId) {
+          const it = order.items.find(it => it.id === targetItemId);
+          if (it) it.subtotal = +accepted.amount || 0;
+        }
+        order.total_amount = order.items.reduce((s,it)=> s + Math.round(((+it.subtotal||0) * (100+TAX_RATE_FIXED)/100)), 0);
+      }
     }
     this.save();
     return p;
@@ -558,12 +723,18 @@ const fmt = {
     const w = ['日','月','火','水','木','金','土'][d.getDay()];
     return `${d.getMonth()+1}/${d.getDate()}（${w}）`;
   },
+  // v2.16: 年月日+曜日
+  dateWY(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const w = ['日','月','火','水','木','金','土'][d.getDay()];
+    return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}（${w}）`;
+  },
   delivery(o) {
-    // v2.2: 予定/必ず/範囲指定/仮
+    // v2.13: 予定/必ず/範囲指定/仮
     if (o.delivery_type === 'asap')      return o.delivery_date_start ? `必ず ${fmt.dateW(o.delivery_date_start)}` : '必ず（未指定）';
     if (o.delivery_type === 'tentative') return o.delivery_date_start ? `仮 ${fmt.dateW(o.delivery_date_start)}` : '仮（未定）';
     if (o.delivery_type === 'range')     return `${fmt.dateW(o.delivery_date_start)}〜${fmt.dateW(o.delivery_date_end)}`;
-    // single = 予定
     return o.delivery_date_start ? `予定 ${fmt.dateW(o.delivery_date_start)}` : '予定（未指定）';
   },
   // v2: 納期超過なら "N日経過" を返す。未到来は null
@@ -577,33 +748,16 @@ const fmt = {
   // v2: ラミネートのバッジ文言（なし以外）
   laminationLabel(v) { return (!v || v === 'なし') ? '' : v; },
   tagBadge(name) {
-    const t = DB.tagsMaster().find(x => x.name === name) || { color: '#707070' };
-    return `<span style="display:inline-block;background:${t.color};color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:3px;white-space:nowrap;">${esc(name)}</span>`;
+    // v2.9: 色分け廃止、統一色
+    return `<span style="display:inline-block;background:#707070;color:white;font-size: inherit;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:3px;white-space:nowrap;">${esc(name)}</span>`;
   },
   tags(arr) { return (arr || []).map(t => fmt.tagBadge(t)).join(''); },
 };
 
 function calcItemPrice(item) {
-  // v2.2: ページ物は subtotal を直接利用（自由入力）
-  if (item.type === 'page') {
-    const subtotal = +item.subtotal || 0;
-    const unit_price = item.quantity > 0 ? Math.round(subtotal / item.quantity) : 0;
-    return { unit_price, subtotal };
-  }
-  const paper = DB.find('papers', item.paper_id);
-  if (!paper) return { unit_price: 0, subtotal: 0 };
-  const ink = INK_PATTERNS.find(p => p.value === item.ink_pattern) || INK_PATTERNS[0];
-  const base = paper.unit_price * ink.mult;
-  let extra = 0;
-  if (item.mishin_count > 0) extra += PROCESSING_PRICE.mishin * item.mishin_count;
-  if (item.folding && item.folding !== 'なし') extra += PROCESSING_PRICE.folding;
-  if (item.hole_position && item.hole_position !== 'なし') extra += PROCESSING_PRICE.hole;
-  if (item.numbering_enabled) extra += PROCESSING_PRICE.numbering;
-  if (item.yacho_style) extra += PROCESSING_PRICE.yacho;
-  // v2: lamination は文字列。"なし"以外は加工料を加算
-  if (item.lamination && item.lamination !== 'なし') extra += PROCESSING_PRICE.lamination;
-  const unit_price = Math.round(base);
-  const subtotal = Math.round(base * item.quantity + extra);
+  // v2.7: 全明細の小計は自由入力（外税）。subtotalをそのまま使い、自動計算は廃止
+  const subtotal = +item.subtotal || 0;
+  const unit_price = item.quantity > 0 ? Math.round(subtotal / item.quantity) : 0;
   return { unit_price, subtotal };
 }
 function calcOrderTotal(items) {
@@ -613,7 +767,7 @@ function calcOrder(items, discount = 0) {
   const subtotal = calcOrderTotal(items);
   const breakdown = {};
   items.forEach(it => {
-    const rate = it.tax_rate || 10;
+    const rate = TAX_RATE_FIXED;
     const sub = calcItemPrice(it).subtotal || 0;
     if (!breakdown[rate]) breakdown[rate] = { rate, subtotal: 0, tax: 0 };
     breakdown[rate].subtotal += sub;
@@ -681,7 +835,12 @@ const Router = {
 // ========= App =========
 const App = {
   currentUserId: 'u1',
-  render() {
+  render(opts = {}) {
+    // v2.14: スクロール位置を保存（デフォルトは保持、画面遷移時のみトップへ）
+    const savedScrollY = window.scrollY;
+    // v2.6: 受注確認モード時は body に view-mode クラスを付与
+    document.body.classList.toggle('view-mode',
+      Router.currentScreen === 'order_new' && Screens.order_new.displayMode === 'view');
     // Highlight nav (v2: 編集モード時は受注一覧をハイライト)
     const editing = Router.currentScreen === 'order_new' && Screens.order_new.isEditMode;
     const effective = editing ? 'orders' : Router.currentScreen;
@@ -691,9 +850,7 @@ const App = {
     $$('.side-link').forEach(l => {
       const match = l.dataset.screen === effective ||
                     (Router.currentScreen === 'customer' && l.dataset.screen === 'customers');
-      l.classList.toggle('bg-brand/10', match);
-      l.classList.toggle('text-brand', match);
-      l.classList.toggle('font-bold', match || l.dataset.screen === 'order_new');
+      l.classList.toggle('active', match);
     });
     // Render screen
     const main = $('#main');
@@ -701,10 +858,14 @@ const App = {
     if (!screen) { main.innerHTML = `<div class="text-center py-16 text-ink-500">画面が見つかりません: ${Router.currentScreen}</div>`; return; }
     main.innerHTML = screen.render(...(Router.params || []));
     screen.bind?.(...(Router.params || []));
-    // Update stat
-    $('#stat-info').textContent = `受注 ${DB.all('orders').length}件 / 顧客 ${DB.all('customers').length}件`;
-    // scroll to top
-    window.scrollTo({ top: 0 });
+    // v2.10: ユーザーリンク更新
+    if (typeof refreshUserLink === 'function') refreshUserLink();
+    // v2.14: スクロール位置: opts.scroll === 'top' のときのみ最上部へ。それ以外は保持
+    if (opts.scroll === 'top') {
+      window.scrollTo({ top: 0 });
+    } else {
+      window.scrollTo({ top: savedScrollY });
+    }
   },
 };
 
@@ -732,34 +893,34 @@ Screens.dashboard = {
         <p class="text-sm text-ink-500">${fmt.dateJp(today)} の状況 / カードをクリックで該当案件を絞り込み表示</p>
       </div>
       <div class="grid grid-cols-5 gap-3 mb-6">
-        <a href="#orders?filter=today" class="dash-card bg-white border-l-4 border-brand p-4 rounded shadow-sm hover:shadow-md transition" data-filter="today">
+        <a href="#orders?filter=today" class="dash-card bg-white border-2 border-brand p-4 rounded shadow-sm hover:shadow-md transition" data-filter="today">
           <div class="text-xs text-ink-500 font-bold">本日納品予定</div>
-          <div class="text-3xl font-black mt-1">${todayDue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1">${todayDue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
-        <a href="#orders?filter=inprogress" class="dash-card bg-white border-l-4 border-ok p-4 rounded shadow-sm hover:shadow-md transition" data-filter="inprogress">
+        <a href="#orders?filter=inprogress" class="dash-card bg-white border-2 border-ok p-4 rounded shadow-sm hover:shadow-md transition" data-filter="inprogress">
           <div class="text-xs text-ink-500 font-bold">進行中</div>
-          <div class="text-3xl font-black mt-1">${inProgress.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1">${inProgress.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
-        <a href="#orders?filter=urgent" class="dash-card bg-white border-l-4 border-red-500 p-4 rounded shadow-sm hover:shadow-md transition" data-filter="urgent">
+        <a href="#orders?filter=urgent" class="dash-card bg-white border-2 border-red-500 p-4 rounded shadow-sm hover:shadow-md transition" data-filter="urgent">
           <div class="text-xs text-ink-500 font-bold">納期3日以内</div>
-          <div class="text-3xl font-black mt-1 ${urgent.length>0?'text-red-600':''}">${urgent.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1 ${urgent.length>0?'text-red-600':''}">${urgent.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
-        <a href="#orders?filter=overdue" class="dash-card bg-white border-l-4 border-red-700 p-4 rounded shadow-sm hover:shadow-md transition" data-filter="overdue">
+        <a href="#orders?filter=overdue" class="dash-card bg-white border-2 border-red-700 p-4 rounded shadow-sm hover:shadow-md transition" data-filter="overdue">
           <div class="text-xs text-ink-500 font-bold">納期超過</div>
-          <div class="text-3xl font-black mt-1 ${overdue.length>0?'text-red-700':''}">${overdue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1 ${overdue.length>0?'text-red-700':''}">${overdue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
-        <div class="bg-white border-l-4 border-blue-500 p-4 rounded shadow-sm">
+        <div class="bg-white border-2 border-blue-500 p-4 rounded shadow-sm">
           <div class="text-xs text-ink-500 font-bold">今月売上見込み</div>
           <div class="text-2xl font-black mt-1">${fmt.money(monthSalesForecast)}</div>
-          <div class="text-[10px] text-ink-500">受注済(${thisMonth.length}件) 合計</div>
+          <div class="text-xs text-ink-500">受注済(${thisMonth.length}件) 合計</div>
         </div>
       </div>
 
       <div class="grid grid-cols-3 gap-4">
         <div class="bg-white rounded shadow-sm col-span-2">
           <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold flex justify-between">
-            <span>⚡ 本日納品予定</span>
-            <span class="text-xs text-ink-300">至急対応</span>
+            <span>本日納品予定</span>
+            <span class="text-xs text-ink-300"></span>
           </div>
           <table class="w-full text-sm">
             <thead class="bg-ink-700/5"><tr class="text-left">
@@ -780,7 +941,7 @@ Screens.dashboard = {
         </div>
 
         <div class="bg-white rounded shadow-sm">
-          <div class="bg-red-600 text-white px-4 py-2 rounded-t font-bold">🔔 最近の変更履歴</div>
+          <div class="bg-red-600 text-white px-4 py-2 rounded-t font-bold">最近の変更履歴</div>
           <ul class="text-xs divide-y max-h-80 overflow-auto">
             ${recentLogs.length === 0 ? `<li class="px-3 py-4 text-ink-500 text-center">履歴なし</li>` :
               recentLogs.map(l => `
@@ -801,9 +962,12 @@ Screens.dashboard = {
 // ---------- Orders List ----------
 Screens.orders = {
   filter: { q: '', status: '', from: '', to: '', tag: '', quick: '' },
+  page: 1,
+  PAGE_SIZE: 50,
   // v2: ダッシュボードからのクイック絞り込み
   applyQuick(quick) {
     this.filter = { q:'', status:'', from:'', to:'', tag:'', quick };
+    this.page = 1;
   },
   render() {
     const all = DB.all('orders').slice().sort((a,b) => (b.received_date || '').localeCompare(a.received_date || ''));
@@ -817,12 +981,9 @@ Screens.orders = {
       if (f.quick === 'overdue'    && !(active(o) && o.status !== '見積もり段階' && o.delivery_date_start && dayDiff(TODAY, o.delivery_date_start) > 0)) return false;
       if (f.quick === 'estimate'   && o.status !== '見積もり段階') return false;
       if (f.q) {
-        const cust = fmt.customer(o.customer_id);
-        // 全文検索: メモ・明細メモ・顧客備考も対象
-        const customerObj = DB.find('customers', o.customer_id);
-        const itemNotes = (o.items || []).map(it => `${it.item_notes || ''} ${it.paper_other_memo || ''} ${fmt.paper(it.paper_id)}`).join(' ');
-        const searchStr = `${o.order_number} ${o.title||''} ${cust} ${o.memo || ''} ${itemNotes} ${customerObj?.notes || ''} ${(o.tags || []).join(' ')} ${o.discount_reason || ''}`.toLowerCase();
-        if (!searchStr.includes(f.q.toLowerCase())) return false;
+        // v2.13: 受注一覧の検索は顧客名のみ
+        const cust = fmt.customer(o.customer_id).toLowerCase();
+        if (!cust.includes(f.q.toLowerCase())) return false;
       }
       if (f.status && o.status !== f.status) return false;
       if (f.from && o.received_date < f.from) return false;
@@ -831,6 +992,11 @@ Screens.orders = {
       return true;
     });
     const quickLabel = {today:'本日納品予定', inprogress:'進行中', urgent:'納期3日以内', overdue:'納期超過', estimate:'見積もり段階'}[f.quick] || '';
+    // v2.11: ページネーション
+    const totalPages = Math.max(1, Math.ceil(filtered.length / this.PAGE_SIZE));
+    const page = Math.min(Math.max(1, this.page), totalPages);
+    this.page = page;
+    const pageList = filtered.slice((page-1)*this.PAGE_SIZE, page*this.PAGE_SIZE);
     return `
       <div class="flex justify-between items-center mb-4">
         <div>
@@ -840,7 +1006,7 @@ Screens.orders = {
         <a href="#order/new" class="bg-brand hover:bg-brand-dark text-white px-5 py-2 rounded font-bold shadow-sm">+ 新規受注起票</a>
       </div>
       <div class="bg-white p-4 rounded shadow-sm mb-4 grid grid-cols-6 gap-3 text-sm" id="filter-bar">
-        <div class="col-span-2"><label class="block text-xs font-bold mb-1">全文検索（顧客名・番号・メモ・明細・タグ）</label><input id="f-q" class="w-full border rounded px-2 py-1.5" value="${esc(f.q)}" placeholder="🔍 すべての項目を横断検索"></div>
+        <div class="col-span-2"><label class="block text-xs font-bold mb-1">顧客名検索</label><input id="f-q" class="w-full border rounded px-2 py-1.5" value="${esc(f.q)}" placeholder="例: タクシー, 高拡散"></div>
         <div><label class="block text-xs font-bold mb-1">受付日 From</label><input type="date" id="f-from" class="w-full border rounded px-2 py-1.5" value="${esc(f.from)}"></div>
         <div><label class="block text-xs font-bold mb-1">〜 To</label><input type="date" id="f-to" class="w-full border rounded px-2 py-1.5" value="${esc(f.to)}"></div>
         <div><label class="block text-xs font-bold mb-1">ステータス</label>
@@ -862,45 +1028,53 @@ Screens.orders = {
 
       <div class="bg-white rounded shadow-sm">
         <div class="flex justify-between items-center px-4 py-2 border-b">
-          <span class="text-sm">結果 <span class="font-bold">${filtered.length}</span> / ${all.length} 件</span>
+          <span class="text-sm">結果 <span class="font-bold">${filtered.length}</span> / ${all.length} 件 <span class="text-ink-500 ml-2">(${(page-1)*this.PAGE_SIZE+1}〜${Math.min(page*this.PAGE_SIZE, filtered.length)}件を表示)</span></span>
         </div>
         <table class="w-full text-sm">
           <thead class="bg-ink-700/5"><tr class="text-left">
-            <th class="px-3 py-2">受注番号</th><th class="px-3 py-2">受付</th><th class="px-3 py-2">顧客</th><th class="px-3 py-2">品名 / タグ</th><th class="px-3 py-2">納期</th><th class="px-3 py-2 text-right">金額</th><th class="px-3 py-2">状態</th>
+            <th class="px-3 py-2">受注番号</th><th class="px-3 py-2">受付日</th><th class="px-3 py-2">顧客</th><th class="px-3 py-2">品名 / タグ</th><th class="px-3 py-2 text-right">数量</th><th class="px-3 py-2">納品日</th><th class="px-3 py-2 text-right">金額</th><th class="px-3 py-2">状態</th>
           </tr></thead>
           <tbody>
-            ${filtered.length === 0 ? `<tr><td colspan="7" class="text-center py-10 text-ink-500">該当なし</td></tr>` :
-              filtered.map(o => {
-                const firstItem = o.items[0];
+            ${filtered.length === 0 ? `<tr><td colspan="8" class="text-center py-10 text-ink-500">該当なし</td></tr>` :
+              pageList.map(o => {
                 const overdue = fmt.overdueText(o);
+                const totalQty = o.items.reduce((s, it) => s + (+it.quantity || 0), 0);
                 return `
                 <tr class="border-t hover:bg-brand/5 cursor-pointer" onclick="location.hash='#order/${o.id}'">
                   <td class="px-3 py-2 font-mono text-xs">${esc(o.order_number)}</td>
-                  <td class="px-3 py-2">${esc(fmt.date(o.received_date))}</td>
+                  <td class="px-3 py-2">${esc(fmt.dateW(o.received_date))}</td>
                   <td class="px-3 py-2">${esc(fmt.customer(o.customer_id))}</td>
                   <td class="px-3 py-2 text-xs">
                     <div class="font-bold">${esc(o.title || '—')}</div>
-                    <div class="text-ink-500">${esc(fmt.paper(firstItem?.paper_id))} ${o.items.length > 1 ? `<span>他${o.items.length-1}件</span>` : ''}</div>
                     ${o.tags && o.tags.length ? `<div class="mt-1">${fmt.tags(o.tags)}</div>` : ''}
                   </td>
-                  <td class="px-3 py-2">${esc(fmt.delivery(o))}${overdue ? `<div class="text-xs text-purple-600 font-bold mt-1">${overdue}</div>` : ''}</td>
+                  <td class="px-3 py-2 text-right font-mono">${totalQty}</td>
+                  <td class="px-3 py-2">${o.delivered_date ? esc(fmt.dateW(o.delivered_date)) : esc(fmt.delivery(o))}${overdue ? `<div class="text-xs text-purple-600 font-bold mt-1">${overdue}</div>` : ''}</td>
                   <td class="px-3 py-2 text-right font-mono">${fmt.money(o.total_amount)}</td>
                   <td class="px-3 py-2"><span class="st st-${esc(o.status)}">${esc(o.status)}</span></td>
                 </tr>`;
               }).join('')}
           </tbody>
         </table>
+        ${totalPages > 1 ? `
+        <div class="flex justify-center items-center gap-3 p-3 text-sm border-t">
+          <button id="pg-prev" class="px-3 py-1 border rounded ${page<=1?'opacity-40 cursor-not-allowed':'hover:bg-ink-700/5'}" ${page<=1?'disabled':''}>← 前</button>
+          <span class="font-bold">ページ ${page} / ${totalPages}</span>
+          <button id="pg-next" class="px-3 py-1 border rounded ${page>=totalPages?'opacity-40 cursor-not-allowed':'hover:bg-ink-700/5'}" ${page>=totalPages?'disabled':''}>次 →</button>
+        </div>` : ''}
       </div>`;
   },
   bind() {
     const apply = () => {
       this.filter = {
+        ...this.filter,
         q: $('#f-q').value,
         status: $('#f-status').value,
         from: $('#f-from').value,
         to: $('#f-to').value,
         tag: $('#f-tag')?.value || '',
       };
+      this.page = 1;  // v2.11: フィルタ変更時はページリセット
       App.render();
     };
     ['#f-q','#f-status','#f-from','#f-to','#f-tag'].forEach(sel => {
@@ -908,8 +1082,10 @@ Screens.orders = {
       el && el.addEventListener('input', debounce(apply, 300));
       el && el.addEventListener('change', apply);
     });
-    $('#btn-filter-clear')?.addEventListener('click', () => { this.filter = { q:'', status:'', from:'', to:'', tag:'', quick:'' }; App.render(); });
-    $('#btn-clear-quick')?.addEventListener('click', () => { this.filter.quick = ''; App.render(); });
+    $('#btn-filter-clear')?.addEventListener('click', () => { this.filter = { q:'', status:'', from:'', to:'', tag:'', quick:'' }; this.page = 1; App.render(); });
+    $('#btn-clear-quick')?.addEventListener('click', () => { this.filter.quick = ''; this.page = 1; App.render(); });
+    $('#pg-prev')?.addEventListener('click', () => { this.page = Math.max(1, this.page - 1); App.render(); });
+    $('#pg-next')?.addEventListener('click', () => { this.page = this.page + 1; App.render(); });
   },
 };
 
@@ -920,9 +1096,11 @@ Screens.order_new = {
   draft: null,
   isEditMode: false,
   editId: null,
+  displayMode: 'new',   // v2.6: 'new' | 'edit' | 'view'
   initDraft() {
     this.isEditMode = false;
     this.editId = null;
+    this.displayMode = 'new';
     this.draft = {
       customer_id: '',
       received_date: TODAY,
@@ -947,22 +1125,28 @@ Screens.order_new = {
       factory_status: '待機',      // v2: 工場ステータス初期値
     };
   },
-  // v2: 既存受注を draft に読み込み、編集モードで開く
-  initFromOrder(orderId) {
+  // v2: 既存受注を draft に読み込み、編集 or 確認モードで開く
+  initFromOrder(orderId, mode = 'view') {
     const o = DB.find('orders', orderId);
     if (!o) { this.initDraft(); return; }
     const fr = DB.findFactoryRecord(orderId);
     this.draft = clone(o);
     this.draft.show_discount = (o.discount_amount || 0) > 0;
     this.draft.factory_status = fr?.factory_status || '待機';
-    // v2.3: 旧データ互換 - items[].title 未設定なら order.title を fallback
     this.draft.items = (this.draft.items || []).map((it, i) => ({
       ...it,
       type: it.type || 'normal',
       title: it.title || (i === 0 ? (o.title || '') : ''),
+      // v2.13: 旧データ互換: 明細に納期がなければ受注全体の納期を継承
+      delivery_type: it.delivery_type || o.delivery_type || 'single',
+      delivery_date_start: it.delivery_date_start || o.delivery_date_start || '',
+      delivery_date_end: it.delivery_date_end || o.delivery_date_end || '',
+      first_proof_date: it.first_proof_date || (i === 0 ? (o.first_proof_date || null) : null),
+      used_date: it.used_date || (i === 0 ? (o.used_date || null) : null),
     }));
     this.isEditMode = true;
     this.editId = orderId;
+    this.displayMode = mode === 'edit' ? 'edit' : 'view';
   },
   newItem() {
     return {
@@ -983,6 +1167,14 @@ Screens.order_new = {
       yacho_style: false,        // 内部キーは互換、UI表記は「野丁式」
       lamination: 'なし',         // v2: 選択式
       tax_rate: 10,
+      subtotal: 0,                 // v2.7: 自由入力（外税）
+      unit_price: 0,
+      // v2.13: 納期/初校日/使用日 を明細単位で保持
+      delivery_type: 'single',
+      delivery_date_start: '',
+      delivery_date_end: '',
+      first_proof_date: null,
+      used_date: null,
       item_notes: '',
     };
   },
@@ -993,6 +1185,12 @@ Screens.order_new = {
       type: 'page',
       title: '',                 // v2.3: 明細ごとの品名
       quantity: 100,
+      // v2.13: 納期/初校日/使用日 を明細単位で保持
+      delivery_type: 'single',
+      delivery_date_start: '',
+      delivery_date_end: '',
+      first_proof_date: null,
+      used_date: null,
       page_size: 'A4',
       page_size_custom: '',
       page_count: '',
@@ -1018,35 +1216,41 @@ Screens.order_new = {
       .sort((a,b) => (b.received_date || '').localeCompare(a.received_date || ''))
       .slice(0, 5) : [];
 
-    const isEdit = this.isEditMode;
-    const editingOrder = isEdit ? DB.find('orders', this.editId) : null;
+    const mode = this.displayMode || (this.isEditMode ? 'edit' : 'new');
+    const isView = mode === 'view';
+    const isNew  = mode === 'new';
+    const isEdit = mode === 'edit';   // v2.6: editing existing order
+    const editingOrder = this.isEditMode ? DB.find('orders', this.editId) : null;
     const overdueTxt = editingOrder ? fmt.overdueText(editingOrder) : null;
     return `
       <div class="flex justify-between items-start mb-4">
         <div>
-          ${isEdit ? `
+          ${editingOrder ? `
             <div class="flex items-center gap-3 flex-wrap">
               <a href="#orders" class="text-ink-500 text-sm">← 一覧</a>
               <h1 class="text-2xl font-black">受注 <span class="font-mono">#${esc(editingOrder.order_number)}</span></h1>
-              <span class="st st-${esc(editingOrder.status)} text-sm">${esc(editingOrder.status)}</span>
               ${overdueTxt ? `<span class="st st-経過 text-sm">${overdueTxt}</span>` : ''}
             </div>
-            <p class="text-sm text-ink-500 mt-1">${esc(fmt.customer(editingOrder.customer_id))} / 受付 ${fmt.dateFull(editingOrder.received_date)} / 納期 ${fmt.delivery(editingOrder)}${editingOrder.delivered_date?` / 納品 ${fmt.dateFull(editingOrder.delivered_date)}`:''}</p>
           ` : `
-            <h1 class="text-2xl font-black">受注新規起票 <span class="ml-2 text-xs bg-brand text-white px-2 py-0.5 rounded align-middle">最重要</span></h1>
+            <h1 class="text-2xl font-black">受注新規起票</h1>
             <p class="text-sm text-ink-500">お問い合わせ・来客を受けたらここに起票</p>
           `}
         </div>
         <div class="flex gap-2 flex-wrap">
-          ${isEdit ? `
-            <a href="#print/${editingOrder.id}" class="border px-3 py-2 rounded text-sm">📄 印刷ビュー</a>
-            <button id="btn-quote" class="border px-3 py-2 rounded text-sm">📑 見積書</button>
+          ${isView ? `
+            <button id="btn-spec-copy" class="view-allow border px-3 py-2 rounded text-sm">この仕様でコピー</button>
+            <a href="#print/${editingOrder.id}" class="view-allow border px-3 py-2 rounded text-sm">印刷ビュー</a>
+            <button id="btn-quote" class="view-allow border px-3 py-2 rounded text-sm">見積書</button>
+            <button id="btn-delete" class="view-allow border border-red-500 text-red-500 px-3 py-2 rounded text-sm">削除</button>
+            <a href="#order/${editingOrder.id}/edit" class="view-allow bg-brand hover:bg-brand-dark text-white px-6 py-2 rounded font-bold">編集に進む</a>
+          ` : isNew ? `
+            <button id="btn-cancel" class="border px-4 py-2 rounded font-bold">キャンセル</button>
+            <button id="btn-save" class="bg-brand hover:bg-brand-dark text-white px-6 py-2 rounded font-bold">✓ 保存して起票</button>
+          ` : `
+            <a href="#order/${editingOrder.id}" class="border px-3 py-2 rounded text-sm">← 確認に戻る</a>
             <button id="btn-delete" class="border border-red-500 text-red-500 px-3 py-2 rounded text-sm">削除</button>
             <button id="btn-cancel" class="border px-4 py-2 rounded font-bold">変更を破棄</button>
             <button id="btn-save" class="bg-brand hover:bg-brand-dark text-white px-6 py-2 rounded font-bold">✓ 変更を保存</button>
-          ` : `
-            <button id="btn-cancel" class="border px-4 py-2 rounded font-bold">キャンセル</button>
-            <button id="btn-save" class="bg-brand hover:bg-brand-dark text-white px-6 py-2 rounded font-bold">✓ 保存して起票</button>
           `}
         </div>
       </div>
@@ -1064,14 +1268,8 @@ Screens.order_new = {
                     <option value="">— 選択 —</option>
                     ${customers.map(c => `<option value="${c.id}" ${d.customer_id===c.id?'selected':''}>${esc(c.company_name || c.individual_name)} (${esc(c.area)})</option>`).join('')}
                   </select>
-                  ${isEdit ? '' : `<button id="btn-new-customer" class="border px-2 py-1 rounded text-xs bg-brand/10 text-brand font-bold whitespace-nowrap">+ 新規</button>`}
+                  ${isNew ? `<button id="btn-new-customer" class="border px-2 py-1 rounded text-xs bg-brand/10 text-brand font-bold whitespace-nowrap">+ 新規</button>` : ''}
                 </div>
-                ${isEdit ? `
-                <div class="flex gap-1 mt-2">
-                  <input id="f-new-customer-name" class="flex-1 border rounded px-2 py-1.5 text-xs" placeholder="新規顧客名（この内容をコピーして起票）">
-                  <button id="btn-copy-new" class="border px-2 py-1 rounded text-xs bg-ok/10 text-ok-dark font-bold whitespace-nowrap">📋 新規でコピー</button>
-                </div>
-                ` : ''}
               </div>
               <div>
                 <label class="block text-xs font-bold mb-1">受付日</label>
@@ -1089,38 +1287,33 @@ Screens.order_new = {
                   ${RECEPTION_METHODS.map(m => `<option ${d.reception_method===m?'selected':''}>${m}</option>`).join('')}
                 </select>
               </div>
-              <div class="col-span-4">
-                <label class="block text-xs font-bold mb-1">納期区分・納期</label>
-                <div class="flex gap-2 items-center text-sm flex-wrap">
-                  ${DELIVERY_TYPES.map(dt => `
-                    <label class="flex items-center gap-1"><input type="radio" name="dtype" value="${dt.value}" ${d.delivery_type===dt.value?'checked':''}>${dt.label}</label>`).join('')}
-                  <input type="date" id="f-dstart" class="border rounded px-2 py-1.5 ml-2" value="${d.delivery_date_start||''}">
-                  <span id="dend-wrap" style="display:${d.delivery_type==='range'?'inline':'none'}">
-                    〜 <input type="date" id="f-dend" class="border rounded px-2 py-1.5" value="${d.delivery_date_end||''}">
-                  </span>
-                  ${d.delivery_date_start && d.delivery_type !== 'tentative' ? `<span class="text-xs text-ink-500 ml-2">営業日換算: <b>${DB.businessDaysBetween(TODAY, d.delivery_date_start)}日</b></span>` : ''}
-                  ${d.delivery_type==='tentative' ? `<span class="text-xs text-amber-600 font-bold">※「仮」は確定前の見込み納期</span>` : ''}
-                  ${d.delivery_type==='asap' ? `<span class="text-xs text-red-600 font-bold">※「必ず」は必着</span>` : ''}
-                </div>
-              </div>
-              <!-- v2.2: 初校日 / 使用日 / 納品日 -->
-              <div>
-                <label class="block text-xs font-bold mb-1">初校日</label>
-                <input type="date" id="f-first-proof-date" class="w-full border rounded px-2 py-1.5" value="${d.first_proof_date || ''}">
-              </div>
-              <div>
-                <label class="block text-xs font-bold mb-1">使用日</label>
-                <input type="date" id="f-used-date" class="w-full border rounded px-2 py-1.5" value="${d.used_date || ''}">
-              </div>
-              <div>
-                <label class="block text-xs font-bold mb-1">納品日</label>
-                <input type="date" id="f-delivered-date" class="w-full border rounded px-2 py-1.5" value="${d.delivered_date || ''}">
-              </div>
-              <div></div>
+              <!-- v2.13: 納期/初校日/使用日 は各製作明細セクションへ移動 -->
             </div>
           </div>
 
-          <!-- 案件属性 -->
+          <!-- v2.6: 案件属性は製作明細の下に移動（このブロックは旧位置から削除） -->
+
+          <!-- 明細 -->
+          <div class="bg-white rounded shadow-sm">
+            <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold flex justify-between items-center">
+              <span>製作明細</span>
+              <div class="flex gap-1">
+                <button id="btn-add-item" class="text-xs border border-white/50 px-2 py-0.5 rounded hover:bg-white/10">+ 通常を追加</button>
+                <button id="btn-add-page-item" class="text-xs border border-purple-300 bg-purple-700 px-2 py-0.5 rounded hover:bg-purple-600">+ ページ物を追加</button>
+              </div>
+            </div>
+            <div id="items-container">
+              ${d.items.length === 0 ? `
+                <div class="p-8 text-center text-ink-500 border-2 border-dashed border-ink-300 m-4 rounded">
+                  <div class="text-2xl mb-2"></div>
+                  <div class="font-bold mb-1">明細が未追加です</div>
+                  <div class="text-xs">右上の「+ 通常を追加」または「+ ページ物を追加」から明細を追加してください。<br>※ 各明細ごとに品名を入力します。ページ物のみの受注も可能です。</div>
+                </div>
+              ` : d.items.map((it, i) => this.renderItem(it, i, majorPapers, otherPapers)).join('')}
+            </div>
+          </div>
+
+          <!-- 案件属性（v2.6: 製作明細の下に配置） -->
           <div class="bg-white rounded shadow-sm">
             <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold">案件属性</div>
             <div class="p-4 grid grid-cols-3 gap-3 text-sm">
@@ -1130,39 +1323,18 @@ Screens.order_new = {
                   ${DATA_STATUS.map(s => `<option ${d.data_status===s?'selected':''}>${s}</option>`).join('')}
                 </select>
               </div>
-              <!-- v2: 値引きは通常非表示、トグルで開く -->
-              <div class="col-span-2">
-                <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                  <input type="checkbox" id="f-show-discount" ${d.show_discount?'checked':''}> 値引きを使用する
-                </label>
-                <div id="discount-block" class="grid grid-cols-3 gap-2 mt-2" style="display:${d.show_discount?'grid':'none'}">
-                  <div>
-                    <label class="block text-xs font-bold mb-1">名目</label>
-                    <select id="f-discount-label-type" class="w-full border rounded px-2 py-1.5 text-xs">
-                      ${DISCOUNT_LABEL_TYPES.map(t => `<option ${d.discount_label_type===t?'selected':''}>${t}</option>`).join('')}
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold mb-1">金額</label>
-                    <input type="number" id="f-discount" class="w-full border rounded px-2 py-1.5 text-right font-mono text-xs" min="0" step="100" value="${d.discount_amount||0}">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold mb-1">補足（広告料名等）</label>
-                    <input type="text" id="f-discount-reason" class="w-full border rounded px-2 py-1.5 text-xs" placeholder="○○広告料 等" value="${esc(d.discount_reason||'')}">
-                  </div>
-                </div>
-              </div>
+              <!-- v2.8: 値引きは見積書側で管理。案件属性からは廃止 -->
               <div class="col-span-3">
                 <label class="block text-xs font-bold mb-1">案件タグ</label>
                 <div class="flex flex-wrap gap-1.5">
                   ${DB.tagsMaster().map(t => `
                     <label class="cursor-pointer">
                       <input type="checkbox" class="hidden tag-check" value="${esc(t.name)}" ${d.tags.includes(t.name)?'checked':''}>
-                      <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full border-2" style="border-color:${t.color}; ${d.tags.includes(t.name)?`background:${t.color};color:white;`:`color:${t.color};background:white;`}">${esc(t.name)}</span>
+                      <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full border ${d.tags.includes(t.name)?'bg-ink-700 text-white border-ink-700':'bg-white text-ink-700 border-ink-300'}">${esc(t.name)}</span>
                     </label>`).join('')}
                 </div>
               </div>
-              <div class="col-span-3">
+              <div class="col-span-3 edit-only">
                 <label class="block text-xs font-bold mb-1">入稿データ・参考資料の添付</label>
                 <input type="file" id="f-attach" class="w-full border rounded px-2 py-1.5 text-sm" multiple>
                 ${(d.attachments||[]).length ? `<div class="mt-2 flex flex-wrap gap-1 text-xs">
@@ -1172,31 +1344,11 @@ Screens.order_new = {
             </div>
           </div>
 
-          <!-- 明細 -->
-          <div class="bg-white rounded shadow-sm">
-            <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold flex justify-between items-center">
-              <span>製作明細（複数行対応）</span>
-              <div class="flex gap-1">
-                <button id="btn-add-item" class="text-xs border border-white/50 px-2 py-0.5 rounded hover:bg-white/10">+ 通常を追加</button>
-                <button id="btn-add-page-item" class="text-xs border border-purple-300 bg-purple-700 px-2 py-0.5 rounded hover:bg-purple-600">+ 📖 ページ物を追加</button>
-              </div>
-            </div>
-            <div id="items-container">
-              ${d.items.length === 0 ? `
-                <div class="p-8 text-center text-ink-500 border-2 border-dashed border-ink-300 m-4 rounded">
-                  <div class="text-2xl mb-2">📝</div>
-                  <div class="font-bold mb-1">明細が未追加です</div>
-                  <div class="text-xs">右上の「+ 通常を追加」または「+ 📖 ページ物を追加」から明細を追加してください。<br>※ 各明細ごとに品名を入力します。ページ物のみの受注も可能です。</div>
-                </div>
-              ` : d.items.map((it, i) => this.renderItem(it, i, majorPapers, otherPapers)).join('')}
-            </div>
-          </div>
-
           <!-- メモ -->
           <div class="bg-white rounded shadow-sm">
-            <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold">フリーメモ</div>
+            <div class="bg-ink-900 text-white px-4 py-2 rounded-t font-bold">備考（フリーメモ）</div>
             <div class="p-4">
-              <textarea id="f-memo" class="w-full border rounded px-2 py-1.5 text-sm" rows="3" placeholder="顧客指示・参考情報など">${esc(d.memo)}</textarea>
+              <textarea id="f-memo" class="w-full border rounded px-2 py-1.5 text-sm bg-ink-300/30" rows="4" placeholder="顧客指示・参考情報など">${esc(d.memo)}</textarea>
             </div>
           </div>
         </div>
@@ -1206,18 +1358,18 @@ Screens.order_new = {
             <div class="bg-brand text-white px-4 py-2 rounded-t font-bold">見積サマリー</div>
             <div class="p-4 text-sm space-y-2">
               ${(() => {
-                // v2: 値引きトグルがOFFなら割引適用しない
-                const useDiscount = !!d.show_discount;
+                // v2.6: 値引き金額>0 のとき自動で適用
+                const useDiscount = (d.discount_amount || 0) > 0;
                 const calc = calcOrder(d.items, useDiscount ? (d.discount_amount || 0) : 0);
                 let html = '';
                 d.items.forEach((it, i) => {
                   const { subtotal } = calcItemPrice(it);
-                  html += `<div class="flex justify-between text-xs"><span>明細 #${i+1}（${it.tax_rate||10}%）</span><span class="font-mono">${fmt.money(subtotal)}</span></div>`;
+                  html += `<div class="flex justify-between text-xs"><span>明細 #${i+1}</span><span class="font-mono">${fmt.money(subtotal)}</span></div>`;
                 });
                 html += '<hr>';
                 html += `<div class="flex justify-between"><span>小計</span><span class="font-mono font-bold">${fmt.money(calc.subtotal)}</span></div>`;
                 if (calc.discount > 0) {
-                  html += `<div class="flex justify-between text-red-600"><span>${esc(d.discount_label_type || '値引き')}${d.discount_reason ? `<span class="text-[10px] text-ink-500 ml-1">(${esc(d.discount_reason)})</span>`:''}</span><span class="font-mono">-${fmt.money(calc.discount)}</span></div>`;
+                  html += `<div class="flex justify-between text-red-600"><span>${esc(d.discount_label_type || '値引き')}${d.discount_reason ? `<span class="text-xs text-ink-500 ml-1">(${esc(d.discount_reason)})</span>`:''}</span><span class="font-mono">-${fmt.money(calc.discount)}</span></div>`;
                 }
                 calc.tax_breakdown.forEach(b => {
                   html += `<div class="flex justify-between text-ink-500"><span>消費税（${b.rate}%）</span><span class="font-mono">${fmt.money(b.tax)}</span></div>`;
@@ -1233,9 +1385,9 @@ Screens.order_new = {
           <div class="bg-white rounded shadow-sm">
             <div class="px-4 py-2 border-b font-bold">ステータス操作</div>
             <div class="p-3 space-y-2 text-sm">
-              ${(isEdit ? ORDER_STATUSES : ['見積もり段階','受注']).map(s => `
+              ${(isNew ? ['見積もり段階','受注'] : ORDER_STATUSES).map(s => `
                 <button class="w-full border px-3 py-2 rounded text-left text-sm ${d.status===s?'bg-brand text-white border-brand font-bold':'hover:bg-ink-700/5'} draft-set-status" data-status="${s}">
-                  ${d.status===s?'● ':''}<span class="st st-${esc(s)} text-[10px] mr-1">${esc(s)}</span>
+                  ${esc(s)}
                 </button>`).join('')}
             </div>
           </div>
@@ -1246,12 +1398,12 @@ Screens.order_new = {
             <div class="p-3 space-y-2 text-sm">
               ${FACTORY_STATUSES.map(s => `
                 <button class="w-full border px-3 py-2 rounded text-left text-sm ${d.factory_status===s?'bg-ink-900 text-white border-ink-900 font-bold':'hover:bg-ink-700/5'} draft-set-factory" data-fstatus="${s}">
-                  ${d.factory_status===s?'● ':''}${esc(s)}
+                  ${esc(s)}
                 </button>`).join('')}
             </div>
           </div>
 
-          ${customer && !isEdit ? `
+          ${customer && isNew ? `
           <div class="bg-white rounded shadow-sm">
             <div class="bg-ok text-white px-4 py-2 rounded-t font-bold">この顧客の過去発注</div>
             <ul class="text-sm divide-y max-h-96 overflow-auto">
@@ -1265,7 +1417,7 @@ Screens.order_new = {
             </ul>
           </div>` : ''}
 
-          ${isEdit ? `
+          ${!isNew ? `
           <div class="bg-white rounded shadow-sm">
             <div class="px-4 py-2 border-b font-bold">変更履歴</div>
             <ul class="text-xs divide-y max-h-80 overflow-auto">
@@ -1295,12 +1447,12 @@ Screens.order_new = {
       <div class="p-4 ${i > 0 ? 'border-t' : 'border-t'}" data-item-idx="${i}">
         <div class="flex items-center gap-2 mb-2">
           <span class="text-xs font-black bg-ink-700 text-white px-2 py-0.5 rounded">明細 #${i+1}</span>
-          <span class="text-[10px] text-ink-500">通常</span>
+          <span class="text-xs text-ink-500">通常</span>
           <button class="text-xs text-red-500 ml-auto btn-remove-item" data-idx="${i}">削除</button>
         </div>
         <div class="mb-2">
           <label class="block text-xs font-bold mb-1 text-red-600">* 品名</label>
-          <input class="w-full border rounded px-2 py-1.5 text-base font-bold item-title" data-idx="${i}" placeholder="例: 名刺リピート 500枚" value="${esc(it.title||'')}">
+          <input class="w-full border rounded px-2 py-1.5 text-sm font-bold item-title" data-idx="${i}" placeholder="例: 名刺リピート 500枚" value="${esc(it.title||'')}">
         </div>
         <div class="grid grid-cols-6 gap-2 text-sm">
           <div class="col-span-2">
@@ -1328,7 +1480,7 @@ Screens.order_new = {
           </div>
           <div>
             <label class="block text-xs font-bold mb-1">小計</label>
-            <div class="border rounded px-2 py-1.5 bg-ink-700/5 text-right font-mono font-bold text-brand">${fmt.money(subtotal)}</div>
+            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono font-bold text-ink-900 item-subtotal" data-idx="${i}" value="${it.subtotal||0}">
           </div>
         </div>
         ${!it.paper_id ? `<div class="mt-2"><input type="text" class="w-full border rounded px-2 py-1.5 text-sm item-paper-other" data-idx="${i}" placeholder="用紙の自由入力（例: 特殊紙XYZ）" value="${esc(it.paper_other_memo)}"></div>` : ''}
@@ -1373,11 +1525,35 @@ Screens.order_new = {
             </select>
           </div>
         </div>
+        <div class="mt-3 p-3 bg-ink-700/5 rounded">
+          <div class="text-xs font-bold mb-2 text-ink-500">納期 / 初校日 / 使用日</div>
+          <div class="grid grid-cols-6 gap-2 text-xs items-end">
+            <div class="col-span-3">
+              <label class="block text-xs font-bold mb-1">納期区分</label>
+              <div class="flex gap-2 flex-wrap">
+                ${DELIVERY_TYPES.map(dt => `<label class="flex items-center gap-1"><input type="radio" name="dt-${i}" value="${dt.value}" ${(it.delivery_type||'single')===dt.value?'checked':''} class="item-dt" data-idx="${i}">${dt.label}</label>`).join('')}
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">納期日</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-dstart" data-idx="${i}" value="${it.delivery_date_start||''}">
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">〜終了</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-dend" data-idx="${i}" value="${it.delivery_date_end||''}" ${(it.delivery_type==='range')?'':'disabled'}>
+            </div>
+            <div></div>
+            <div>
+              <label class="block text-xs font-bold mb-1">初校日</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-proof" data-idx="${i}" value="${it.first_proof_date||''}">
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">使用日</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-used" data-idx="${i}" value="${it.used_date||''}">
+            </div>
+          </div>
+        </div>
         <div class="mt-2 flex gap-2 items-center">
-          <label class="text-xs font-bold">税率</label>
-          <select class="border rounded px-1 py-0.5 text-xs item-tax" data-idx="${i}">
-            ${TAX_RATES.map(r => `<option value="${r}" ${it.tax_rate===r?'selected':''}>${r}%${r===8?' 軽減':' 標準'}</option>`).join('')}
-          </select>
           <input class="flex-1 border rounded px-2 py-1.5 text-sm item-note" data-idx="${i}" placeholder="この明細のメモ（任意）" value="${esc(it.item_notes)}">
         </div>
       </div>`;
@@ -1388,12 +1564,12 @@ Screens.order_new = {
       <div class="p-4 border-t bg-purple-50/40" data-item-idx="${i}">
         <div class="flex items-center gap-2 mb-2">
           <span class="text-xs font-black bg-purple-700 text-white px-2 py-0.5 rounded">明細 #${i+1}</span>
-          <span class="text-[10px] text-purple-700 font-bold">📖 ページ物</span>
+          <span class="text-xs text-purple-700 font-bold">ページ物</span>
           <button class="text-xs text-red-500 ml-auto btn-remove-item" data-idx="${i}">削除</button>
         </div>
         <div class="mb-2">
           <label class="block text-xs font-bold mb-1 text-red-600">* 品名</label>
-          <input class="w-full border rounded px-2 py-1.5 text-base font-bold item-title" data-idx="${i}" placeholder="例: 40周年記念誌 / 第○回総会資料" value="${esc(it.title||'')}">
+          <input class="w-full border rounded px-2 py-1.5 text-sm font-bold item-title" data-idx="${i}" placeholder="例: 40周年記念誌 / 第○回総会資料" value="${esc(it.title||'')}">
         </div>
         <div class="grid grid-cols-6 gap-2 text-sm">
           <div class="col-span-2">
@@ -1426,11 +1602,35 @@ Screens.order_new = {
             <input class="w-full border rounded px-2 py-1.5 item-page-body" data-idx="${i}" value="${esc(it.page_body||'')}" placeholder="例: 上質90kg 1C × 64P">
           </div>
         </div>
+        <div class="mt-3 p-3 bg-ink-700/5 rounded">
+          <div class="text-xs font-bold mb-2 text-ink-500">納期 / 初校日 / 使用日</div>
+          <div class="grid grid-cols-6 gap-2 text-xs items-end">
+            <div class="col-span-3">
+              <label class="block text-xs font-bold mb-1">納期区分</label>
+              <div class="flex gap-2 flex-wrap">
+                ${DELIVERY_TYPES.map(dt => `<label class="flex items-center gap-1"><input type="radio" name="dt-${i}" value="${dt.value}" ${(it.delivery_type||'single')===dt.value?'checked':''} class="item-dt" data-idx="${i}">${dt.label}</label>`).join('')}
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">納期日</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-dstart" data-idx="${i}" value="${it.delivery_date_start||''}">
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">〜終了</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-dend" data-idx="${i}" value="${it.delivery_date_end||''}" ${(it.delivery_type==='range')?'':'disabled'}>
+            </div>
+            <div></div>
+            <div>
+              <label class="block text-xs font-bold mb-1">初校日</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-proof" data-idx="${i}" value="${it.first_proof_date||''}">
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">使用日</label>
+              <input type="date" class="w-full border rounded px-1 py-1 item-used" data-idx="${i}" value="${it.used_date||''}">
+            </div>
+          </div>
+        </div>
         <div class="mt-2 flex gap-2 items-center">
-          <label class="text-xs font-bold">税率</label>
-          <select class="border rounded px-1 py-0.5 text-xs item-tax" data-idx="${i}">
-            ${TAX_RATES.map(r => `<option value="${r}" ${it.tax_rate===r?'selected':''}>${r}%${r===8?' 軽減':' 標準'}</option>`).join('')}
-          </select>
           <input class="flex-1 border rounded px-2 py-1.5 text-sm item-note" data-idx="${i}" placeholder="この明細のメモ（任意）" value="${esc(it.item_notes||'')}">
         </div>
       </div>`;
@@ -1449,6 +1649,7 @@ Screens.order_new = {
       $$('.item-paper').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].paper_id = e.target.value; rerenderItems(); updateSummary(); }));
       $$('.item-paper-other').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].paper_other_memo = e.target.value; }));
       $$('.item-qty').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].quantity = +e.target.value || 0; updateSummary(); }));
+      $$('.item-subtotal').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].subtotal = +e.target.value || 0; updateSummary(); }));
       $$('.item-ink').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].ink_pattern = e.target.value; updateSummary(); }));
       $$('.item-mishin-on').forEach(el => el.addEventListener('change', (e) => { const idx = +e.target.dataset.idx; d.items[idx].mishin_count = e.target.checked ? 1 : 0; rerenderItems(); updateSummary(); }));
       $$('.item-mishin-count').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].mishin_count = +e.target.value; updateSummary(); }));
@@ -1464,8 +1665,13 @@ Screens.order_new = {
       $$('.item-yacho').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].yacho_style = e.target.checked; updateSummary(); }));
       $$('.item-lam-on').forEach(el => el.addEventListener('change', (e) => { const idx = +e.target.dataset.idx; d.items[idx].lamination = e.target.checked ? 'PP貼り 艶あり' : 'なし'; rerenderItems(); updateSummary(); }));
       $$('.item-lam').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].lamination = e.target.value; updateSummary(); }));
-      $$('.item-tax').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].tax_rate = +e.target.value; updateSummary(); }));
       $$('.item-note').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].item_notes = e.target.value; }));
+      // v2.13: 明細ごとの納期/初校日/使用日
+      $$('.item-dt').forEach(el => el.addEventListener('change', e => { d.items[+e.target.dataset.idx].delivery_type = e.target.value; rerenderItems(); }));
+      $$('.item-dstart').forEach(el => el.addEventListener('change', e => { d.items[+e.target.dataset.idx].delivery_date_start = e.target.value; }));
+      $$('.item-dend').forEach(el => el.addEventListener('change', e => { d.items[+e.target.dataset.idx].delivery_date_end = e.target.value; }));
+      $$('.item-proof').forEach(el => el.addEventListener('change', e => { d.items[+e.target.dataset.idx].first_proof_date = e.target.value || null; }));
+      $$('.item-used').forEach(el => el.addEventListener('change', e => { d.items[+e.target.dataset.idx].used_date = e.target.value || null; }));
       $$('.btn-remove-item').forEach(el => el.addEventListener('click', (e) => { d.items.splice(+e.target.dataset.idx, 1); rerenderItems(); updateSummary(); }));
       // v2.2: ページ物明細のハンドラ
       $$('.item-page-size').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].page_size = e.target.value; rerenderItems(); }));
@@ -1502,27 +1708,8 @@ Screens.order_new = {
     $('#f-received-date')?.addEventListener('change', (e) => { d.received_date = e.target.value; });
     $('#f-received-by')?.addEventListener('change', (e) => { d.received_by_id = e.target.value; });
     $('#f-reception')?.addEventListener('change', (e) => { d.reception_method = e.target.value; });
-    $$('input[name="dtype"]').forEach(r => r.addEventListener('change', (e) => {
-      d.delivery_type = e.target.value;
-      App.render();
-    }));
-    $('#f-dstart')?.addEventListener('change', (e) => { d.delivery_date_start = e.target.value; });
-    $('#f-dend')?.addEventListener('change', (e) => { d.delivery_date_end = e.target.value; });
-    // v2.2: 初校日 / 使用日 / 納品日
-    $('#f-first-proof-date')?.addEventListener('change', (e) => { d.first_proof_date = e.target.value || null; });
-    $('#f-used-date')?.addEventListener('change', (e) => { d.used_date = e.target.value || null; });
-    $('#f-delivered-date')?.addEventListener('change', (e) => { d.delivered_date = e.target.value || null; });
     $('#f-memo')?.addEventListener('input', (e) => { d.memo = e.target.value; });
     $('#f-data-status')?.addEventListener('change', (e) => { d.data_status = e.target.value; });
-    // v2: 値引きトグル
-    $('#f-show-discount')?.addEventListener('change', (e) => {
-      d.show_discount = e.target.checked;
-      if (!e.target.checked) { d.discount_amount = 0; d.discount_reason = ''; }
-      App.render();
-    });
-    $('#f-discount-label-type')?.addEventListener('change', (e) => { d.discount_label_type = e.target.value; });
-    $('#f-discount')?.addEventListener('change', (e) => { d.discount_amount = +e.target.value || 0; updateSummary(); });
-    $('#f-discount-reason')?.addEventListener('input', (e) => { d.discount_reason = e.target.value; });
     $$('.tag-check').forEach(el => el.addEventListener('change', (e) => {
       const v = e.target.value;
       if (e.target.checked) { if (!d.tags.includes(v)) d.tags.push(v); }
@@ -1567,7 +1754,66 @@ Screens.order_new = {
       d.factory_status = el.dataset.fstatus;
       App.render();
     }));
+    // v2.6: viewモードでは保存/コピー系をbindしない
+    const mode = this.displayMode || (this.isEditMode ? 'edit' : 'new');
+    if (mode === 'view') {
+      // v2.7: 見積書ボタンは直接見積書ページへ遷移
+      $('#btn-quote')?.addEventListener('click', () => {
+        const q = DB.createQuote(this.editId);
+        if (q) location.hash = `#quote/${q.id}`;
+      });
+      $('#btn-delete')?.addEventListener('click', () => {
+        const o = DB.find('orders', this.editId);
+        if (!o) return;
+        if (!confirm(`受注 ${o.order_number} を削除しますか？\nこの操作は取り消せません。`)) return;
+        DB.deleteOrder(this.editId);
+        toast('受注を削除しました');
+        this.initDraft();
+        location.hash = '#orders';
+      });
+      // v2.17: 「この仕様でコピー」- 顧客はそのまま、内容をクローンして新規受注画面へ
+      $('#btn-spec-copy')?.addEventListener('click', () => {
+        const srcOrder = DB.find('orders', this.editId);
+        if (!srcOrder) return;
+        this.isEditMode = false;
+        this.editId = null;
+        this.displayMode = 'new';
+        this.draft = {
+          customer_id: srcOrder.customer_id,
+          received_date: TODAY,
+          received_by_id: App.currentUserId,
+          reception_method: '電話',
+          delivery_type: 'single',
+          delivery_date_start: '',
+          delivery_date_end: '',
+          delivered_date: null,
+          first_proof_date: null,
+          used_date: null,
+          memo: srcOrder.memo || '',
+          data_status: srcOrder.data_status || '持込',
+          discount_amount: srcOrder.discount_amount || 0,
+          discount_reason: srcOrder.discount_reason || '',
+          discount_label_type: srcOrder.discount_label_type || '値引き',
+          show_discount: (srcOrder.discount_amount || 0) > 0,
+          tags: [...(srcOrder.tags || [])],
+          attachments: [],
+          items: srcOrder.items.map(it => ({
+            ...it,
+            id: 'itmp_' + Math.random().toString(36).slice(2, 8),
+            // 納期系はリセット
+            delivery_date_start: '', delivery_date_end: '',
+            first_proof_date: null, used_date: null,
+          })),
+          status: '受注',
+          factory_status: '待機',
+        };
+        location.hash = '#order/new';
+        toast('この仕様で新規受注画面を開きました', 'ok');
+      });
+      return;
+    }
     // v2: 編集モード時の「新規でコピー」
+    // v2.7: editモードでも見積書を直接開けるようにする(削除済み btn-quote はrenderでview時のみ出力)
     if (this.isEditMode) {
       $('#btn-copy-new')?.addEventListener('click', () => {
         const name = $('#f-new-customer-name').value.trim();
@@ -1611,11 +1857,7 @@ Screens.order_new = {
         location.hash = '#order/new';
         toast(`新規顧客「${name}」で内容をコピーしました`, 'ok');
       });
-      $('#btn-quote')?.addEventListener('click', () => {
-        let q = DB.all('quotes').find(q => q.order_id === this.editId);
-        if (!q) q = DB.createQuote(this.editId);
-        location.hash = `#quote/${q.id}`;
-      });
+      $('#btn-quote')?.addEventListener('click', () => this.openQuotePickerModal());
       $('#btn-delete')?.addEventListener('click', () => {
         const o = DB.find('orders', this.editId);
         if (!o) return;
@@ -1631,7 +1873,7 @@ Screens.order_new = {
   openNewCustomerModal() {
     openModal(`
       <div class="p-6">
-        <h2 class="text-xl font-black mb-4">新規顧客登録</h2>
+        <h2 class="text-2xl font-black mb-4">新規顧客登録</h2>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div class="col-span-2"><label class="block text-xs font-bold mb-1">会社名</label><input id="nc-company" class="w-full border rounded px-2 py-1.5"></div>
           <div class="col-span-2"><label class="block text-xs font-bold mb-1">個人名（個人の場合）</label><input id="nc-indiv" class="w-full border rounded px-2 py-1.5"></div>
@@ -1677,13 +1919,22 @@ Screens.order_new = {
     // v2.3: 各明細の品名を必須化
     const missingTitle = d.items.findIndex(it => !it.title || !it.title.trim());
     if (missingTitle >= 0) { toast(`明細 #${missingTitle+1} の品名を入力してください`, 'err'); return; }
-    if (!d.delivery_date_start && d.delivery_type !== 'tentative') { toast('納期日を指定してください', 'err'); return; }
+    // v2.13: 各明細の納期を必須化（仮以外）
+    const missingDate = d.items.findIndex(it => it.delivery_type !== 'tentative' && !it.delivery_date_start);
+    if (missingDate >= 0) { toast(`明細 #${missingDate+1} の納期日を指定してください`, 'err'); return; }
+    // 受注代表の納期は items[0] と同期（一覧・カンバン表示用）
+    const first = d.items[0];
+    d.delivery_type = first.delivery_type || 'single';
+    d.delivery_date_start = first.delivery_date_start || null;
+    d.delivery_date_end = first.delivery_date_end || null;
+    d.first_proof_date = first.first_proof_date || null;
+    d.used_date = first.used_date || null;
     const items = d.items.map(it => {
       const c = calcItemPrice(it);
       return { ...it, id: it.id && !it.id.startsWith('itmp_') ? it.id : ('it_' + Math.random().toString(36).slice(2, 8)), unit_price: c.unit_price, subtotal: c.subtotal };
     });
-    // v2: 値引きトグルがOFFなら金額・理由をクリア
-    const effectiveDiscount = d.show_discount ? (d.discount_amount || 0) : 0;
+    // v2.6: 値引き金額>0 で適用
+    const effectiveDiscount = d.discount_amount || 0;
     const calc = calcOrder(items, effectiveDiscount);
 
     if (this.isEditMode) {
@@ -1712,9 +1963,8 @@ Screens.order_new = {
         memo: d.memo || '',
         data_status: d.data_status,
         discount_amount: effectiveDiscount,
-        discount_reason: d.show_discount ? (d.discount_reason || '') : '',
+        discount_reason: effectiveDiscount > 0 ? (d.discount_reason || '') : '',
         discount_label_type: d.discount_label_type || '値引き',
-        show_discount: d.show_discount,
         tags: d.tags || [],
         attachments: d.attachments || [],
         items,
@@ -1731,8 +1981,9 @@ Screens.order_new = {
         DB.updateFactoryRecord(id, patch);
       }
       toast(`受注 ${before?.order_number || ''} を更新しました`, 'ok');
-      // editMode を維持して再ロード
-      this.initFromOrder(id);
+      // v2.6: 保存後は確認画面(view)に戻す
+      this.initFromOrder(id, 'view');
+      location.hash = `#order/${id}`;
       App.render();
     } else {
       // 新規起票
@@ -1743,15 +1994,54 @@ Screens.order_new = {
         title: aggregateTitle,
         items,
         discount_amount: effectiveDiscount,
-        discount_reason: d.show_discount ? (d.discount_reason || '') : '',
+        discount_reason: effectiveDiscount > 0 ? (d.discount_reason || '') : '',
         total_amount: calc.total,
       });
       this.initDraft();
       toast(`受注 ${order.order_number} を起票しました`, 'ok');
-      // 起票後はそのまま編集モードで開く
-      this.initFromOrder(order.id);
+      // 起票後は確認画面(view)で開く
+      this.initFromOrder(order.id, 'view');
       location.hash = `#order/${order.id}`;
     }
+  },
+  // v2.6: 明細ごとに見積書を作成/開くピッカー (Screens.order_new に統合)
+  openQuotePickerModal() {
+    const id = this.editId;
+    const order = DB.find('orders', id);
+    if (!order) return;
+    const quotes = DB.all('quotes').filter(q => q.order_id === id && q.item_id);
+    openModal(`
+      <div class="p-6">
+        <h2 class="text-2xl font-black mb-2">明細ごとの見積書</h2>
+        <p class="text-xs text-ink-500 mb-3">この受注の明細から見積書を作成/開けます。明細ごとに1見積書を作成します。</p>
+        <ul class="divide-y text-sm">
+          ${order.items.map((it, idx) => {
+            const q = quotes.find(qq => qq.item_id === it.id);
+            const typeLabel = it.type === 'page' ? 'ページ物' : '通常';
+            return `
+            <li class="py-3 flex items-center gap-3">
+              <div class="flex-1">
+                <div class="font-bold">#${idx+1} ${esc(it.title || '—')}</div>
+                <div class="text-xs text-ink-500">${typeLabel} / 数量 ${it.quantity} / 小計（外税）${fmt.money(it.subtotal||0)}</div>
+                ${q ? `<div class="text-xs text-ok-dark mt-1">見積 ${esc(q.quote_number)} 作成済</div>` : ''}
+              </div>
+              <button class="view-allow ${q?'bg-ink-900 text-white':'bg-brand text-white'} px-3 py-1.5 rounded text-xs font-bold qp-open" data-item-id="${it.id}">${q?'開く':'+ 作成'}</button>
+            </li>`;
+          }).join('')}
+        </ul>
+        <div class="flex justify-end mt-4">
+          <button id="qp-close" class="view-allow border px-4 py-2 rounded">閉じる</button>
+        </div>
+      </div>
+    `, () => {
+      $('#qp-close').addEventListener('click', closeModal);
+      $$('.qp-open').forEach(b => b.addEventListener('click', (e) => {
+        const itemId = b.dataset.itemId;
+        const q = DB.createQuoteForItem(id, itemId);
+        closeModal();
+        location.hash = `#quote/${q.id}`;
+      }));
+    });
   },
 };
 
@@ -1774,14 +2064,14 @@ Screens.order = {
             <span class="st st-${esc(o.status)} text-sm">${esc(o.status)}</span>
             ${fmt.overdueText(o) ? `<span class="st st-経過 text-sm">${fmt.overdueText(o)}</span>` : ''}
           </div>
-          ${o.title ? `<div class="text-base font-bold mt-1">${esc(o.title)}</div>` : ''}
+          ${o.title ? `<div class="text-sm font-bold mt-1">${esc(o.title)}</div>` : ''}
           <p class="text-sm text-ink-500 mt-1">${esc(fmt.customer(o.customer_id))} / 受付 ${fmt.dateFull(o.received_date)} / 納期 ${fmt.delivery(o)}${o.delivered_date?` / 納品 ${fmt.dateFull(o.delivered_date)}`:''}</p>
           ${o.tags && o.tags.length ? `<div class="mt-2">${fmt.tags(o.tags)}</div>` : ''}
         </div>
         <div class="flex gap-2">
-          <a href="#print/${o.id}" class="border px-3 py-2 rounded text-sm">📄 印刷ビュー</a>
-          <button id="btn-quote" class="border px-3 py-2 rounded text-sm">📑 ${quote ? '見積書を開く' : '見積書作成'}</button>
-          <button id="btn-edit-fields" class="border px-3 py-2 rounded text-sm bg-brand/10 text-brand font-bold">✎ 編集</button>
+          <a href="#print/${o.id}" class="border px-3 py-2 rounded text-sm">印刷ビュー</a>
+          <button id="btn-quote" class="border px-3 py-2 rounded text-sm">${quote ? '見積書を開く' : '見積書作成'}</button>
+          <button id="btn-edit-fields" class="border px-3 py-2 rounded text-sm bg-brand/10 text-brand font-bold">編集</button>
           <button id="btn-delete" class="border border-red-500 text-red-500 px-3 py-2 rounded text-sm">削除</button>
         </div>
       </div>
@@ -1789,18 +2079,19 @@ Screens.order = {
       <div class="grid grid-cols-3 gap-4">
         <div class="col-span-2 space-y-4">
           <div class="bg-white rounded shadow-sm p-4 text-sm">
-            <h3 class="font-bold text-base mb-3">基本情報 <button id="btn-edit-fields-inline" class="ml-2 text-xs text-brand hover:underline">編集</button></h3>
+            <h3 class="font-bold text-sm mb-3">基本情報 <button id="btn-edit-fields-inline" class="ml-2 text-xs text-brand hover:underline">編集</button></h3>
             <div class="grid grid-cols-3 gap-3">
               <div><div class="text-xs text-ink-500 font-bold">品名</div><div class="font-bold">${esc(o.title || '—')}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">顧客</div><div class="font-bold"><a class="hover:underline" href="#customer/${o.customer_id}">${esc(fmt.customer(o.customer_id))}</a></div></div>
               <div><div class="text-xs text-ink-500 font-bold">種別</div><div>
-                <span class="text-xs px-2 py-0.5 rounded font-bold ${customer?.kind==='地域・団体'?'bg-blue-100 text-blue-700':customer?.kind==='企業・個人'?'bg-amber-100 text-amber-800':'bg-ink-300/40'}">${esc(customer?.kind || '—')}</span>
+                <span class="font-bold ${customer?.kind==='地域・団体'?'text-blue-700':customer?.kind==='企業・個人'?'text-amber-800':'text-ink-500'}">${esc(customer?.kind || '—')}</span>
                 <span class="ml-1 text-xs text-ink-500">${esc(customer?.area || '')}</span>
               </div></div>
               <div><div class="text-xs text-ink-500 font-bold">担当者</div><div>${esc(fmt.user(o.received_by_id))}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">受付日</div><div>${fmt.dateFull(o.received_date)}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">納期</div><div class="${o.delivery_date_start === TODAY ? 'text-red-600 font-bold' : ''}">${esc(fmt.delivery(o))}</div></div>
-              <div><div class="text-xs text-ink-500 font-bold">納品日</div><div>${o.delivered_date ? fmt.dateW(o.delivered_date) : '—'}</div></div>
+              <div><div class="text-xs text-ink-500 font-bold">初校日</div><div>${o.first_proof_date ? fmt.dateW(o.first_proof_date) : '—'}</div></div>
+              <div><div class="text-xs text-ink-500 font-bold">使用日</div><div>${o.used_date ? fmt.dateW(o.used_date) : '—'}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">受付方法</div><div>${esc(o.reception_method)}</div></div>
               <div><div class="text-xs text-ink-500 font-bold">入稿データ</div><div class="font-bold ${o.data_status === '未受領' ? 'text-red-600' : ''}">${esc(o.data_status || '—')}</div></div>
               ${o.discount_amount > 0 ? `<div><div class="text-xs text-ink-500 font-bold">値引き（${esc(o.discount_label_type||'値引き')}）</div><div class="font-bold text-red-600">-${fmt.money(o.discount_amount)}${o.discount_reason ? `<span class="text-xs text-ink-500 ml-1">(${esc(o.discount_reason)})</span>` : ''}</div></div>` : ''}
@@ -1823,7 +2114,7 @@ Screens.order = {
                     const size = it.page_size === '自由' ? (it.page_size_custom || '自由') : it.page_size;
                     return `
                     <tr class="border-t bg-purple-50/40">
-                      <td class="px-3 py-2"><span class="text-[10px] text-purple-700 font-bold">📖 ${i+1}</span></td>
+                      <td class="px-3 py-2"><span class="text-xs text-purple-700 font-bold">${i+1}</span></td>
                       <td class="px-3 py-2"><div class="font-bold">ページ物</div><div class="text-xs text-ink-500">${esc(it.page_cover || '')}${it.page_cover && it.page_body ? ' / ' : ''}${esc(it.page_body || '')}</div></td>
                       <td class="px-3 py-2 font-mono">${it.quantity}部</td>
                       <td class="px-3 py-2 text-xs">${esc(size)}</td>
@@ -1858,7 +2149,7 @@ Screens.order = {
           </div>
 
           <div class="bg-white rounded shadow-sm p-4 text-sm">
-            <h3 class="font-bold text-base mb-2">工場進捗（C管理）</h3>
+            <h3 class="font-bold text-sm mb-2">工場進捗（C管理）</h3>
             ${fr ? `
               <div class="flex items-center gap-3 text-xs mb-2">
                 <span class="st st-${esc(fr.factory_status)}">${esc(fr.factory_status)}</span>
@@ -1969,6 +2260,45 @@ Screens.order = {
     $('#btn-edit-fields')?.addEventListener('click', openEdit);
     $('#btn-edit-fields-inline')?.addEventListener('click', openEdit);
   },
+  // v2.5: 明細ごとに見積書を作成/開くピッカー
+  openQuotePickerModal() {
+    const id = this.editId;
+    const order = DB.find('orders', id);
+    if (!order) return;
+    const quotes = DB.all('quotes').filter(q => q.order_id === id && q.item_id);
+    openModal(`
+      <div class="p-6">
+        <h2 class="text-2xl font-black mb-2">明細ごとの見積書</h2>
+        <p class="text-xs text-ink-500 mb-3">この受注の明細から見積書を作成/開けます。明細ごとに1見積書を作成します。</p>
+        <ul class="divide-y text-sm">
+          ${order.items.map((it, idx) => {
+            const q = quotes.find(qq => qq.item_id === it.id);
+            const typeLabel = it.type === 'page' ? 'ページ物' : '通常';
+            return `
+            <li class="py-3 flex items-center gap-3">
+              <div class="flex-1">
+                <div class="font-bold">#${idx+1} ${esc(it.title || '—')}</div>
+                <div class="text-xs text-ink-500">${typeLabel} / 数量 ${it.quantity} / 小計（外税）${fmt.money(it.subtotal||0)}</div>
+                ${q ? `<div class="text-xs text-ok-dark mt-1">見積 ${esc(q.quote_number)} 作成済</div>` : ''}
+              </div>
+              <button class="${q?'bg-ink-900 text-white':'bg-brand text-white'} px-3 py-1.5 rounded text-xs font-bold qp-open" data-item-id="${it.id}">${q?'開く':'+ 作成'}</button>
+            </li>`;
+          }).join('')}
+        </ul>
+        <div class="flex justify-end mt-4">
+          <button id="qp-close" class="border px-4 py-2 rounded">閉じる</button>
+        </div>
+      </div>
+    `, () => {
+      $('#qp-close').addEventListener('click', closeModal);
+      $$('.qp-open').forEach(b => b.addEventListener('click', (e) => {
+        const itemId = b.dataset.itemId;
+        const q = DB.createQuoteForItem(id, itemId);
+        closeModal();
+        location.hash = `#quote/${q.id}`;
+      }));
+    });
+  },
   // v2: 受注編集モーダル
   openEditModal(id) {
     const o = DB.find('orders', id);
@@ -1977,7 +2307,7 @@ Screens.order = {
     const customers = DB.all('customers');
     openModal(`
       <div class="p-6">
-        <h2 class="text-xl font-black mb-4">受注 ${esc(o.order_number)} 編集</h2>
+        <h2 class="text-2xl font-black mb-4">受注 ${esc(o.order_number)} 編集</h2>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div class="col-span-2">
             <label class="block text-xs font-bold mb-1">品名</label>
@@ -2077,34 +2407,44 @@ Screens.order = {
   },
 };
 
-// ---------- Quote (v2: 複数パターン対応) ----------
+// ---------- Quote (v2.8: 明細=パターン1:1 / 縦並びPDFプレビュー) ----------
 Screens.quote = {
   render(id) {
     const q = DB.find('quotes', id);
     if (!q) return `<div class="text-center py-16 text-ink-500">見積書が見つかりません</div>`;
-    if (!q.patterns || q.patterns.length === 0) {
-      // 旧データ互換: パターン構造へ移行
-      q.patterns = [{ id: 'qp_legacy', label: '基本案', amount: q.total_amount || 0, accepted: true, show_discount: false, discount_amount: 0, discount_label_type: '値引き', discount_label_text: '' }];
-      DB.save();
-    }
     const o = DB.find('orders', q.order_id);
+    if (!o) return `<div class="text-center py-16 text-ink-500">受注が見つかりません</div>`;
+    // v2.8: 受注明細とパターンを1:1同期
+    DB.syncQuotePatterns(q.id);
+
+    // v2.9: 採用された1つの明細のみPDFプレビューに表示
     const accepted = q.patterns.find(p => p.accepted) || q.patterns[0];
+    const acceptedItem = accepted ? o.items.find(it => it.id === accepted.item_id) : null;
+    const calcPattern = (p) => {
+      const ext = +p.amount || 0;
+      const disc = p.show_discount ? (+p.discount_amount || 0) : 0;
+      const extAD = Math.max(0, ext - disc);
+      const tax = Math.round(extAD * TAX_RATE_FIXED / 100);
+      const total = extAD + tax;
+      return { ext, disc, extAD, tax, total };
+    };
+    const acceptedCalc = accepted ? calcPattern(accepted) : { ext:0, disc:0, extAD:0, tax:0, total:0 };
+
     return `
       <div class="flex justify-between items-center mb-4">
         <div>
           <a href="#order/${o.id}" class="text-ink-500 text-sm">← 受注に戻る</a>
           <h1 class="text-2xl font-black">見積書 <span class="font-mono">#${esc(q.quote_number)}</span></h1>
-          <p class="text-sm text-ink-500">受注 ${esc(o.order_number)} / ${esc(fmt.customer(o.customer_id))} / 採用: <b>${esc(accepted.label)}</b></p>
+          <p class="text-sm text-ink-500">受注 ${esc(o.order_number)} / ${esc(fmt.customer(o.customer_id))} / 採用明細: <b>${esc(acceptedItem?.title || '—')}</b> / 合計 <b class="text-brand">${fmt.money(acceptedCalc.total)}</b>（税込）</p>
         </div>
         <div class="flex gap-2">
-          <button id="btn-keep-accepted" class="border px-4 py-2 rounded text-sm" title="採用以外のパターンを削除">✓ 採用案のみ残す</button>
-          <button id="btn-print-quote" class="bg-ink-900 text-white px-4 py-2 rounded text-sm font-bold">📄 PDF出力 (印刷)</button>
-          <button id="btn-send-quote" class="bg-brand text-white px-4 py-2 rounded text-sm font-bold">✉ 送信済にする</button>
+          <button id="btn-print-quote" class="bg-ink-900 text-white px-4 py-2 rounded text-sm font-bold">PDF出力 (印刷)</button>
+          <button id="btn-send-quote" class="bg-brand text-white px-4 py-2 rounded text-sm font-bold">送信済にする</button>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-white rounded shadow-sm p-4 text-sm space-y-3">
-          <h3 class="font-bold text-base">見積書入力</h3>
+          <h3 class="font-bold text-sm">見積書入力</h3>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="block text-xs font-bold mb-1">宛先</label><div class="border rounded px-2 py-1.5 bg-ink-700/5">${esc(fmt.customer(o.customer_id))}</div></div>
             <div><label class="block text-xs font-bold mb-1">見積日</label><input type="date" id="q-issued" class="w-full border rounded px-2 py-1.5" value="${q.issued_date}"></div>
@@ -2120,34 +2460,30 @@ Screens.quote = {
           </div>
           <div><label class="block text-xs font-bold mb-1">備考</label><textarea id="q-memo" class="w-full border rounded px-2 py-1.5" rows="3">${esc(q.memo)}</textarea></div>
 
-          <!-- v2: 複数パターン -->
           <div class="border-t pt-3">
-            <div class="flex justify-between items-center mb-2">
-              <h4 class="font-bold">見積パターン（複数対応）</h4>
-              <button id="btn-add-pattern" class="bg-brand text-white text-xs px-3 py-1 rounded font-bold">+ パターン追加</button>
-            </div>
-            <p class="text-xs text-ink-500 mb-2">金額は自由入力。各パターンに値引きを個別設定可（既定は非表示）。</p>
+            <h4 class="font-bold mb-2">対象明細</h4>
             <div id="patterns-list" class="space-y-2">
-              ${q.patterns.map(p => this.renderPattern(p, q)).join('')}
+              ${q.patterns.map(p => this.renderPattern(p, q, o)).join('')}
             </div>
           </div>
         </div>
         <div class="bg-white rounded shadow-sm p-4" id="print-target">
-          <div class="text-xs font-bold text-ink-500 mb-2 no-print">📄 PDFプレビュー（採用案）</div>
+          <div class="text-xs font-bold text-ink-500 mb-2 no-print">PDFプレビュー（明細ごと縦並び）</div>
           <div class="border-2 border-ink-300/50 p-6 bg-white text-xs print-page" id="quote-pdf-page">
             <div class="flex justify-between border-b-2 border-ink-900 pb-2 mb-4">
-              <div><div class="text-2xl font-black">御 見 積 書</div><div class="text-xs mt-1">No. ${esc(q.quote_number)} / 案: ${esc(accepted.label)}</div></div>
+              <div><div class="text-2xl font-black">御 見 積 書</div><div class="text-xs mt-1">No. ${esc(q.quote_number)}</div></div>
               <div class="text-right"><div class="font-bold">${fmt.dateJp(q.issued_date)}</div></div>
             </div>
             <div class="mb-4">
               <div class="text-lg font-bold">${esc(fmt.customer(o.customer_id))} 御中</div>
-              <div class="mt-2">下記の通りお見積もり申し上げます。${o.title ? `<span class="text-ink-500">（件名: ${esc(o.title)}）</span>` : ''}</div>
+              <div class="mt-2">下記の通りお見積もり申し上げます。</div>
+              ${acceptedItem?.title ? `<div class="mt-2"><span class="font-bold">件名：</span>${esc(acceptedItem.title)}</div>` : ''}
             </div>
             <div class="flex justify-between mb-4">
               <div>
                 <div class="text-xs">有効期限: ${fmt.dateJp(q.valid_until)}</div>
-                <div class="mt-2 font-bold">合計金額</div>
-                <div class="text-2xl font-black text-brand border-b-2 border-brand inline-block">${fmt.money(accepted.amount)}<span class="text-xs">（税込）</span></div>
+                <div class="mt-2 font-bold">合計金額（税込）</div>
+                <div class="text-2xl font-black border-b-2 border-ink-900 inline-block">${fmt.money(acceptedCalc.total)}</div>
               </div>
               <div class="text-xs border-2 border-ink-700 p-3 min-w-[220px]">
                 <div class="font-black text-sm">${esc(DB.settings().company_name || '有限会社 渡辺謄写堂')}</div>
@@ -2165,33 +2501,41 @@ Screens.quote = {
                 </div>
               </div>
             </div>
-            <table class="w-full border-collapse text-xs">
-              <thead class="bg-ink-900 text-white"><tr>
-                <th class="p-1 text-left">品名・仕様</th><th class="p-1 text-right">数量</th><th class="p-1 text-right">税率</th><th class="p-1 text-right">金額</th>
-              </tr></thead>
-              <tbody>
-                ${o.items.map(it => `
-                <tr class="border-b">
-                  <td class="p-1">${esc(fmt.paper(it.paper_id))}（${esc(fmt.ink(it.ink_pattern))}）</td>
-                  <td class="p-1 text-right">${it.quantity}</td>
-                  <td class="p-1 text-right">${it.tax_rate||10}%</td>
-                  <td class="p-1 text-right">${fmt.money(it.subtotal)}</td>
-                </tr>`).join('')}
-                <tr class="border-b">
-                  <td class="p-1 text-ink-500" colspan="3">採用案 金額（自由入力値）</td>
-                  <td class="p-1 text-right font-bold">${fmt.money(accepted.amount)}</td>
-                </tr>
-                ${accepted.show_discount && accepted.discount_amount > 0 ? `
-                <tr class="border-b text-red-600"><td class="p-1" colspan="3">${esc(accepted.discount_label_type || '値引き')}${accepted.discount_label_text ? `（${esc(accepted.discount_label_text)}）` : ''}</td><td class="p-1 text-right">-${fmt.money(accepted.discount_amount)}</td></tr>
-                ` : ''}
-                <tr class="font-bold bg-ink-700/5"><td class="p-1" colspan="3">合計（税込）</td><td class="p-1 text-right">${fmt.money(Math.max(0, accepted.amount - (accepted.show_discount ? accepted.discount_amount : 0)))}</td></tr>
-              </tbody>
-            </table>
+
+            ${acceptedItem ? (() => {
+              let spec = '';
+              if (acceptedItem.type === 'page') {
+                const size = acceptedItem.page_size === '自由' ? (acceptedItem.page_size_custom || '自由') : acceptedItem.page_size;
+                spec = `ページ物 / ${esc(size)} / ${esc(acceptedItem.page_count||'')}`;
+              } else {
+                spec = `${esc(fmt.paper(acceptedItem.paper_id))}（${esc(fmt.ink(acceptedItem.ink_pattern))}）`;
+              }
+              return `
+              <table class="w-full border-collapse text-xs">
+                <thead class="bg-ink-900 text-white"><tr>
+                  <th class="p-1 text-left">品名・仕様</th><th class="p-1 text-right">数量</th><th class="p-1 text-right">金額（外税）</th>
+                </tr></thead>
+                <tbody>
+                  <tr class="border-b">
+                    <td class="p-1"><b>${esc(acceptedItem.title || '—')}</b><br><span class="text-ink-500">${spec}</span></td>
+                    <td class="p-1 text-right">${acceptedItem.quantity}</td>
+                    <td class="p-1 text-right">${fmt.money(acceptedCalc.ext)}</td>
+                  </tr>
+                  ${accepted.show_discount && accepted.discount_amount > 0 ? `
+                  <tr class="border-b text-red-600"><td class="p-1" colspan="2">${esc(accepted.discount_label_type || '値引き')}${accepted.discount_label_text ? `（${esc(accepted.discount_label_text)}）` : ''}</td><td class="p-1 text-right">-${fmt.money(accepted.discount_amount)}</td></tr>
+                  ` : ''}
+                  <tr class="border-b"><td class="p-1 text-ink-500" colspan="2">小計（外税）</td><td class="p-1 text-right">${fmt.money(acceptedCalc.extAD)}</td></tr>
+                  <tr class="border-b"><td class="p-1 text-ink-500" colspan="2">消費税（${TAX_RATE_FIXED}%）</td><td class="p-1 text-right">${fmt.money(acceptedCalc.tax)}</td></tr>
+                  <tr class="font-black bg-ink-700/10"><td class="p-2" colspan="2">合計（税込）</td><td class="p-2 text-right text-sm">${fmt.money(acceptedCalc.total)}</td></tr>
+                </tbody>
+              </table>`;
+            })() : '<p class="text-ink-500 text-xs">明細を1件以上選択してください</p>'}
+
             <div class="mt-4 text-xs">
               <div class="font-bold">備考</div>
-              <div class="whitespace-pre-wrap">${esc(q.memo)}</div>
+              <div class="bg-white border rounded p-2 min-h-[60px] whitespace-pre-wrap">${esc(q.memo)}</div>
             </div>
-            <div class="mt-4 text-[11px] border-t pt-2">
+            <div class="mt-4 text-xs border-t pt-2">
               <div class="font-bold">お振込先</div>
               <div>① ${esc(DB.settings().bank_info_1 || '')}</div>
               <div>② ${esc(DB.settings().bank_info_2 || '')}</div>
@@ -2202,25 +2546,31 @@ Screens.quote = {
       </div>
     `;
   },
-  renderPattern(p, q) {
+  renderPattern(p, q, order) {
+    // v2.8: 明細1:1対応。対象明細selectや採用ラジオは廃止
+    const items = order?.items || [];
+    const idx = items.findIndex(it => it.id === p.item_id);
+    const item = items[idx];
+    const typeBadge = item?.type === 'page' ? '<span class="text-xs text-purple-700 font-bold">ページ物</span>' : '<span class="text-xs text-ink-500">通常</span>';
     return `
       <div class="border rounded p-3 ${p.accepted?'bg-brand/5 border-brand':'bg-white'}" data-pid="${p.id}">
-        <div class="flex items-center gap-2">
-          <input type="radio" name="qaccept" value="${p.id}" ${p.accepted?'checked':''} class="qp-accept">
-          <input class="flex-1 border rounded px-2 py-1 text-sm font-bold qp-label" value="${esc(p.label)}" placeholder="例: 1000枚 / 両面カラー">
-          <input type="number" class="w-32 border rounded px-2 py-1 text-right font-mono qp-amount" value="${p.amount || 0}" min="0" step="100">
+        <div class="flex items-center gap-2 flex-wrap">
+          <input type="radio" name="qaccept" value="${p.id}" ${p.accepted?'checked':''} class="qp-accept cursor-pointer">
+          <span class="text-xs font-black bg-ink-700 text-white px-2 py-0.5 rounded">明細 #${idx+1}</span>
+          ${typeBadge}
+          <span class="flex-1 font-bold text-sm">${esc(item?.title || '(品名未設定)')}</span>
+          <input type="number" class="w-28 border rounded px-2 py-1 text-right font-mono qp-amount" value="${p.amount || 0}" min="0" step="100">
           <span class="text-xs">円</span>
-          ${q.patterns.length > 1 ? `<button class="text-xs text-red-500 qp-remove">削除</button>` : ''}
         </div>
         <div class="mt-2 flex items-center gap-3 text-xs">
           <label class="flex items-center gap-1 cursor-pointer">
             <input type="checkbox" class="qp-show-discount" ${p.show_discount?'checked':''}> 値引きを表示
           </label>
-          <div class="flex items-center gap-1" style="display:${p.show_discount?'flex':'none'}">
+          <div class="flex items-center gap-1 flex-wrap" style="display:${p.show_discount?'flex':'none'}">
             <select class="border rounded px-1 py-0.5 text-xs qp-discount-type">
               ${DISCOUNT_LABEL_TYPES.map(t => `<option ${p.discount_label_type===t?'selected':''}>${t}</option>`).join('')}
             </select>
-            <input type="number" class="w-20 border rounded px-1 py-0.5 text-right font-mono text-xs qp-discount-amount" value="${p.discount_amount||0}" min="0" step="100" placeholder="金額">
+            <input type="number" class="w-24 border rounded px-1 py-0.5 text-right font-mono text-xs qp-discount-amount" value="${p.discount_amount||0}" min="0" step="100" placeholder="金額">
             <input class="w-40 border rounded px-1 py-0.5 text-xs qp-discount-text" placeholder="名目（自由）" value="${esc(p.discount_label_text||'')}">
           </div>
         </div>
@@ -2238,26 +2588,11 @@ Screens.quote = {
       toast('発行済にしました', 'ok');
       App.render();
     });
-    // v2: パターン操作
-    $('#btn-add-pattern')?.addEventListener('click', () => {
-      DB.addQuotePattern(id);
-      App.render();
-    });
-    $('#btn-keep-accepted')?.addEventListener('click', () => {
-      if (!confirm('採用案以外のパターンを削除します。よろしいですか？')) return;
-      DB.keepOnlyAcceptedPatterns(id);
-      toast('採用案のみに整理しました', 'ok');
-      App.render();
-    });
+    // v2.9: 採用パターンのラジオ切替
     $$('.qp-accept').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
       DB.acceptQuotePattern(id, pid);
-      toast('採用案を変更しました', 'ok');
       App.render();
-    }));
-    $$('.qp-label').forEach(el => el.addEventListener('change', (e) => {
-      const pid = el.closest('[data-pid]').dataset.pid;
-      DB.updateQuotePattern(id, pid, { label: e.target.value });
     }));
     $$('.qp-amount').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
@@ -2281,12 +2616,6 @@ Screens.quote = {
     $$('.qp-discount-text').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
       DB.updateQuotePattern(id, pid, { discount_label_text: e.target.value });
-    }));
-    $$('.qp-remove').forEach(el => el.addEventListener('click', (e) => {
-      const pid = el.closest('[data-pid]').dataset.pid;
-      if (!confirm('このパターンを削除しますか？')) return;
-      DB.removeQuotePattern(id, pid);
-      App.render();
     }));
   },
 };
@@ -2317,8 +2646,8 @@ Screens.factory = {
         ${cols.map(col => `
         <div class="rounded p-3 ${col.status==='待機'?'bg-ink-300/20':col.status==='作業中'?'bg-yellow-400/20':col.status==='完成'?'bg-ok/10':'bg-ink-900/10'}" data-col="${col.status}">
           <div class="flex justify-between items-center mb-3">
-            <div class="font-black ${col.status==='完成'?'text-ok-dark':col.status==='納品済み'?'text-ink-900':''}">${col.status}</div>
-            <span class="${col.status==='待機'?'bg-ink-700':col.status==='作業中'?'bg-yellow-500':col.status==='完成'?'bg-ok':'bg-ink-900'} text-white text-xs px-2 py-0.5 rounded-full font-bold">${col.items.length}</span>
+            <div class="font-black ${col.status==='待機'?'text-ink-700':col.status==='作業中'?'text-yellow-600':col.status==='完成'?'text-ok-dark':'text-ink-900'}">${col.status}</div>
+            <span class="font-black ${col.status==='待機'?'text-ink-700':col.status==='作業中'?'text-yellow-600':col.status==='完成'?'text-ok-dark':'text-ink-900'}">${col.items.length}</span>
           </div>
           <div class="space-y-2 kanban-col min-h-[200px]" data-status="${col.status}">
             ${col.items.map(({order: o, fr}) => {
@@ -2326,7 +2655,7 @@ Screens.factory = {
               const urgent = o.delivery_date_start && dayDiff(o.delivery_date_start, TODAY) <= 1 && dayDiff(o.delivery_date_start, TODAY) >= 0;
               const borderColor = col.status==='待機'?'border-ink-500':col.status==='作業中'?'border-yellow-500':col.status==='完成'?'border-ok':'border-ink-900';
               return `
-              <div class="bg-white rounded p-3 shadow-sm border-l-4 ${borderColor} text-sm cursor-pointer kanban-card" draggable="true" data-order-id="${o.id}" onclick="location.hash='#order/${o.id}'">
+              <div class="bg-white rounded p-3 shadow-sm border-2 ${borderColor} text-sm cursor-pointer kanban-card" draggable="true" data-order-id="${o.id}" onclick="location.hash='#order/${o.id}'">
                 <div class="flex justify-between">
                   <span class="font-mono text-xs text-ink-500">${esc(o.order_number)}</span>
                   ${overdue ? `<span class="text-xs text-purple-600 font-bold">${overdue}</span>`
@@ -2336,7 +2665,7 @@ Screens.factory = {
                 <div class="font-bold mt-1 truncate">${esc(o.title || fmt.customer(o.customer_id))}</div>
                 <div class="text-xs text-ink-500 truncate">${esc(fmt.customer(o.customer_id))} / ${esc(fmt.paper(o.items[0]?.paper_id))} ${o.items[0]?.quantity}枚</div>
                 ${o.tags && o.tags.length ? `<div class="mt-1">${fmt.tags(o.tags)}</div>` : ''}
-                <div class="text-xs text-ink-500 mt-1">状態: <span class="st st-${esc(o.status)}">${esc(o.status)}</span>${o.data_status === '未受領' ? `<span class="ml-2 text-red-600 font-bold">⚠ データ未受領</span>` : ''}</div>
+                <div class="text-xs mt-1"><span class="st st-${esc(o.status)}">${esc(o.status)}</span>${o.data_status === '未受領' ? `<span class="ml-2 text-red-600 font-bold">データ未受領</span>` : ''}</div>
               </div>`;
             }).join('') || `<div class="text-center text-ink-500 text-xs py-8">（空）</div>`}
           </div>
@@ -2395,6 +2724,8 @@ Screens.factory = {
 // ---------- Customers List (v2: 検索・新規追加ポップアップ・累計売上内訳) ----------
 Screens.customers = {
   filter: { q: '', kind: '' },
+  page: 1,
+  PAGE_SIZE: 50,
   // 顧客ごとの売上集計（税抜・税・税込）
   computeSales(customer_id) {
     const own = DB.all('orders').filter(o => o.customer_id === customer_id && o.status !== 'キャンセル' && o.status !== '見積もり段階');
@@ -2414,26 +2745,28 @@ Screens.customers = {
     const f = this.filter;
     const list = all.filter(c => {
       const name = (c.company_name || c.individual_name || '').toLowerCase();
-      if (f.q) {
-        const q = f.q.toLowerCase();
-        const blob = `${name} ${c.phone||''} ${c.fax||''} ${c.area||''} ${c.address||''} ${c.notes||''}`.toLowerCase();
-        if (!blob.includes(q)) return false;
-      }
+      // v2.5: 検索対象は顧客名のみ
+      if (f.q && !name.includes(f.q.toLowerCase())) return false;
       if (f.kind && c.kind !== f.kind) return false;
       return true;
     });
+    // v2.11: ページネーション
+    const totalPages = Math.max(1, Math.ceil(list.length / this.PAGE_SIZE));
+    const page = Math.min(Math.max(1, this.page), totalPages);
+    this.page = page;
+    const pageList = list.slice((page-1)*this.PAGE_SIZE, page*this.PAGE_SIZE);
     return `
       <div class="flex justify-between items-center mb-4">
         <div>
           <h1 class="text-2xl font-black">顧客一覧</h1>
-          <p class="text-sm text-ink-500">${list.length} / ${all.length} 件</p>
+          <p class="text-sm text-ink-500">${list.length} / ${all.length} 件 <span class="ml-2">(${list.length>0?(page-1)*this.PAGE_SIZE+1:0}〜${Math.min(page*this.PAGE_SIZE, list.length)}件を表示)</span></p>
         </div>
         <button id="btn-new-customer-top" class="bg-brand text-white px-5 py-2 rounded font-bold shadow-sm">+ 新規顧客追加</button>
       </div>
       <div class="bg-white p-4 rounded shadow-sm mb-4 grid grid-cols-4 gap-3 text-sm">
         <div class="col-span-2">
-          <label class="block text-xs font-bold mb-1">🔍 検索（顧客名・電話・FAX・住所・地域・メモ）</label>
-          <input id="cf-q" class="w-full border rounded px-2 py-1.5" value="${esc(f.q)}" placeholder="二本松, タクシー, 0243…">
+          <label class="block text-xs font-bold mb-1">🔍 顧客名検索</label>
+          <input id="cf-q" class="w-full border rounded px-2 py-1.5" value="${esc(f.q)}" placeholder="例: タクシー, 高拡散, 山田">
         </div>
         <div class="col-span-2">
           <label class="block text-xs font-bold mb-1">種別</label>
@@ -2458,13 +2791,13 @@ Screens.customers = {
           </tr></thead>
           <tbody>
             ${list.length === 0 ? `<tr><td colspan="9" class="text-center py-10 text-ink-500">該当なし</td></tr>` :
-              list.map(c => {
+              pageList.map(c => {
               const s = this.computeSales(c.id);
               return `
               <tr class="border-t hover:bg-brand/5 cursor-pointer" onclick="location.hash='#customer/${c.id}'">
                 <td class="px-3 py-2 font-bold">${esc(c.company_name || c.individual_name)}</td>
                 <td class="px-3 py-2">
-                  <span class="text-xs px-2 py-0.5 rounded font-bold ${c.kind==='地域・団体'?'bg-blue-100 text-blue-700':c.kind==='企業・個人'?'bg-amber-100 text-amber-800':'bg-ink-300/40'}">${esc(c.kind || '—')}</span>
+                  <span class="font-bold ${c.kind==='地域・団体'?'text-blue-700':c.kind==='企業・個人'?'text-amber-800':'text-ink-500'}">${esc(c.kind || '—')}</span>
                 </td>
                 <td class="px-3 py-2">${esc(c.area || '')}</td>
                 <td class="px-3 py-2 font-mono text-xs">${esc(c.phone || '')}</td>
@@ -2477,6 +2810,12 @@ Screens.customers = {
             }).join('')}
           </tbody>
         </table>
+        ${totalPages > 1 ? `
+        <div class="flex justify-center items-center gap-3 p-3 text-sm border-t">
+          <button id="cpg-prev" class="px-3 py-1 border rounded ${page<=1?'opacity-40 cursor-not-allowed':'hover:bg-ink-700/5'}" ${page<=1?'disabled':''}>← 前</button>
+          <span class="font-bold">ページ ${page} / ${totalPages}</span>
+          <button id="cpg-next" class="px-3 py-1 border rounded ${page>=totalPages?'opacity-40 cursor-not-allowed':'hover:bg-ink-700/5'}" ${page>=totalPages?'disabled':''}>次 →</button>
+        </div>` : ''}
       </div>
     `;
   },
@@ -2486,16 +2825,19 @@ Screens.customers = {
         q: $('#cf-q')?.value || '',
         kind: $('#cf-kind')?.value || '',
       };
+      this.page = 1;  // v2.11: フィルタ変更時はページリセット
       App.render();
     };
     $('#cf-q')?.addEventListener('input', debounce(apply, 300));
     $('#cf-kind')?.addEventListener('change', apply);
     $('#btn-new-customer-top')?.addEventListener('click', () => Screens.customers.openCreateModal());
+    $('#cpg-prev')?.addEventListener('click', () => { this.page = Math.max(1, this.page - 1); App.render(); });
+    $('#cpg-next')?.addEventListener('click', () => { this.page = this.page + 1; App.render(); });
   },
   openCreateModal() {
     openModal(`
       <div class="p-6">
-        <h2 class="text-xl font-black mb-4">+ 新規顧客追加</h2>
+        <h2 class="text-2xl font-black mb-4">+ 新規顧客追加</h2>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div class="col-span-2"><label class="block text-xs font-bold mb-1">会社名</label><input id="cc-company" class="w-full border rounded px-2 py-1.5"></div>
           <div class="col-span-2"><label class="block text-xs font-bold mb-1">個人名（個人の場合）</label><input id="cc-indiv" class="w-full border rounded px-2 py-1.5"></div>
@@ -2555,64 +2897,61 @@ Screens.customer = {
             <h1 class="text-2xl font-black">${esc(c.company_name || c.individual_name)}</h1>
             <div class="text-sm text-ink-500 mt-1 flex flex-wrap gap-x-3 gap-y-1 items-center">
               <span class="font-bold text-ink-700">種別:</span>
-              <span class="text-xs px-2 py-0.5 rounded font-bold ${c.kind==='地域・団体'?'bg-blue-100 text-blue-700':c.kind==='企業・個人'?'bg-amber-100 text-amber-800':'bg-ink-300/40'}">${esc(c.kind || '—')}</span>
+              <span class="font-bold ${c.kind==='地域・団体'?'text-blue-700':c.kind==='企業・個人'?'text-amber-800':'text-ink-500'}">${esc(c.kind || '—')}</span>
               <span class="ml-2">地域: ${esc(c.area || '')}</span>
-              <span>TEL: ${esc(c.phone || '')}</span>
-              ${c.fax ? `<span>FAX: ${esc(c.fax)}</span>` : ''}
+              <span>TEL: ${esc(c.phone || '—')}</span>
+              <span>FAX: ${esc(c.fax || '—')}</span>
               ${c.address ? `<span>${esc(c.address)}</span>` : ''}
             </div>
             ${c.notes ? `<div class="mt-2 text-xs text-ink-500">メモ: ${esc(c.notes)}</div>` : ''}
           </div>
           <div class="flex gap-2">
-            <button id="btn-edit-customer" class="border px-3 py-2 rounded text-sm">✎ 顧客編集</button>
+            <button id="btn-edit-customer" class="border px-3 py-2 rounded text-sm">顧客編集</button>
             <a href="#order/new" class="bg-brand text-white px-4 py-2 rounded text-sm font-bold" id="btn-new-with">+ この顧客で新規受注</a>
           </div>
         </div>
         <div class="grid grid-cols-5 border-t text-sm">
-          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計受注</div><div class="text-xl font-black">${sales.count}件</div></div>
+          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計受注</div><div class="text-2xl font-black">${sales.count}件</div></div>
           <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">税抜小計</div><div class="text-lg font-black font-mono">${fmt.money(sales.subtotalEx)}</div></div>
           <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">消費税</div><div class="text-lg font-black font-mono text-ink-500">${fmt.money(sales.tax)}</div></div>
-          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計売上（税込）</div><div class="text-xl font-black text-brand">${fmt.money(sales.total)}</div></div>
+          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計売上（税込）</div><div class="text-2xl font-black text-brand">${fmt.money(sales.total)}</div></div>
           <div class="p-3"><div class="text-xs font-bold text-ink-500">最終納品</div><div class="text-lg font-black">${sales.lastDelivered ? fmt.dateW(sales.lastDelivered) : '—'}</div></div>
         </div>
       </div>
       <div class="bg-white rounded shadow-sm mb-4">
         <div class="p-4 border-b flex justify-between items-center">
-          <h3 class="font-bold">📞 連絡履歴 (${contacts.length}件)</h3>
-          <button id="btn-add-contact" class="bg-brand text-white px-3 py-1 rounded text-xs font-bold">+ 追加</button>
+          <h3 class="font-bold">メモ</h3>
+          <button id="btn-save-memo" class="bg-brand text-white px-3 py-1 rounded text-xs font-bold">保存</button>
         </div>
-        <ul class="text-sm divide-y max-h-60 overflow-auto">
-          ${contacts.length === 0 ? `<li class="px-4 py-4 text-ink-500 text-center text-xs">連絡履歴なし</li>` :
-            contacts.map(l => `
-            <li class="px-4 py-2">
-              <div class="flex justify-between text-xs text-ink-500">
-                <span><b>${esc(l.contact_type)}</b> · ${esc(fmt.user(l.user_id))}</span>
-                <span>${fmt.dateTime(l.logged_at)}</span>
-              </div>
-              <div>${esc(l.summary)}</div>
-            </li>`).join('')}
-        </ul>
+        <div class="p-4">
+          <textarea id="customer-memo" class="w-full border rounded px-2 py-1.5 text-sm bg-ink-300/30" rows="5" placeholder="顧客に関するメモ・備考・連絡履歴など">${esc(c.notes || '')}</textarea>
+        </div>
       </div>
 
       <div class="bg-white rounded shadow-sm">
         <div class="p-4 border-b"><h3 class="font-bold">過去発注履歴</h3></div>
         <table class="w-full text-sm">
           <thead class="bg-ink-700/5"><tr class="text-left">
-            <th class="px-3 py-2">受付日</th><th class="px-3 py-2">納品日</th><th class="px-3 py-2">受注番号</th><th class="px-3 py-2">品名 / 仕様</th><th class="px-3 py-2">数量</th><th class="px-3 py-2 text-right">金額</th><th class="px-3 py-2">状態</th><th class="px-3 py-2"></th>
+            <th class="px-3 py-2">受注番号</th><th class="px-3 py-2">受付日</th><th class="px-3 py-2">品名 / タグ</th><th class="px-3 py-2 text-right">数量</th><th class="px-3 py-2">納品日</th><th class="px-3 py-2 text-right">金額</th><th class="px-3 py-2">状態</th><th class="px-3 py-2"></th>
           </tr></thead>
           <tbody>
             ${own.length === 0 ? `<tr><td colspan="8" class="text-center py-8 text-ink-500">過去の発注はありません</td></tr>` :
-              own.map(o => `
+              own.map(o => {
+                const totalQty = o.items.reduce((s,it)=> s + (+it.quantity||0), 0);
+                return `
               <tr class="border-t hover:bg-brand/5">
-                <td class="px-3 py-2">${fmt.dateFull(o.received_date)}</td>
-                <td class="px-3 py-2 ${o.delivered_date?'':'text-ink-500'}">${o.delivered_date ? fmt.dateFull(o.delivered_date) : '—'}</td>
                 <td class="px-3 py-2 font-mono text-xs"><a class="hover:underline text-brand font-bold" href="#order/${o.id}">${esc(o.order_number)}</a></td>
-                <td class="px-3 py-2 text-xs"><span class="font-bold">${esc(o.title || '—')}</span><br>${esc(fmt.paper(o.items[0]?.paper_id))} / ${esc(fmt.ink(o.items[0]?.ink_pattern))}</td>
-                <td class="px-3 py-2">${o.items.reduce((s,i)=>s+i.quantity,0)}</td>
+                <td class="px-3 py-2">${fmt.dateWY(o.received_date)}</td>
+                <td class="px-3 py-2 text-xs">
+                  <div class="font-bold">${esc(o.title || '—')}</div>
+                  ${o.tags && o.tags.length ? `<div class="mt-1">${fmt.tags(o.tags)}</div>` : ''}
+                </td>
+                <td class="px-3 py-2 text-right font-mono">${totalQty}</td>
+                <td class="px-3 py-2 ${o.delivered_date?'':'text-ink-500'}">${o.delivered_date ? fmt.dateWY(o.delivered_date) : '—'}</td>
                 <td class="px-3 py-2 text-right font-mono">${fmt.money(o.total_amount)}</td>
                 <td class="px-3 py-2"><span class="st st-${esc(o.status)}">${esc(o.status)}</span></td>
                 <td class="px-3 py-2"><button class="text-brand text-xs font-bold btn-copy-order" data-src="${o.id}">この仕様でコピー</button></td>
-              </tr>`).join('')}
+              </tr>`;}).join('')}
           </tbody>
         </table>
       </div>
@@ -2634,39 +2973,11 @@ Screens.customer = {
       location.hash = '#order/new';
       toast('仕様をコピーしました', 'ok');
     }));
-    $('#btn-add-contact')?.addEventListener('click', () => {
-      openModal(`
-        <div class="p-6">
-          <h2 class="text-xl font-black mb-4">📞 連絡履歴を追加</h2>
-          <div class="space-y-3 text-sm">
-            <div>
-              <label class="block text-xs font-bold mb-1">連絡種別</label>
-              <select id="ct-type" class="w-full border rounded px-2 py-1.5">
-                ${CONTACT_TYPES.map(t => `<option>${t}</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold mb-1">内容・要約</label>
-              <textarea id="ct-summary" class="w-full border rounded px-2 py-1.5" rows="4" placeholder="例: 名刺の追加発注について。次回4月末に500枚予定とのこと"></textarea>
-            </div>
-          </div>
-          <div class="flex justify-end gap-2 mt-4">
-            <button id="ct-cancel" class="border px-4 py-2 rounded">キャンセル</button>
-            <button id="ct-save" class="bg-brand text-white px-4 py-2 rounded font-bold">保存</button>
-          </div>
-        </div>
-      `, () => {
-        $('#ct-cancel').addEventListener('click', closeModal);
-        $('#ct-save').addEventListener('click', () => {
-          const type = $('#ct-type').value;
-          const summary = $('#ct-summary').value.trim();
-          if (!summary) { toast('内容を入力してください', 'err'); return; }
-          DB.addContactLog(id, type, summary);
-          closeModal();
-          App.render();
-          toast('連絡履歴を追加しました', 'ok');
-        });
-      });
+    // v2.17: 顧客メモ保存（連絡履歴UIから置換）
+    $('#btn-save-memo')?.addEventListener('click', () => {
+      const v = $('#customer-memo').value;
+      DB.updateCustomer(id, { notes: v });
+      toast('メモを保存しました', 'ok');
     });
   },
   // v2: 顧客編集モーダル
@@ -2675,7 +2986,7 @@ Screens.customer = {
     if (!c) return;
     openModal(`
       <div class="p-6">
-        <h2 class="text-xl font-black mb-4">顧客編集</h2>
+        <h2 class="text-2xl font-black mb-4">顧客編集</h2>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div class="col-span-2"><label class="block text-xs font-bold mb-1">会社名</label><input id="ec-company" class="w-full border rounded px-2 py-1.5" value="${esc(c.company_name || '')}"></div>
           <div class="col-span-2"><label class="block text-xs font-bold mb-1">個人名</label><input id="ec-indiv" class="w-full border rounded px-2 py-1.5" value="${esc(c.individual_name || '')}"></div>
@@ -2717,66 +3028,84 @@ Screens.customer = {
   },
 };
 
-// ---------- Papers ----------
-Screens.papers = {
-  render() {
-    const list = DB.all('papers');
-    return `
-      <div class="mb-4"><h1 class="text-2xl font-black">用紙マスタ</h1><p class="text-sm text-ink-500">本番ではCSV一括インポート機能あり</p></div>
-      <div class="bg-white rounded shadow-sm">
-        <table class="w-full text-sm">
-          <thead class="bg-ink-700/5"><tr class="text-left">
-            <th class="px-3 py-2">用紙名</th><th class="px-3 py-2">質</th><th class="px-3 py-2">色</th><th class="px-3 py-2 text-right">厚さ(kg)</th><th class="px-3 py-2">サイズ</th><th class="px-3 py-2 text-right">単価</th><th class="px-3 py-2">メジャー</th>
-          </tr></thead>
-          <tbody>
-            ${list.map(p => `
-            <tr class="border-t">
-              <td class="px-3 py-2 font-bold">${esc(p.paper_name)}</td>
-              <td class="px-3 py-2">${esc(p.quality)}</td>
-              <td class="px-3 py-2">${esc(p.color)}</td>
-              <td class="px-3 py-2 text-right font-mono">${p.thickness_kg}</td>
-              <td class="px-3 py-2">${esc(p.paper_size)}</td>
-              <td class="px-3 py-2 text-right font-mono">${fmt.money(p.unit_price)}/枚</td>
-              <td class="px-3 py-2">${p.is_major ? '⭐' : ''}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  },
-};
+// v2.9: 用紙マスタ画面は廃止（DB側のデータは残置）
 
-// ---------- Settings ----------
-Screens.settings = {
+// v2.6: 設定画面は削除（書出/リセットはサイドバーに残す）
+
+// ---------- Login ----------
+Screens.login = {
   render() {
+    const users = DB.all('users');
     return `
-      <h1 class="text-2xl font-black mb-4">設定</h1>
-      <div class="bg-white rounded shadow-sm p-6 space-y-4 max-w-xl">
-        <div>
-          <h3 class="font-bold mb-2">データ操作</h3>
-          <div class="flex gap-2">
-            <button id="set-export" class="border px-4 py-2 rounded">JSON書出</button>
-            <label class="border px-4 py-2 rounded cursor-pointer">JSON取込<input id="set-import" type="file" accept=".json" class="hidden"></label>
-            <button id="set-reset" class="border border-red-300 text-red-500 px-4 py-2 rounded">初期データに戻す</button>
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-12 h-12 bg-brand rounded flex items-center justify-center font-black text-2xl text-white">謄</div>
+            <div>
+              <div class="font-black">渡辺謄写堂</div>
+              <div class="text-xs text-ink-500">業務管理システム ログイン</div>
+            </div>
           </div>
-        </div>
-        <div>
-          <h3 class="font-bold mb-2">統計</h3>
-          <ul class="text-sm space-y-1">
-            <li>顧客: ${DB.all('customers').length}件</li>
-            <li>受注: ${DB.all('orders').length}件</li>
-            <li>見積: ${DB.all('quotes').length}件</li>
-            <li>用紙: ${DB.all('papers').length}件</li>
-            <li>変更履歴: ${DB.all('change_logs').length}件</li>
-          </ul>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="block text-xs font-bold mb-1">ユーザー</label>
+              <select id="login-user" class="w-full border rounded px-2 py-2">
+                ${users.map(u => `<option value="${u.id}">${esc(u.name)}（${esc(u.role)}）</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">パスワード</label>
+              <input id="login-pass" type="password" class="w-full border rounded px-2 py-2" placeholder="••••••">
+            </div>
+            <div class="text-right">
+              <a href="#password_reset" class="text-xs text-brand hover:underline">パスワードをお忘れの方</a>
+            </div>
+            <button id="btn-login" class="w-full bg-brand text-white px-4 py-2 rounded font-bold mt-2">ログイン</button>
+          </div>
         </div>
       </div>
     `;
   },
   bind() {
-    $('#set-export')?.addEventListener('click', () => exportJson());
-    $('#set-reset')?.addEventListener('click', () => { if (confirm('全データを初期状態に戻しますか？')) { DB.reset(); App.render(); toast('初期化しました', 'ok'); } });
-    $('#set-import')?.addEventListener('change', (e) => importJson(e.target.files[0]));
+    $('#btn-login')?.addEventListener('click', () => {
+      const uid = $('#login-user').value;
+      const pass = $('#login-pass').value;
+      if (!pass) { toast('パスワードを入力してください', 'err'); return; }
+      App.currentUserId = uid;
+      if (typeof refreshUserLink === 'function') refreshUserLink();
+      toast(`${fmt.user(uid)} としてログインしました`, 'ok');
+      location.hash = '#dashboard';
+    });
+  },
+};
+
+// ---------- Password Reset ----------
+Screens.password_reset = {
+  render() {
+    return `
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
+          <a href="#login" class="text-xs text-ink-500">← ログインに戻る</a>
+          <h1 class="text-2xl font-black mt-2 mb-4">パスワードリセット</h1>
+          <p class="text-xs text-ink-500 mb-4">登録メールアドレス宛にリセット用リンクをお送りします。</p>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="block text-xs font-bold mb-1">メールアドレス</label>
+              <input id="pr-email" type="email" class="w-full border rounded px-2 py-2" placeholder="example@toshado.jp">
+            </div>
+            <button id="btn-pr-send" class="w-full bg-brand text-white px-4 py-2 rounded font-bold mt-2">リセットメールを送信</button>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+  bind() {
+    $('#btn-pr-send')?.addEventListener('click', () => {
+      const email = $('#pr-email').value.trim();
+      if (!email) { toast('メールアドレスを入力してください', 'err'); return; }
+      toast('リセット用リンクを送信しました（モック動作）', 'ok');
+      setTimeout(() => { location.hash = '#login'; }, 800);
+    });
   },
 };
 
@@ -2794,12 +3123,12 @@ Screens.print = {
           <h1 class="text-2xl font-black">受注票印刷ビュー</h1>
           <p class="text-sm text-ink-500">A4横 / クリアファイル回覧用 / Ctrl+P または「印刷」ボタンで</p>
         </div>
-        <button id="btn-print" class="bg-ink-900 text-white px-4 py-2 rounded font-bold">🖨 印刷</button>
+        <button id="btn-print" class="bg-ink-900 text-white px-4 py-2 rounded font-bold">印刷</button>
       </div>
       <div class="bg-white border-2 border-ink-300/50 p-6 mx-auto print-page" style="width:297mm; max-width:100%; min-height:210mm;">
         <div class="flex justify-between border-b-4 border-ink-900 pb-2 mb-3">
           <div>
-            <div class="text-3xl font-black">受 注 票</div>
+            <div class="text-2xl font-black">受 注 票</div>
             <div class="text-sm font-mono">No. ${esc(o.order_number)}</div>
           </div>
           <div class="text-right">
@@ -2817,7 +3146,7 @@ Screens.print = {
             <td class="border p-2 bg-ink-700/5 font-bold w-24">顧 客</td>
             <td class="border p-2 font-bold text-lg" colspan="3">${esc(fmt.customer(o.customer_id))}${customer?.company_name ? ' 御中' : ' 様'}</td>
             <td class="border p-2 bg-ink-700/5 font-bold w-24">納 期</td>
-            <td class="border p-2 font-bold ${o.delivery_date_start === TODAY ? 'text-red-600' : ''} text-lg">${esc(fmt.delivery(o))}${o.delivery_date_start === TODAY ? ' ★本日必着' : ''}${fmt.overdueText(o) ? ` <span class="st st-経過">${fmt.overdueText(o)}</span>` : ''}</td>
+            <td class="border p-2 font-bold ${o.delivery_date_start === TODAY ? 'text-red-600' : ''} text-lg">${esc(fmt.delivery(o))}${o.delivery_date_start === TODAY ? ' 本日必着' : ''}${fmt.overdueText(o) ? ` <span class="st st-経過">${fmt.overdueText(o)}</span>` : ''}</td>
           </tr>
           <tr><td class="border p-2 bg-ink-900 text-white font-bold text-center" colspan="6">製 作 明 細</td></tr>
           ${o.items.map((it, i) => {
@@ -2825,7 +3154,7 @@ Screens.print = {
               const size = it.page_size === '自由' ? (it.page_size_custom || '自由') : it.page_size;
               return `
               <tr>
-                <td class="border p-2 bg-purple-100 font-bold w-20">#${i+1} 📖ページ物</td>
+                <td class="border p-2 bg-purple-100 font-bold w-20">#${i+1} ページ物</td>
                 <td class="border p-2 font-bold" colspan="5">${esc(it.title || '—')}</td>
               </tr>
               <tr>
@@ -2914,13 +3243,13 @@ Router.route = function() {
   }
   const parts = hash.split('/');
   if (parts[0] === 'order' && parts[1] === 'new') {
-    // 新規起票: draft を初期化（既に customer_id 等が事前セットされている場合は保持）
     if (!Screens.order_new.draft || Screens.order_new.isEditMode) Screens.order_new.initDraft();
     this.currentScreen = 'order_new';
     this.params = [];
   } else if (parts[0] === 'order') {
-    // v2: 受注詳細も新規起票と同一画面（編集モード）で開く
-    Screens.order_new.initFromOrder(parts[1]);
+    // v2.6: #order/:id → view, #order/:id/edit → edit
+    const mode = parts[2] === 'edit' ? 'edit' : 'view';
+    Screens.order_new.initFromOrder(parts[1], mode);
     this.currentScreen = 'order_new';
     this.params = parts.slice(1);
   } else if (parts[0] === 'customer') {
@@ -2940,46 +3269,58 @@ Router.route = function() {
   if (this.currentScreen === 'orders' && query.filter) {
     Screens.orders.applyQuick(query.filter);
   }
-  App.render();
+  // v2.14: 画面遷移時のみ最上部へ
+  App.render({ scroll: 'top' });
 };
 
-// ========= Export / Import =========
-function exportJson() {
-  const blob = new Blob([JSON.stringify(DB.data, null, 2)], { type: 'application/json' });
+// ========= Export / Import (v2.6: CSV) =========
+function csvEscape(v) {
+  if (v == null) return '';
+  const s = String(v).replace(/"/g, '""').replace(/\r?\n/g, ' ');
+  return /[,"]/.test(s) ? `"${s}"` : s;
+}
+function toCsv(rows) {
+  return rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+}
+function tableToCsv(name, rows, cols) {
+  return [name, cols.join(',')].concat(rows.map(r => cols.map(c => csvEscape(r[c])).join(','))).join('\r\n');
+}
+function exportCsv() {
+  const sections = [];
+  const dump = (table, cols) => {
+    sections.push(`# ${table}`);
+    sections.push(cols.join(','));
+    DB.all(table).forEach(r => {
+      sections.push(cols.map(c => csvEscape(typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c])).join(','));
+    });
+    sections.push('');
+  };
+  dump('customers', ['id','company_name','individual_name','kind','area','phone','fax','address','notes']);
+  dump('orders', ['id','order_number','title','customer_id','received_date','delivered_date','first_proof_date','used_date','received_by_id','reception_method','delivery_type','delivery_date_start','delivery_date_end','status','memo','total_amount','data_status','discount_amount','discount_reason','discount_label_type','tags','items']);
+  dump('quotes', ['id','quote_number','order_id','item_id','issued_date','valid_until','total_amount','send_method','status','memo','patterns']);
+  dump('papers', ['id','paper_name','quality','color','thickness_kg','paper_size','unit_price','is_major']);
+  dump('users', ['id','name','role','email']);
+  const blob = new Blob(['﻿' + sections.join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `watanabe_db_${TODAY}.json`;
+  a.download = `watanabe_db_${TODAY}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
-function importJson(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      DB.data = data;
-      DB.save();
-      toast('取込完了', 'ok');
-      App.render();
-    } catch (e) { toast('JSON読込エラー', 'err'); }
-  };
-  reader.readAsText(file);
-}
+// 後方互換: 旧Screens.settings呼出があった場合用に残す
+function exportJson() { return exportCsv(); }
+function importJson() { toast('現在はCSV取込のみ対応', 'err'); }
 
 // ========= Init =========
 DB.load();
-// populate user selector
-const userSel = $('#current-user');
-DB.all('users').forEach(u => {
-  const opt = document.createElement('option');
-  opt.value = u.id; opt.textContent = `${u.name} (${u.role})`;
-  userSel.appendChild(opt);
-});
-userSel.value = App.currentUserId;
-userSel.addEventListener('change', (e) => { App.currentUserId = e.target.value; toast(`ログイン: ${fmt.user(App.currentUserId)}`); });
-$('#btn-export').addEventListener('click', exportJson);
+// v2.10: ログイン中ユーザー名を表示するヘルパー（クリックでログイン画面へ）
+function refreshUserLink() {
+  const el = $('#current-user-link');
+  if (el) el.textContent = fmt.user(App.currentUserId) || '—';
+}
+refreshUserLink();
+$('#btn-export')?.addEventListener('click', exportCsv);
 $('#btn-reset').addEventListener('click', () => {
   if (confirm('全データを初期状態に戻しますか？\n入力・変更したデータは全て失われます。')) {
     DB.reset();
