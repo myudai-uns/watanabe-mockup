@@ -782,6 +782,11 @@ const fmt = {
     return `<span style="display:inline-block;background:#707070;color:white;font-size: inherit;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:3px;white-space:nowrap;">${esc(name)}</span>`;
   },
   tags(arr) { return (arr || []).map(t => fmt.tagBadge(t)).join(''); },
+  // v3: 値引きの表示名目を解決（自由記載=入力テキスト / JA等=その名称 / 既定=値引き）
+  discountLabel(type, text) {
+    if (type === '自由記載') return (text && text.trim()) ? text.trim() : '値引き';
+    return type || '値引き';
+  },
 };
 
 function calcItemPrice(item) {
@@ -2529,7 +2534,7 @@ Screens.quote = {
                     <td class="p-1 text-right">${fmt.money(acceptedCalc.ext)}</td>
                   </tr>
                   ${accepted.show_discount && accepted.discount_amount > 0 ? `
-                  <tr class="border-b text-red-600"><td class="p-1" colspan="2">${esc(accepted.discount_label_type || '値引き')}${accepted.discount_label_text ? `（${esc(accepted.discount_label_text)}）` : ''}</td><td class="p-1 text-right">-${fmt.money(accepted.discount_amount)}</td></tr>
+                  <tr class="border-b text-red-600"><td class="p-1" colspan="2">${esc(fmt.discountLabel(accepted.discount_label_type, accepted.discount_label_text))}</td><td class="p-1 text-right">-${fmt.money(accepted.discount_amount)}</td></tr>
                   ` : ''}
                   <tr class="border-b"><td class="p-1 text-ink-500" colspan="2">小計（外税）</td><td class="p-1 text-right">${fmt.money(acceptedCalc.extAD)}</td></tr>
                   <tr class="border-b"><td class="p-1 text-ink-500" colspan="2">消費税（${TAX_RATE_FIXED}%）</td><td class="p-1 text-right">${fmt.money(acceptedCalc.tax)}</td></tr>
@@ -2578,7 +2583,7 @@ Screens.quote = {
               ${DISCOUNT_LABEL_TYPES.map(t => `<option ${p.discount_label_type===t?'selected':''}>${t}</option>`).join('')}
             </select>
             <input type="number" class="w-24 border rounded px-1 py-0.5 text-right font-mono text-xs qp-discount-amount" value="${p.discount_amount||0}" min="0" step="100" placeholder="金額">
-            <input class="w-40 border rounded px-1 py-0.5 text-xs qp-discount-text" placeholder="名目（自由）" value="${esc(p.discount_label_text||'')}">
+            ${p.discount_label_type === '自由記載' ? `<input class="w-40 border rounded px-1 py-0.5 text-xs qp-discount-text" placeholder="名目を入力" value="${esc(p.discount_label_text||'')}">` : ''}
           </div>
         </div>
       </div>`;
@@ -2614,6 +2619,7 @@ Screens.quote = {
     $$('.qp-discount-type').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
       DB.updateQuotePattern(id, pid, { discount_label_type: e.target.value });
+      App.render();  // v3: 名目変更を見積書プレビューと自由記載欄の表示に反映
     }));
     $$('.qp-discount-amount').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
@@ -2623,6 +2629,7 @@ Screens.quote = {
     $$('.qp-discount-text').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
       DB.updateQuotePattern(id, pid, { discount_label_text: e.target.value });
+      App.render();  // v3: 自由記載名目を見積書プレビューに反映
     }));
   },
 };
