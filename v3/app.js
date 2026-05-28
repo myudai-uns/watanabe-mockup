@@ -2633,7 +2633,7 @@ Screens.factory = {
   colStyle(s) {
     return ({
       '見積もり段階': { bg: 'bg-blue-400/10',  text: 'text-blue-800',   border: 'border-blue-400' },
-      '受注':     { bg: 'bg-ink-300/20',   text: 'text-ink-700',    border: 'border-ink-500' },
+      '受注':     { bg: 'bg-red-500/10',    text: 'text-red-700',    border: 'border-red-500' },
       '印刷中':   { bg: 'bg-yellow-400/20', text: 'text-yellow-600', border: 'border-yellow-500' },
       '完成':     { bg: 'bg-ok/10',         text: 'text-ok-dark',    border: 'border-ok' },
       '納品済み': { bg: 'bg-ink-900/10',    text: 'text-ink-900',    border: 'border-ink-900' },
