@@ -36,7 +36,7 @@ const INK_PATTERNS = [
 //     「待機」「キャンセル」「製版中」「校正中」「作業中」「出荷待ち」は廃止（キャンセルは削除で対応）
 const ORDER_STATUSES    = ['見積もり段階','受注','印刷中','完成','納品済み'];
 // 工場カンバンの列（見積もり段階は工程前のため板には出さない）
-const FACTORY_STATUSES  = ['受注','印刷中','完成','納品済み'];
+const FACTORY_STATUSES  = ['見積もり段階','受注','印刷中','完成','納品済み'];  // v3: カンバンは5列（見積もり段階含む）
 // v3: 旧ステータス値を新5項目へ正規化（シードデータ・旧保存データ両対応）
 function normalizeStatus(s) {
   if (s === '製版中' || s === '校正中' || s === '作業中') return '印刷中';
@@ -1459,9 +1459,9 @@ Screens.order_new = {
     // v2.2: ページ物明細は別レンダー
     if (it.type === 'page') return this.renderPageItem(it, i);
     const { subtotal } = calcItemPrice(it);
-    // v3: 金額入力は税抜/税込を選択可。subtotal は常に税抜で保持し、税込選択時は表示値を換算
-    const subMode = it.subtotal_tax_mode || '税抜';
-    const dispSub = subMode === '税込' ? Math.round((+it.subtotal||0) * (100 + TAX_RATE_FIXED) / 100) : (+it.subtotal||0);
+    // v3: 金額入力は税抜・税込それぞれの入力欄を用意（subtotal は常に税抜で保持）
+    const subEx = +it.subtotal || 0;
+    const subIn = Math.round(subEx * (100 + TAX_RATE_FIXED) / 100);
     return `
       <div class="p-4 ${i > 0 ? 'border-t' : 'border-t'}" data-item-idx="${i}">
         <div class="flex items-center gap-2 mb-2">
@@ -1491,20 +1491,21 @@ Screens.order_new = {
             <label class="block text-xs font-bold mb-1">数量</label>
             <input type="number" min="1" class="w-full border rounded px-2 py-1.5 text-right font-mono item-qty" data-idx="${i}" value="${it.quantity}">
           </div>
-          <div class="col-span-2">
+          <div class="col-span-3">
             <label class="block text-xs font-bold mb-1">インク</label>
             <select class="w-full border rounded px-2 py-1.5 item-ink" data-idx="${i}">
               ${INK_PATTERNS.map(ip => `<option value="${ip.value}" ${it.ink_pattern===ip.value?'selected':''}>${esc(ip.label)}</option>`).join('')}
             </select>
           </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm mt-2">
           <div>
-            <label class="block text-xs font-bold mb-1">
-              <select class="border rounded bg-white px-1 py-0.5 text-xs font-bold item-subtotal-mode" data-idx="${i}">
-                <option value="税抜" ${subMode==='税抜'?'selected':''}>小計（税抜）</option>
-                <option value="税込" ${subMode==='税込'?'selected':''}>小計（税込）</option>
-              </select>
-            </label>
-            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono font-bold text-ink-900 item-subtotal" data-idx="${i}" value="${dispSub}">
+            <label class="block text-xs font-bold mb-1">小計（税抜）</label>
+            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono font-bold text-ink-900 item-subtotal-ex" data-idx="${i}" value="${subEx}">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">小計（税込）</label>
+            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono text-ink-700 item-subtotal-in" data-idx="${i}" value="${subIn}">
           </div>
         </div>
         ${!it.paper_id ? `<div class="mt-2"><input type="text" class="w-full border rounded px-2 py-1.5 text-sm item-paper-other" data-idx="${i}" placeholder="用紙の自由入力（例: 特殊紙XYZ）" value="${esc(it.paper_other_memo)}"></div>` : ''}
@@ -1584,9 +1585,9 @@ Screens.order_new = {
   },
   // v2.2: ページ物明細レンダー
   renderPageItem(it, i) {
-    // v3: 金額入力は税抜/税込を選択可（subtotal は常に税抜で保持）
-    const subMode = it.subtotal_tax_mode || '税抜';
-    const dispSub = subMode === '税込' ? Math.round((+it.subtotal||0) * (100 + TAX_RATE_FIXED) / 100) : (+it.subtotal||0);
+    // v3: 金額入力は税抜・税込それぞれの入力欄（subtotal は常に税抜で保持）
+    const subEx = +it.subtotal || 0;
+    const subIn = Math.round(subEx * (100 + TAX_RATE_FIXED) / 100);
     return `
       <div class="p-4 border-t bg-purple-50/40" data-item-idx="${i}">
         <div class="flex items-center gap-2 mb-2">
@@ -1612,18 +1613,9 @@ Screens.order_new = {
             <label class="block text-xs font-bold mb-1">数量(部)</label>
             <input type="number" min="1" class="w-full border rounded px-2 py-1.5 text-right font-mono item-page-qty" data-idx="${i}" value="${it.quantity}">
           </div>
-          <div class="col-span-2">
+          <div class="col-span-3">
             <label class="block text-xs font-bold mb-1">ページ数</label>
             <input class="w-full border rounded px-2 py-1.5 item-page-count" data-idx="${i}" value="${esc(it.page_count||'')}" placeholder="例: 本文64P + 表紙">
-          </div>
-          <div>
-            <label class="block text-xs font-bold mb-1">
-              <select class="border rounded bg-white px-1 py-0.5 text-xs font-bold item-page-subtotal-mode" data-idx="${i}">
-                <option value="税抜" ${subMode==='税抜'?'selected':''}>小計（税抜）</option>
-                <option value="税込" ${subMode==='税込'?'selected':''}>小計（税込）</option>
-              </select>
-            </label>
-            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono item-page-subtotal" data-idx="${i}" value="${dispSub}">
           </div>
           <div class="col-span-3">
             <label class="block text-xs font-bold mb-1">表紙</label>
@@ -1632,6 +1624,16 @@ Screens.order_new = {
           <div class="col-span-3">
             <label class="block text-xs font-bold mb-1">本文</label>
             <input class="w-full border rounded px-2 py-1.5 item-page-body" data-idx="${i}" value="${esc(it.page_body||'')}" placeholder="例: 上質90kg 1C × 64P">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm mt-2">
+          <div>
+            <label class="block text-xs font-bold mb-1">小計（税抜）</label>
+            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono font-bold text-ink-900 item-page-subtotal-ex" data-idx="${i}" value="${subEx}">
+          </div>
+          <div>
+            <label class="block text-xs font-bold mb-1">小計（税込）</label>
+            <input type="number" min="0" step="100" class="w-full border rounded px-2 py-1.5 text-right font-mono text-ink-700 item-page-subtotal-in" data-idx="${i}" value="${subIn}">
           </div>
         </div>
         <div class="mt-3 p-3 bg-ink-700/5 rounded">
@@ -1681,16 +1683,15 @@ Screens.order_new = {
       $$('.item-paper').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].paper_id = e.target.value; rerenderItems(); updateSummary(); }));
       $$('.item-paper-other').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].paper_other_memo = e.target.value; }));
       $$('.item-qty').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].quantity = +e.target.value || 0; updateSummary(); }));
-      $$('.item-subtotal').forEach(el => el.addEventListener('change', (e) => {
-        const it = d.items[+e.target.dataset.idx];
-        const v = +e.target.value || 0;
-        // v3: 税込入力時は税抜へ換算して保持
-        it.subtotal = (it.subtotal_tax_mode === '税込') ? Math.round(v * 100 / (100 + TAX_RATE_FIXED)) : v;
-        updateSummary();
+      // v3: 小計は税抜・税込それぞれの入力欄。どちらを入力しても税抜に正規化して保持し、両欄を再描画
+      $$('.item-subtotal-ex').forEach(el => el.addEventListener('change', (e) => {
+        d.items[+e.target.dataset.idx].subtotal = +e.target.value || 0;
+        rerenderItems(); updateSummary();
       }));
-      $$('.item-subtotal-mode').forEach(el => el.addEventListener('change', (e) => {
-        d.items[+e.target.dataset.idx].subtotal_tax_mode = e.target.value;
-        rerenderItems(); updateSummary();  // 表示値を再計算
+      $$('.item-subtotal-in').forEach(el => el.addEventListener('change', (e) => {
+        const v = +e.target.value || 0;
+        d.items[+e.target.dataset.idx].subtotal = Math.round(v * 100 / (100 + TAX_RATE_FIXED));
+        rerenderItems(); updateSummary();
       }));
       $$('.item-ink').forEach(el => el.addEventListener('change', (e) => { d.items[+e.target.dataset.idx].ink_pattern = e.target.value; updateSummary(); }));
       $$('.item-mishin-on').forEach(el => el.addEventListener('change', (e) => { const idx = +e.target.dataset.idx; d.items[idx].mishin_count = e.target.checked ? 1 : 0; rerenderItems(); updateSummary(); }));
@@ -1722,14 +1723,13 @@ Screens.order_new = {
       $$('.item-page-count').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].page_count = e.target.value; }));
       $$('.item-page-cover').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].page_cover = e.target.value; }));
       $$('.item-page-body').forEach(el => el.addEventListener('input', (e) => { d.items[+e.target.dataset.idx].page_body = e.target.value; }));
-      $$('.item-page-subtotal').forEach(el => el.addEventListener('change', (e) => {
-        const it = d.items[+e.target.dataset.idx];
-        const v = +e.target.value || 0;
-        it.subtotal = (it.subtotal_tax_mode === '税込') ? Math.round(v * 100 / (100 + TAX_RATE_FIXED)) : v;
-        updateSummary();
+      $$('.item-page-subtotal-ex').forEach(el => el.addEventListener('change', (e) => {
+        d.items[+e.target.dataset.idx].subtotal = +e.target.value || 0;
+        rerenderItems(); updateSummary();
       }));
-      $$('.item-page-subtotal-mode').forEach(el => el.addEventListener('change', (e) => {
-        d.items[+e.target.dataset.idx].subtotal_tax_mode = e.target.value;
+      $$('.item-page-subtotal-in').forEach(el => el.addEventListener('change', (e) => {
+        const v = +e.target.value || 0;
+        d.items[+e.target.dataset.idx].subtotal = Math.round(v * 100 / (100 + TAX_RATE_FIXED));
         rerenderItems(); updateSummary();
       }));
       $$('[data-copy-from]').forEach(el => el.addEventListener('click', (e) => {
@@ -2629,9 +2629,10 @@ Screens.quote = {
 
 // ---------- Factory Kanban (v2: 納品済み/曜日/経過日数) ----------
 Screens.factory = {
-  // v3: 列ごとの配色（受注/印刷中/完成/納品済み）
+  // v3: 列ごとの配色（見積もり段階/受注/印刷中/完成/納品済み）
   colStyle(s) {
     return ({
+      '見積もり段階': { bg: 'bg-blue-400/10',  text: 'text-blue-800',   border: 'border-blue-400' },
       '受注':     { bg: 'bg-ink-300/20',   text: 'text-ink-700',    border: 'border-ink-500' },
       '印刷中':   { bg: 'bg-yellow-400/20', text: 'text-yellow-600', border: 'border-yellow-500' },
       '完成':     { bg: 'bg-ok/10',         text: 'text-ok-dark',    border: 'border-ok' },
@@ -2639,8 +2640,8 @@ Screens.factory = {
     })[s] || { bg: 'bg-ink-300/20', text: 'text-ink-700', border: 'border-ink-500' };
   },
   render() {
-    // v3: カンバン列は o.status で決定（ステータスを工場看板側に統一）。見積もり段階は工程前のため除外
-    const orders = DB.all('orders').filter(o => o.status !== '見積もり段階');
+    // v3: カンバン列は o.status で決定（5列・見積もり段階含む）
+    const orders = DB.all('orders');
     const cols = FACTORY_STATUSES.map(s => ({ status: s, items: [] }));
     orders.forEach(o => {
       const col = cols.find(c => c.status === o.status);
@@ -2653,7 +2654,7 @@ Screens.factory = {
           <p class="text-sm text-ink-500">カードをドラッグしてステータスを変更できます。納期は曜日付き、超過時は「N日経過」と表示。</p>
         </div>
       </div>
-      <div class="grid grid-cols-4 gap-3">
+      <div class="grid grid-cols-5 gap-3">
         ${cols.map(col => { const cs = this.colStyle(col.status); return `
         <div class="rounded p-3 ${cs.bg}" data-col="${col.status}">
           <div class="flex justify-between items-center mb-3">
@@ -2676,7 +2677,6 @@ Screens.factory = {
                 <div class="font-bold mt-1 truncate">${esc(o.title || fmt.customer(o.customer_id))}</div>
                 <div class="text-xs text-ink-500 truncate">${esc(fmt.customer(o.customer_id))} / ${esc(fmt.paper(o.items[0]?.paper_id))} ${o.items[0]?.quantity}枚</div>
                 ${o.tags && o.tags.length ? `<div class="mt-1">${fmt.tags(o.tags)}</div>` : ''}
-                <div class="text-xs mt-1"><span class="st st-${esc(o.status)}">${esc(o.status)}</span>${o.data_status === '未受領' ? `<span class="ml-2 text-red-600 font-bold">データ未受領</span>` : ''}</div>
               </div>`;
             }).join('') || `<div class="text-center text-ink-500 text-xs py-8">（空）</div>`}
           </div>
@@ -3055,7 +3055,7 @@ Screens.login = {
             <div>
               <label class="block text-xs font-bold mb-1">ユーザー</label>
               <select id="login-user" class="w-full border rounded px-2 py-2">
-                ${users.map(u => `<option value="${u.id}">${esc(u.name)}（${esc(u.role)}）</option>`).join('')}
+                ${users.map(u => `<option value="${u.id}">${esc(u.name)}</option>`).join('')}
               </select>
             </div>
             <div>
