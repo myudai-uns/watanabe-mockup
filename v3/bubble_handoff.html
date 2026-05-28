@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 業務管理システム v3 — Bubble実装ハンドオフ仕様書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { 'sans': ['Noto Sans JP', 'sans-serif'] },
+  colors: { brand: { DEFAULT: '#E87825', dark: '#B85D16', light: '#FFF4EC' }, ink: { 900:'#1A1A1A',700:'#3A3A3A',500:'#707070',300:'#B5B5B5' } },
+}}}
+</script>
+<style>
+  body { font-family: 'Noto Sans JP', sans-serif; background:#F3F4F6; color:#1A1A1A; }
+  h2 { scroll-margin-top: 80px; }
+  table { border-collapse: collapse; width:100%; }
+  th,td { border:1px solid #D1D5DB; padding:6px 10px; text-align:left; vertical-align:top; font-size:13px; }
+  th { background:#1A1A1A; color:#fff; font-weight:700; white-space:nowrap; }
+  tbody tr:nth-child(even){ background:#F9FAFB; }
+  code { background:#EEF2FF; color:#3730A3; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; font-weight:700; color:#fff; }
+  .req { color:#DC2626; font-weight:700; }
+  .note { background:#FFF4EC; border-left:4px solid #E87825; padding:10px 14px; border-radius:4px; font-size:13px; }
+  .card { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+</style>
+</head>
+<body class="text-ink-900">
+
+<header class="bg-ink-900 text-white sticky top-0 z-50">
+  <div class="px-6 py-3 flex items-center justify-between flex-wrap gap-2">
+    <div>
+      <div class="font-black">渡辺謄写堂 業務管理システム v3 — Bubble実装ハンドオフ仕様書</div>
+      <div class="text-xs text-ink-300">基準モック: <a class="underline" href="https://myudai-uns.github.io/watanabe-mockup/v3/">https://myudai-uns.github.io/watanabe-mockup/v3/</a> ／ 作成 2026-05-28</div>
+    </div>
+    <nav class="text-xs flex flex-wrap gap-1">
+      <a href="#proc" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">構築手順</a>
+      <a href="#model" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">データモデル</a>
+      <a href="#option" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">Option Set</a>
+      <a href="#logic" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">計算・採番・条件</a>
+      <a href="#screen" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">画面・権限</a>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto p-6 space-y-10">
+
+  <div class="note">
+    本書は v3 モック（<code>app.js</code>）から書き起こした実装仕様です。<b>要件は本モックを正とし、本書はその実装ガイド</b>です。
+    モックは localStorage 上の単一ファイルアプリのため明細・見積パターンを受注/見積に内包していますが、
+    Bubble では <b>別 Data Type ＋ 参照（リレーション）</b>に分解する前提で記載しています。
+  </div>
+
+  <!-- ============ 構築手順 ============ -->
+  <section id="proc" class="card p-6">
+    <h2 class="text-2xl font-black mb-3">0. 推奨構築手順（この順が最小負担）</h2>
+    <p class="text-sm mb-3 text-ink-700">原則：<b>「見た目」からではなく「データ→共通部品→表示→入力→複雑機能」</b>の順。</p>
+    <ol class="list-decimal pl-6 space-y-1 text-sm">
+      <li><b>Option Set を作成</b>（本書 §3）— 色属性も設定。</li>
+      <li><b>Data Type ＆ フィールドを作成</b>（本書 §2）— リレーションを張る。</li>
+      <li><b>シードCSVを一括アップロード</b>（別添 <code>watanabe_db_*.csv</code>）— 早期に実データで検証。</li>
+      <li><b>Reusable Element を先に作成</b>：ヘッダー/ナビ、ステータスバッジ（Option Set color駆動）、「タイトル帯＋コンテンツ」カード。</li>
+      <li><b>一覧・詳細の“表示のみ”を構築</b>：受注一覧／顧客一覧／工場カンバン／変更履歴は Repeating Group。</li>
+      <li><b>入力フォーム＋workflow</b>：受注起票・編集、見積パターン、税抜⇄税込換算、採番、保存（本書 §4）。</li>
+      <li><b>複雑機能は最後</b>：カンバンD&D（Draggable Elementsプラグイン）／顧客メモ未保存警告（custom state）／見積PDF（PDFプラグイン）。</li>
+      <li><b>権限/privacy rules・レスポンシブ調整</b>（本書 §5）。</li>
+      <li><b>検証</b>：シードデータでモックと画面・計算・条件表示を1:1突合。</li>
+    </ol>
+  </section>
+
+  <!-- ============ データモデル ============ -->
+  <section id="model" class="space-y-6">
+    <h2 class="text-2xl font-black">2. データモデル（Data Types）</h2>
+    <p class="text-sm text-ink-700">型の凡例：<code>text</code> <code>number</code> <code>date</code> <code>yes/no</code> <code>OptionSet</code> <code>→ 他DataType</code>(参照) <code>list</code>(複数)。<span class="req">★</span>=必須。</p>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">Customer（顧客）</h3>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>company_name</td><td>text</td><td>会社名（個人客は空）</td></tr>
+        <tr><td>individual_name</td><td>text</td><td>個人名（法人は空）</td></tr>
+        <tr><td>kind</td><td>OptionSet CustomerKind</td><td>地域・団体／企業・個人</td></tr>
+        <tr><td>area</td><td>OptionSet Area</td><td>地域</td></tr>
+        <tr><td>phone / fax</td><td>text</td><td>電話／FAX</td></tr>
+        <tr><td>address</td><td>text</td><td>住所</td></tr>
+        <tr><td>notes</td><td>text</td><td>顧客メモ（未保存警告の対象）</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">Paper（用紙マスタ）</h3>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>paper_name</td><td>text</td><td>表示名（例: コート135kg 白 A4）</td></tr>
+        <tr><td>quality</td><td>text</td><td>紙質（コート/上質/フミス…）</td></tr>
+        <tr><td>color</td><td>text</td><td>色</td></tr>
+        <tr><td>thickness_kg</td><td>number</td><td>斤量</td></tr>
+        <tr><td>paper_size</td><td>text</td><td>サイズ</td></tr>
+        <tr><td>unit_price</td><td>number</td><td>用紙単価（UI非表示・内部保持）</td></tr>
+        <tr><td>is_major</td><td>yes/no</td><td>「よく使う紙」グループ判定</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">User（担当者）</h3>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>name</td><td>text</td><td>氏名（渡辺 聡／渡辺 豊／吉村 栄子／菅野 香里／金井 奈々子／安斎 崇子）</td></tr>
+        <tr><td>role</td><td>text</td><td>役職（代表/製版/工場/事務/経理）。UI表示はかっこ書きせず氏名のみ</td></tr>
+        <tr><td>email</td><td>text</td><td>メール</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">Order（受注）</h3>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>order_number</td><td>text</td><td>採番 YYMMDD-連番3桁（§4）</td></tr>
+        <tr><td>title</td><td>text</td><td>品名（明細titleを「 / 」結合して導出）</td></tr>
+        <tr><td>customer</td><td>→ Customer <span class="req">★</span></td><td>顧客</td></tr>
+        <tr><td>received_date</td><td>date</td><td>受付日</td></tr>
+        <tr><td>delivered_date</td><td>date</td><td>納品日（status=納品済みで自動セット）</td></tr>
+        <tr><td>received_by</td><td>→ User</td><td>担当者</td></tr>
+        <tr><td>reception_method</td><td>OptionSet ReceptionMethod</td><td>受付方法</td></tr>
+        <tr><td>delivery_type</td><td>OptionSet DeliveryType</td><td>納期区分（予定/必ず/範囲指定/仮）</td></tr>
+        <tr><td>delivery_date_start / _end</td><td>date</td><td>納期（_end は範囲指定時のみ）</td></tr>
+        <tr><td>first_proof_date / used_date</td><td>date</td><td>初校日／使用日</td></tr>
+        <tr><td>status</td><td>OptionSet OrderStatus</td><td>見積もり段階/受注/印刷中/完成/納品済み</td></tr>
+        <tr><td>memo</td><td>text</td><td>備考（フリーメモ）</td></tr>
+        <tr><td>total_amount</td><td>number</td><td><b>税込</b>合計（§4 calcOrder で算出）</td></tr>
+        <tr><td>data_status</td><td>OptionSet DataStatus</td><td>持込/ゼロから作成/未受領</td></tr>
+        <tr><td>discount_amount</td><td>number</td><td>値引き額（税抜ベース）</td></tr>
+        <tr><td>discount_reason</td><td>text</td><td>値引き理由（補足表示）</td></tr>
+        <tr><td>discount_label_type</td><td>OptionSet DiscountLabelType</td><td>値引き名目種別</td></tr>
+        <tr><td>show_discount</td><td>yes/no</td><td>値引き表示フラグ（額&gt;0で真）</td></tr>
+        <tr><td>tags</td><td>list OptionSet Tag</td><td>案件タグ</td></tr>
+        <tr><td>attachments</td><td>list file</td><td>添付</td></tr>
+        <tr><td>created_by</td><td>→ User</td><td>起票者</td></tr>
+        <tr><td>created_at / updated_at</td><td>date</td><td>Bubble標準のCreated/Modified可</td></tr>
+      </tbody></table>
+      <p class="text-xs text-ink-500 mt-2">※明細は <b>OrderItem</b> として分離（下記）。受注代表の納期は items[0] と同期して一覧/カンバン表示に使用。</p>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">OrderItem（受注明細）<span class="text-xs font-normal text-ink-500">※モックでは Order に内包</span></h3>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>order</td><td>→ Order</td><td>親受注</td></tr>
+        <tr><td>type</td><td>OptionSet ItemType</td><td>normal / page（ページ物）</td></tr>
+        <tr><td>title</td><td>text <span class="req">★</span></td><td>品名（必須）</td></tr>
+        <tr><td>paper</td><td>→ Paper</td><td>用紙（空=自由入力）</td></tr>
+        <tr><td>paper_other_memo</td><td>text</td><td>用紙自由入力</td></tr>
+        <tr><td>quantity</td><td>number</td><td>数量</td></tr>
+        <tr><td>ink_pattern</td><td>OptionSet InkPattern</td><td>インク</td></tr>
+        <tr><td>folding</td><td>OptionSet FoldingType</td><td>折り</td></tr>
+        <tr><td>mishin_count</td><td>number</td><td>ミシン本数（0/1/2）</td></tr>
+        <tr><td>hole_position</td><td>OptionSet HolePosition</td><td>穴</td></tr>
+        <tr><td>nori_position</td><td>OptionSet NoriPosition</td><td>のり</td></tr>
+        <tr><td>numbering_enabled</td><td>yes/no</td><td>ナンバリング</td></tr>
+        <tr><td>numbering_from / _to</td><td>number/text</td><td>ナンバリング範囲</td></tr>
+        <tr><td>yacho_style</td><td>yes/no</td><td>野丁式（内部キーは yacho_style）</td></tr>
+        <tr><td>lamination</td><td>OptionSet LaminationOption</td><td>ラミネート</td></tr>
+        <tr><td>tax_rate</td><td>number</td><td>固定10</td></tr>
+        <tr><td>subtotal</td><td>number</td><td><b>税抜（外税）で保持</b>。自由入力。税込は表示換算（§4）</td></tr>
+        <tr><td>unit_price</td><td>number</td><td>= round(subtotal / quantity) 派生</td></tr>
+        <tr><td>delivery_type / _start / _end</td><td>OptionSet / date</td><td>明細単位の納期</td></tr>
+        <tr><td>first_proof_date / used_date</td><td>date</td><td>明細単位の初校日/使用日</td></tr>
+        <tr><td>item_notes</td><td>text</td><td>明細メモ</td></tr>
+        <tr><td colspan="3" class="bg-ink-700/5"><b>ページ物（type=page）追加フィールド</b></td></tr>
+        <tr><td>page_size</td><td>OptionSet PageSize</td><td>A4/B5/A5/自由</td></tr>
+        <tr><td>page_size_custom</td><td>text</td><td>サイズ自由入力</td></tr>
+        <tr><td>page_count</td><td>text</td><td>ページ数（例: 本文64P + 表紙）</td></tr>
+        <tr><td>page_cover / page_body</td><td>text</td><td>表紙仕様／本文仕様</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">Quote（見積書） ＋ QuotePattern（見積パターン）</h3>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>quote_number</td><td>text</td><td>採番 Q-YYMMDD-連番3桁</td></tr>
+        <tr><td>order</td><td>→ Order</td><td>対象受注</td></tr>
+        <tr><td>issued_date / valid_until</td><td>date</td><td>発行日／有効期限（既定=発行日+1ヶ月）</td></tr>
+        <tr><td>send_method</td><td>OptionSet SendMethod</td><td>送付方法</td></tr>
+        <tr><td>status</td><td>OptionSet QuoteStatus</td><td>作成中/発行済/受諾/失注</td></tr>
+        <tr><td>memo</td><td>text</td><td>備考（振込先等）</td></tr>
+        <tr><td>total_amount</td><td>number</td><td>採用パターンの税込額（互換保持）</td></tr>
+        <tr><td>patterns</td><td>list QuotePattern</td><td>下記</td></tr>
+      </tbody></table>
+      <p class="text-sm font-bold mt-3 mb-1">QuotePattern（明細1件＝1パターンで自動同期）</p>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>quote</td><td>→ Quote</td><td>親見積</td></tr>
+        <tr><td>item</td><td>→ OrderItem</td><td>対象明細</td></tr>
+        <tr><td>label</td><td>text</td><td>パターン名（既定=明細title）</td></tr>
+        <tr><td>amount</td><td>number</td><td>金額（税抜）</td></tr>
+        <tr><td>accepted</td><td>yes/no</td><td>採用フラグ（1見積1採用）</td></tr>
+        <tr><td>show_discount</td><td>yes/no</td><td>値引き表示</td></tr>
+        <tr><td>discount_amount</td><td>number</td><td>値引き額</td></tr>
+        <tr><td>discount_label_type</td><td>OptionSet DiscountLabelType</td><td>名目種別</td></tr>
+        <tr><td>discount_label_text</td><td>text</td><td>自由記載時の名目（§4 値引き名目解決）</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">FactoryRecord（工場進捗）／ ContactLog（連絡履歴）／ ChangeLog（変更履歴）</h3>
+      <p class="text-sm font-bold mb-1">FactoryRecord ＜v3: ステータスは Order.status で管理。本DTは時刻等メタのみ＞</p>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>order</td><td>→ Order</td><td>対象受注（1:1）</td></tr>
+        <tr><td>started_at / completed_at</td><td>date</td><td>印刷開始／完了時刻（§4で自動セット）</td></tr>
+        <tr><td>actual_quantity</td><td>number</td><td>実出来高</td></tr>
+        <tr><td>factory_memo</td><td>text</td><td>工場メモ</td></tr>
+        <tr><td>completed_by</td><td>→ User</td><td>完了担当</td></tr>
+      </tbody></table>
+      <p class="text-sm font-bold mt-3 mb-1">ContactLog</p>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>customer</td><td>→ Customer</td><td>顧客</td></tr>
+        <tr><td>logged_at</td><td>date</td><td>日時</td></tr>
+        <tr><td>contact_type</td><td>OptionSet ContactType</td><td>電話/来客/メール/LINE/FAX</td></tr>
+        <tr><td>summary</td><td>text</td><td>内容</td></tr>
+        <tr><td>user</td><td>→ User</td><td>記録者</td></tr>
+      </tbody></table>
+      <p class="text-sm font-bold mt-3 mb-1">ChangeLog（操作履歴）</p>
+      <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
+        <tr><td>target_type / target_id</td><td>text</td><td>対象種別/ID（Order, Customer, Quote…）</td></tr>
+        <tr><td>changed_by</td><td>→ User</td><td>操作者</td></tr>
+        <tr><td>changed_at</td><td>date</td><td>日時</td></tr>
+        <tr><td>change_summary</td><td>text</td><td>変更内容（例「ステータス変更: 受注→印刷中」）</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">Settings（会社設定 ＝ 単一レコード/App Data）</h3>
+      <table><thead><tr><th>フィールド</th><th>例</th></tr></thead><tbody>
+        <tr><td>invoice_number</td><td>T3380002016689</td></tr>
+        <tr><td>company_name / company_postal / company_address</td><td>有限会社 渡辺謄写堂 / 〒964-0911 / 福島県二本松市亀谷1-43-3</td></tr>
+        <tr><td>company_phone / company_fax</td><td>0243-22-0613 / 0243-22-0644</td></tr>
+        <tr><td>bank_info_1 / bank_info_2 / bank_holder</td><td>東邦銀行二本松支店 普通 72767 / 当座 0022375 / 有限会社渡辺謄写堂 代表取締役 渡辺聡</td></tr>
+        <tr><td>holidays</td><td>list date（休業日：営業日計算に使用）</td></tr>
+      </tbody></table>
+    </div>
+  </section>
+
+  <!-- ============ Option Set ============ -->
+  <section id="option" class="card p-6 space-y-5">
+    <h2 class="text-2xl font-black">3. Option Set 一覧</h2>
+
+    <div>
+      <h3 class="font-black mb-1">OrderStatus（受注ステータス）★色属性を設定</h3>
+      <p class="text-xs text-ink-500 mb-2">属性 <code>color</code> を持たせ、ステータスバッジ／カンバン列の配色に利用。Display順＝工程順。</p>
+      <table><thead><tr><th>Display</th><th>バッジ文字色 color</th><th>カンバン列の配色</th></tr></thead><tbody>
+        <tr><td><span class="pill" style="background:#1E3A8A">見積もり段階</span></td><td><code>#1E3A8A</code></td><td>青系（bg薄青/枠 #60A5FA）</td></tr>
+        <tr><td><span class="pill" style="background:#DC2626">受注</span></td><td><code>#DC2626</code>（v3: 赤色ベース）</td><td>赤系（bg薄赤/枠 #EF4444）</td></tr>
+        <tr><td><span class="pill" style="background:#B45309">印刷中</span></td><td><code>#B45309</code></td><td>黄系</td></tr>
+        <tr><td><span class="pill" style="background:#2A7A44">完成</span></td><td><code>#2A7A44</code></td><td>緑系</td></tr>
+        <tr><td><span class="pill" style="background:#6B7280">納品済み</span></td><td><code>#6B7280</code></td><td>濃グレー系</td></tr>
+      </tbody></table>
+      <p class="text-xs text-ink-500 mt-1">※旧「待機/作業中/製版中/校正中/出荷待ち/キャンセル」は廃止。キャンセルは<b>削除</b>運用。</p>
+    </div>
+
+    <div>
+      <h3 class="font-black mb-1">Tag（案件タグ）★色属性</h3>
+      <table><thead><tr><th>Display</th><th>color</th></tr></thead><tbody>
+        <tr><td>新規（v3追加）</td><td><code>#3B82F6</code></td></tr>
+        <tr><td>急ぎ</td><td><code>#EF4444</code></td></tr>
+        <tr><td>リピート</td><td><code>#3F9D5E</code></td></tr>
+        <tr><td>ご祝儀</td><td><code>#FBBF24</code></td></tr>
+        <tr><td>特殊紙</td><td><code>#8B5CF6</code></td></tr>
+        <tr><td>重要顧客</td><td><code>#E87825</code></td></tr>
+      </tbody></table>
+      <p class="text-xs text-ink-500 mt-1">※モックの一覧表示はタグ色を統一（灰）にしているが、Option Setには色を保持。</p>
+    </div>
+
+    <div>
+      <h3 class="font-black mb-1">InkPattern（インク）★mult属性（将来の自動見積用係数）</h3>
+      <table><thead><tr><th>value</th><th>Display</th><th>mult</th></tr></thead><tbody>
+        <tr><td>4Cx4C</td><td>カラー両面（4C×4C）</td><td>1.00</td></tr>
+        <tr><td>4Cx0</td><td>カラー片面（4C×0）</td><td>0.65</td></tr>
+        <tr><td>1Cx1C</td><td>モノクロ両面（1C×1C）</td><td>0.45</td></tr>
+        <tr><td>1Cx0</td><td>モノクロ片面（1C×0）</td><td>0.30</td></tr>
+        <tr><td>tokushoku_2m</td><td>特色1色両面</td><td>0.55</td></tr>
+        <tr><td>tokushoku_1m</td><td>特色1色片面</td><td>0.38</td></tr>
+        <tr><td>4Cx1C</td><td>片面カラー / 片面モノクロ（4C×1C）</td><td>0.75</td></tr>
+        <tr><td>4Cx_toku</td><td>片面カラー / 片面特色1色（4C×特1C）</td><td>0.80</td></tr>
+        <tr><td>1Cx_toku</td><td>片面モノクロ / 片面特色1色（1C×特1C）</td><td>0.50</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <div>
+        <h3 class="font-black mb-1">DeliveryType（納期区分）</h3>
+        <table><thead><tr><th>value</th><th>Display</th></tr></thead><tbody>
+          <tr><td>single</td><td>予定</td></tr><tr><td>asap</td><td>必ず</td></tr>
+          <tr><td>range</td><td>範囲指定</td></tr><tr><td>tentative</td><td>仮</td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">DiscountLabelType（値引き名目）</h3>
+        <table><tbody>
+          <tr><td>値引き</td></tr><tr><td>JA全農くみあい飼料㈱広告代負担金</td></tr><tr><td>自由記載</td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">Area（地域）</h3>
+        <table><tbody><tr><td>亀谷 / 元町 / 東和 / 岩代 / 市街 / その他</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">ReceptionMethod（受付方法）</h3>
+        <table><tbody><tr><td>電話 / 来客 / FAX / メール / LINE / その他</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">DataStatus（入稿データ）</h3>
+        <table><tbody><tr><td>持込 / ゼロから作成 / 未受領</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">CustomerKind（顧客種別）</h3>
+        <table><tbody><tr><td>地域・団体 / 企業・個人</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">FoldingType / HolePosition / NoriPosition</h3>
+        <table><tbody>
+          <tr><td>折り: なし / 2つ折 / 3つ折</td></tr>
+          <tr><td>穴: なし / 天2穴 / 左2穴</td></tr>
+          <tr><td>のり: なし / 天のり / 左のり</td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">LaminationOption</h3>
+        <table><tbody><tr><td>なし / PP貼り 艶あり / PP貼り 艶なし / パウチ</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">PageSize</h3>
+        <table><tbody><tr><td>A4 / B5 / A5 / 自由</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">SendMethod（送付方法）</h3>
+        <table><tbody><tr><td>郵送 / メール / LINE / 直接手渡し</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">ContactType（連絡手段）</h3>
+        <table><tbody><tr><td>電話 / 来客 / メール / LINE / FAX</td></tr></tbody></table>
+      </div>
+      <div>
+        <h3 class="font-black mb-1">QuoteStatus / ItemType</h3>
+        <table><tbody>
+          <tr><td>見積: 作成中 / 発行済 / 受諾 / 失注</td></tr>
+          <tr><td>明細種別: normal / page</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+    <div class="note text-xs">参考（現行は未使用・将来の自動見積用）：加工単価 PROCESSING_PRICE = ミシン500 / 折800 / 穴300 / ナンバリング1500 / 野丁式1200 / ラミ2000。<b>現行は明細小計を自由入力</b>のため計算には使わない。</div>
+  </section>
+
+  <!-- ============ 計算・採番・条件 ============ -->
+  <section id="logic" class="card p-6 space-y-4">
+    <h2 class="text-2xl font-black">4. 計算・採番・条件ロジック</h2>
+
+    <h3 class="font-black">金額計算（消費税は一律10%）</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>明細小計 <code>subtotal</code> は<b>税抜（外税）で保持・自由入力</b>。<code>unit_price = round(subtotal / quantity)</code>。</li>
+      <li>受注小計 = Σ(明細subtotal)。値引き後 <code>afterDiscount = max(0, 小計 − discount_amount)</code>。</li>
+      <li>値引きは小計に按分：<code>ratio = afterDiscount / 小計</code> を各明細に乗じてから税計算。</li>
+      <li>消費税 = <code>round(afterDiscount × 10%)</code>。<b>受注合計 total_amount（税込）= afterDiscount + 消費税</b>。</li>
+      <li>税抜⇄税込の相互換算：<b>税込 = round(税抜 × 1.1)</b>／<b>税抜 = round(税込 × 100 / 110)</b>。小計は税抜・税込それぞれ入力欄を持つが、保持は常に税抜（入力された方を税抜へ正規化）。</li>
+    </ul>
+
+    <h3 class="font-black">採番</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>受注番号 = <code>YYMMDD-連番3桁</code>（当日同一prefixの既存件数 + 1、ゼロ埋め3桁）。例 260528-001。</li>
+      <li>見積番号 = <code>Q-YYMMDD-連番3桁</code>。例 Q-260528-001。</li>
+    </ul>
+
+    <h3 class="font-black">ステータス連動</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>ステータスは <b>Order.status 単一で管理</b>（受注ステータスと工場ステータスを統一）。工場カンバンも Order.status の5列で表示。</li>
+      <li>status=印刷中 に変わったら FactoryRecord.started_at を現時刻でセット（未設定時）。</li>
+      <li>status=完成 または 納品済み で completed_at・completed_by をセット（未設定時）。</li>
+      <li>status=納品済み を選んだら delivered_date を当日でセット（未設定時）。</li>
+      <li>納期超過表示：status ∉ {納品済み, 見積もり段階} かつ (本日 − 納期) &gt; 0 のとき「N日経過」を表示。</li>
+    </ul>
+
+    <h3 class="font-black">値引き名目の表示解決（見積書）</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>discount_label_type = <b>自由記載</b> → discount_label_text を名目として表示（空なら「値引き」）。</li>
+      <li>= <b>JA全農くみあい飼料㈱広告代負担金</b> → その名称をそのまま表示。</li>
+      <li>= <b>値引き</b> → 「値引き」。</li>
+      <li>自由記載のテキスト入力欄は「自由記載」選択時のみ表示。</li>
+    </ul>
+
+    <h3 class="font-black">条件付き表示</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>値引き行：show_discount = yes かつ discount_amount &gt; 0 のときのみ。</li>
+      <li>納期区分=仮（tentative）：納期日必須を免除。範囲指定のみ終了日を有効化。</li>
+      <li>受注「確認モード（view）」：全入力を読み取り専用（custom state で切替）。</li>
+      <li>新規起票時のステータス選択肢は「見積もり段階／受注」のみ。</li>
+    </ul>
+  </section>
+
+  <!-- ============ 画面・権限 ============ -->
+  <section id="screen" class="card p-6 space-y-4">
+    <h2 class="text-2xl font-black">5. 画面・ルート / Reusable / 権限</h2>
+
+    <h3 class="font-black">画面とルート（モックのhash → Bubchの構成案）</h3>
+    <table><thead><tr><th>モックhash</th><th>画面</th><th>Bubble構成案</th></tr></thead><tbody>
+      <tr><td>#dashboard</td><td>ダッシュボード</td><td>page。本日納品/進行中/納期3日以内/納期超過/今月売上見込み + 履歴RG</td></tr>
+      <tr><td>#orders（?filter=）</td><td>受注一覧</td><td>page + Repeating Group。クイック絞込=URLパラメータ</td></tr>
+      <tr><td>#order/new</td><td>新規起票</td><td>order pageの新規モード（custom state: new）</td></tr>
+      <tr><td>#order/:id</td><td>受注確認（読取専用）</td><td>order page（state: view）</td></tr>
+      <tr><td>#order/:id/edit</td><td>受注編集</td><td>order page（state: edit）</td></tr>
+      <tr><td>#customer/:id</td><td>顧客詳細</td><td>page。メモは未保存警告対象</td></tr>
+      <tr><td>#quote/:id</td><td>見積書</td><td>page。PDFプラグインで出力</td></tr>
+      <tr><td>#factory</td><td>工場カンバン</td><td>page。5列 RG + Draggableプラグイン</td></tr>
+      <tr><td>#login / #password_reset</td><td>ログイン等</td><td>page</td></tr>
+      <tr><td>#print</td><td>印刷ビュー</td><td>PDF生成に置換</td></tr>
+    </tbody></table>
+
+    <h3 class="font-black">Reusable Element（先に作る）</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>ヘッダー＋ナビ（全ページ共通）。</li>
+      <li>ステータスバッジ（OrderStatusのcolor属性で文字色を出し分け）。</li>
+      <li>「タイトル帯＋コンテンツ」カード（受付情報・案件属性・各セクションで再利用）。</li>
+      <li>一覧行／カンバンカード（Repeating Groupのセル）。</li>
+    </ul>
+
+    <h3 class="font-black">権限（ロール）</h3>
+    <p class="text-sm">User.role：代表 / 製版 / 工場 / 事務 / 経理。モックは表示のみのため、Bubble側で「誰が何を編集可」を privacy rules・条件表示で定義する（要件確定後）。</p>
+
+    <div class="note text-xs">
+      <b>Bubbleで手間がかかる箇所（後工程・プラグイン要）</b>：①工場カンバンのドラッグ&ドロップ（Draggable Elements）②顧客メモの未保存警告（custom state＋離脱時確認）③見積書PDF出力（PDFプラグイン）④明細の動的追加/削除＋税抜税込即時換算（各入力のworkflow）。レイアウト（タイトル＋コンテンツ）自体はGroup構成で容易。
+    </div>
+  </section>
+
+  <footer class="text-center text-xs text-ink-500 py-6">
+    渡辺謄写堂 業務管理システム v3 — Bubble実装ハンドオフ仕様書 ／ 本書は v3 モック app.js より生成
+  </footer>
+</main>
+</body>
+</html>
