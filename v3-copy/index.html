@@ -92,6 +92,11 @@ tailwind.config = {
   #bbl-tip .cat { font-size: 10px; font-weight: 700; letter-spacing: .05em; opacity: .9; }
   #bbl-tip .typ { font-size: 15px; font-weight: 900; margin-top: 1px; }
   #bbl-tip .tag { font-size: 10px; opacity: .6; margin-top: 2px; font-family: monospace; }
+  #bbl-tip .ctn { font-size: 10px; color: #AEB6C8; margin-top: 6px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 5px; }
+  #bbl-tip .chips { margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  #bbl-tip .chip { font-size: 10px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
+  #bbl-tip .arr { color: #6E7689; font-size: 11px; }
+  #bbl-panel .cleg { font-size: 9.5px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
   #bbl-panel { position: fixed; top: 86px; right: 14px; z-index: 9998; width: 250px;
     background: rgba(12,14,22,.96); color: #EDF0F7; border: 1px solid rgba(255,255,255,.14);
     border-radius: 14px; padding: 13px 14px; font-size: 12px; box-shadow: 0 18px 50px -16px rgba(0,0,0,.7);
@@ -147,6 +152,16 @@ tailwind.config = {
   <div class="sub">ダッシュボードの各要素にホバーすると、Bubbleでの要素タイプを表示します。</div>
   <div class="row"><b style="background:#2563EB"></b>Visual element（表示系）</div>
   <div class="row"><b style="background:#16A34A"></b>Input form（入力系）</div>
+  <div style="border-top:1px solid rgba(255,255,255,.12);margin:9px 0 7px"></div>
+  <div class="sub" style="margin-bottom:5px">所属コンテナ（外→内・<span style="border-bottom:1px dashed #94a3b8">点線</span>で表示）</div>
+  <div class="row" style="flex-wrap:wrap;gap:5px;margin:0">
+    <span class="cleg" style="background:#64748b">Group</span>
+    <span class="cleg" style="background:#E87825">Repeating Group</span>
+    <span class="cleg" style="background:#F59E0B">Table</span>
+    <span class="cleg" style="background:#A855F7">Popup</span>
+    <span class="cleg" style="background:#06B6D4">FloatingGroup</span>
+    <span class="cleg" style="background:#EC4899">GroupFocus</span>
+  </div>
   <label class="toggle"><input type="checkbox" id="bbl-toggle" checked> 判定表示を有効化</label>
   <div class="off">▶ ダッシュボード（#dashboard）に移動すると有効になります。</div>
   <div class="note">対象＝画面本体(#main)の要素のみ。ヘッダー/ナビ等の共通枠は除外。判定はBubble再現用のガイドです。</div>
@@ -161,8 +176,12 @@ tailwind.config = {
   var CATJP = { visual:'Visual element', input:'Input form' };
   var tip = document.getElementById('bbl-tip');
   var toggle = document.getElementById('bbl-toggle');
+  var mainEl = document.getElementById('main');
   var enabled = true;
   var cur = null, curOutline = '';
+  var curC = null, curCOutline = '';
+  var SKIP = '__skip__';
+  var CCOL = { 'Group':'#64748b', 'Repeating Group':'#E87825', 'Table':'#F59E0B', 'Popup':'#A855F7', 'FloatingGroup':'#06B6D4', 'GroupFocus':'#EC4899' };
 
   toggle.addEventListener('change', function(){ enabled = toggle.checked; if(!enabled) clearHL(); });
 
@@ -222,8 +241,38 @@ tailwind.config = {
     return null;
   }
 
+  function isFixedSticky(el){ try { var p = getComputedStyle(el).position; return p === 'fixed' || p === 'sticky'; } catch(e){ return false; } }
+  function containerType(el){
+    if (el === mainEl) return null;
+    var tag = el.tagName;
+    if (tag === 'TABLE') return 'Table';
+    if (['THEAD','TBODY','TFOOT','TR','TD','TH','COLGROUP','COL','CAPTION'].indexOf(tag) >= 0) return SKIP;
+    if (tag === 'UL' || tag === 'OL') return 'Repeating Group';
+    if (tag === 'LI') return SKIP;
+    if ((el.closest && el.closest('#modal-root')) || el.getAttribute('role') === 'dialog' || /\b(modal|popup)\b/.test(el.className||'')) return 'Popup';
+    if (el.id === 'toast') return 'FloatingGroup';
+    if (/\bgroup-?focus\b/.test(el.className||'')) return 'GroupFocus';
+    var groupTags = ['DIV','SECTION','FORM','ARTICLE','ASIDE','HEADER','FOOTER','NAV','A','BUTTON','LABEL'];
+    if (groupTags.indexOf(tag) >= 0 && el.childElementCount > 0){
+      if (isFixedSticky(el)) return 'FloatingGroup';
+      if (el.id) return 'Group';
+      if (/\b(bg-(white|ink|red|brand|ok|blue|gray|green|yellow|amber)|shadow|border-2|card)\b/.test(el.className||'')) return 'Group';
+    }
+    return SKIP;
+  }
+  function containerInfo(el){
+    var types = [], inner = null, node = el.parentElement, guard = 0;
+    while (node && node !== mainEl && node !== document.body && guard++ < 50){
+      var ct = containerType(node);
+      if (ct && ct !== SKIP){ types.push({ t: ct, node: node }); if (!inner) inner = node; }
+      node = node.parentElement;
+    }
+    return { types: types, inner: inner };
+  }
+
   function clearHL(){
     if (cur){ cur.style.outline = curOutline; cur = null; }
+    if (curC){ curC.style.outline = curCOutline; curC = null; }
     tip.style.display = 'none';
   }
 
@@ -234,15 +283,33 @@ tailwind.config = {
     var r = classify(t);
     if (!r){ clearHL(); return; }
 
+    var ci = containerInfo(t);
+
     if (t !== cur){
       if (cur) cur.style.outline = curOutline;
       cur = t; curOutline = t.style.outline;
       t.style.outline = '2px solid ' + COL[r.cat];
       t.style.outlineOffset = '1px';
     }
+    if (ci.inner !== curC){
+      if (curC) curC.style.outline = curCOutline;
+      curC = ci.inner;
+      if (curC){ curCOutline = curC.style.outline; curC.style.outline = '2px dashed #94a3b8'; curC.style.outlineOffset = '2px'; }
+    }
+
+    var chips;
+    if (ci.types.length){
+      chips = ci.types.slice().reverse().map(function(c, i){
+        return (i ? '<span class="arr">›</span>' : '') + '<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>';
+      }).join('');
+    } else {
+      chips = '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
+    }
     tip.innerHTML = '<div class="cat" style="color:'+COL[r.cat]+'">'+CATJP[r.cat]+'</div>'
                   + '<div class="typ">'+r.type+'</div>'
-                  + '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>';
+                  + '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>'
+                  + '<div class="ctn">所属コンテナ（外→内・'+ci.types.length+'層）</div>'
+                  + '<div class="chips">'+chips+'</div>';
     tip.style.display = 'block';
     var tw = tip.offsetWidth, th = tip.offsetHeight;
     var x = e.clientX + 16, y = e.clientY + 16;
