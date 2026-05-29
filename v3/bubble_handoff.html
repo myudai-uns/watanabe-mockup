@@ -252,6 +252,32 @@ tailwind.config = { theme: { extend: {
     </tbody></table>
     </div>
     <div class="note text-xs">Italic / Underline は全 Style で未使用（–）。Opacity は基準 100%（view-mode の読取専用時のみ 50% を<b>条件</b>で適用）。Border は Text 系では未使用（0 / none）。背景・角丸・余白を持つのは <b>Tag chip / Item-No badge</b> と、Section Title の<b>帯Group</b>のみ。色「条件」は §1-3 の条件付き色ルールに従う。</div>
+
+    <!-- 1-5 Button Style 詳細プロパティ -->
+    <h3 class="font-black text-lg">1-5. Button Style 詳細プロパティ（Bubble Style 設定値）</h3>
+    <p class="text-sm text-ink-700">各 Button Style の設定値。<b>Spacing＝ボタン間隔</b>（行内 gap-2=8px）、<b>Gap＝アイコン-ラベル間</b>、<b>Padding＝内側</b>(py/px)。アイコンは文字グリフ（✓ ＋ ← →）のため <b>Icon size/colorは文字に準拠</b>。Align は全て center（text変種のみ left）。B/I/U＝Bold/Italic/Underline。</p>
+    <style>
+      #btnprops { font-size:11px; }
+      #btnprops th, #btnprops td { padding:4px 7px; white-space:nowrap; }
+      #btnprops td:first-child, #btnprops th:first-child { font-weight:700; position:sticky; left:0; background:#fff; }
+      #btnprops thead th:first-child { background:#1A1A1A; }
+    </style>
+    <div style="overflow-x:auto; border:1px solid #D1D5DB; border-radius:6px;">
+    <table id="btnprops"><thead><tr>
+      <th>Style</th><th>Spacing</th><th>Gap</th><th>Padding</th><th>Font</th><th>Weight</th><th>Size</th><th>Align</th><th>B</th><th>I</th><th>U</th><th>Font color</th><th>Icon size</th><th>Icon color</th><th>Opacity</th><th>Radius</th><th>B-style</th><th>B-width</th><th>B-color</th><th>BG color</th><th>Transitions</th>
+    </tr></thead><tbody>
+      <tr><td>Primary</td><td>8</td><td>6</td><td>8 / 16（py-2 px-4）</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF</td><td>16</td><td>#FFFFFF</td><td>100%</td><td>4</td><td>none</td><td>0</td><td>–</td><td>#E87825</td><td>hover 0.15s（bg→brand-dark）</td></tr>
+      <tr><td>Secondary</td><td>8</td><td>6</td><td>6 / 12（py-1.5 px-3）</td><td>Noto Sans JP</td><td>400–700</td><td>14</td><td>center</td><td>△</td><td>–</td><td>–</td><td>#1A1A1A</td><td>16</td><td>#1A1A1A</td><td>100%（無効時40%）</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>transparent</td><td>hover 0.15s（bg ink/5）</td></tr>
+      <tr><td>Danger（枠付き）</td><td>8</td><td>6</td><td>6 / 12</td><td>Noto Sans JP</td><td>400</td><td>14</td><td>center</td><td>–</td><td>–</td><td>–</td><td>#EF4444</td><td>16</td><td>#EF4444</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#EF4444</td><td>transparent</td><td>hover 0.15s（bg red/5）</td></tr>
+      <tr><td>Danger（text）</td><td>8</td><td>6</td><td>0</td><td>Noto Sans JP</td><td>400</td><td>14</td><td>left</td><td>–</td><td>–</td><td>–</td><td>#EF4444</td><td>16</td><td>#EF4444</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td><td>hover 0.15s（opacity）</td></tr>
+      <tr><td>Page (紫)</td><td>8</td><td>6</td><td>6 / 12</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF</td><td>16</td><td>#FFFFFF</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#D8B4FE</td><td>#7E22CE</td><td>hover 0.15s（bg purple-dark）</td></tr>
+      <tr><td>Add (normal)</td><td>8</td><td>6</td><td>6 / 12</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF</td><td>16</td><td>#FFFFFF</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#FFFFFF</td><td>transparent（濃色面）</td><td>hover 0.15s（bg white/10）</td></tr>
+      <tr><td>Ghost brand（枠あり）</td><td>8</td><td>6</td><td>6 / 12</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#E87825</td><td>16</td><td>#E87825</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>transparent</td><td>hover 0.15s（bg brand/5）</td></tr>
+      <tr><td>Ghost brand（枠なし）</td><td>8</td><td>6</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#E87825</td><td>16</td><td>#E87825</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td><td>hover 0.15s（opacity）</td></tr>
+      <tr><td>Dark</td><td>8</td><td>6</td><td>8 / 16</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF</td><td>16</td><td>#FFFFFF</td><td>100%</td><td>4</td><td>none</td><td>0</td><td>–</td><td>#1A1A1A</td><td>hover 0.15s（bg ink-700）</td></tr>
+    </tbody></table>
+    </div>
+    <div class="note text-xs">Italic/Underline は全Button未使用（–）。アイコンは文字グリフ運用のため Icon は文字色・文字サイズに準拠（Bubbleの Icon 要素を使う場合は size≈16・color=文字色）。Spacing は行内のボタン間（<code>gap-2</code>=8px）、Gap はアイコンとラベルの間隔。無効状態は <code>opacity 40%</code>（条件）。hover は約0.15s の色/背景トランジション。</div>
   </section>
 
   <!-- ============ データモデル ============ -->
