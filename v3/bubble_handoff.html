@@ -161,7 +161,9 @@ tailwind.config = { theme: { extend: {
       <tr><td>副ボタン</td><td><code>border border-ink-300 text-ink-900 rounded px-3 py-1.5</code></td></tr>
       <tr><td>入力 / select</td><td><code>border border-ink-300 rounded px-2 py-1.5 text-sm</code></td></tr>
       <tr><td>カード / セクション</td><td><code>bg-white rounded shadow-sm p-4</code></td></tr>
-      <tr><td>ステータスバッジ</td><td><code>.st</code>＝<b>背景なし・文字色のみ・font-bold・サイズは親継承</b>。色は <code>OrderStatus.color</code> と一致（見積=#1E3A8A / 受注=#DC2626 / 印刷中=#B45309 / 完成=#2A7A44 / 納品済み=#6B7280 / 納期超過=#7C3AED）</td></tr>
+      <tr><td>ステータスバッジ</td><td><code>.st</code>＝<b>背景なし・文字色のみ・font-bold・サイズは親継承</b>。色は <code>OrderStatus.color</code> と一致（見積=#1E3A8A / 受注=#DC2626 / 印刷中=#B45309 / 完成=#2A7A44 / 納品済み=#6B7280）</td></tr>
+      <tr><td>タグchip（v3.1）</td><td><code>Tag.color</code> 背景＋<b>白文字 12·700・rounded・px-2</b>（案件タグ：新規/急ぎ/リピート等）。※一覧で灰に統一する設計も可（§3 Tag 備考）</td></tr>
+      <tr><td>納期超過ラベル（v3.1）</td><td><b>12·700・紫 #9333EA</b>「N日経過」。Status badge とは別Style（サイズ/色が異なる）。<code>status ∉ {納品済み, 見積もり段階}</code> かつ超過時に表示</td></tr>
       <tr><td>ヘッダー / ナビ</td><td>ヘッダー <code>bg-ink-900</code>、ナビ <code>bg-ink-700</code>、active <code>bg-brand</code></td></tr>
       <tr><td>トースト</td><td>右下(bottom 60 / right 20)、bg ink-900 / ok #3F9D5E / err #EF4444、<code>rounded</code>、約2秒で自動消去</td></tr>
     </tbody></table>
@@ -175,7 +177,7 @@ tailwind.config = { theme: { extend: {
     <h3 class="font-black text-lg">1-3. Styles 一覧（Bubble の要素タイプ別）</h3>
     <p class="text-sm text-ink-700">Bubble の「Styles」タブの要素タイプ順に、本システムで定義する共有Styleを整理。<b>同じ見た目は1つのStyleを使い回す</b>。現行モックに該当要素が無いものは「—」＝<b>定義不要</b>（必要になった時点で追加）。Text の各Styleの詳細値は §1-2 を参照。</p>
     <table><thead><tr><th style="width:130px">Bubble 要素</th><th>定義する Style</th><th>仕様（Tailwind相当 / 備考）</th></tr></thead><tbody>
-      <tr><td>Text</td><td>Heading XL / Bold SM / Body SM / Body XS / Mono XS / Label / Caption / Caption XS / Section Title (on dark) / Status badge</td><td>24·900 ／ 14·700 ／ 14·400 ／ 12·400 ／ 12·400 mono ／ 12·700 #707070 ／ 14·400 #707070 ／ 12·400 #707070 ／ 16·700 #FFFFFF ／ 14·700 ＋状態色(条件付き)</td></tr>
+      <tr><td>Text</td><td>Heading XL / Bold SM / Body SM / Body XS / Mono XS / Label / Caption / Caption XS / Section Title (on dark) / Status badge ／ <b>Mono SM</b> / <b>Field Label</b> / <b>Tag chip</b> / <b>Overdue label</b> <span class="text-ink-500">（後4つ=受注一覧で追加）</span></td><td>24·900 ／ 14·700 ／ 14·400 ／ 12·400 ／ 12·400 mono ／ 12·700 #707070 ／ 14·400 #707070 ／ 12·400 #707070 ／ 16·700 #FFFFFF ／ 14·700 ＋状態色(条件付き) ／ <b>14·400 mono</b>（金額/数量） ／ <b>12·700 #1A1A1A</b>（フィルタ項目名） ／ <b>12·700 #FFFFFF</b>（Tag色背景・案件タグpill） ／ <b>12·700 #9333EA</b>（紫・N日経過）</td></tr>
       <tr><td>Button</td><td>Primary / Secondary / Danger</td><td><code>bg-brand text-white rounded px-4 py-2 font-bold</code> ／ <code>border border-ink-300 rounded px-3 py-1.5</code> ／ <code>border-red-500 text-red-500</code></td></tr>
       <tr><td>Input</td><td>Field – Base</td><td><code>border border-ink-300 rounded px-2 py-1.5 text-sm</code>（focus=brand）</td></tr>
       <tr><td>Multiline Input</td><td>Field – Base（共用）</td><td>同上（textarea：備考・メモ）</td></tr>
@@ -202,7 +204,7 @@ tailwind.config = { theme: { extend: {
       <tr><td>HTML</td><td>—</td><td>未使用（PDFはプラグインで出力）</td></tr>
       <tr><td>Page</td><td>Page – Base</td><td>bg <code>#F3F4F6</code>・Noto Sans JP・デスクトップ前提</td></tr>
     </tbody></table>
-    <div class="note text-xs">「—」＝現行モックに該当要素が無く Style は<b>定義不要</b>。Field 系（Input/Multiline/Dropdown/Search/Date）は<b>1つの "Field – Base" を共用</b>するのが最小構成。</div>
+    <div class="note text-xs">「—」＝現行モックに該当要素が無く Style は<b>定義不要</b>。Field 系（Input/Multiline/Dropdown/Search/Date）は<b>1つの "Field – Base" を共用</b>するのが最小構成。<br><b>v3.1追記（受注一覧の精査で発見）：</b><code>Mono SM</code>（14px等幅＝金額/数量）・<code>Field Label</code>（12·700 黒＝フィルタ項目名。灰の Label に統一も可）・<code>Tag chip</code>（白文字12·700＋<code>Tag.color</code>背景）・<code>Overdue label</code>（12·700 紫＝N日経過）。これで受注一覧ページは定義済みStyleのみで構築可能。</div>
   </section>
 
   <!-- ============ データモデル ============ -->
