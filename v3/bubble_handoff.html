@@ -166,7 +166,9 @@ tailwind.config = { theme: { extend: {
       <tr><td>納期超過ラベル（v3.1）</td><td><b>12·700・紫 #9333EA</b>「N日経過」。Status badge とは別Style（サイズ/色が異なる）。<code>status ∉ {納品済み, 見積もり段階}</code> かつ超過時に表示</td></tr>
       <tr><td>明細番号バッジ（v3.1）</td><td><b>12·900 白</b>＋色背景・rounded「明細 #N」（受注起票/編集の各明細ヘッダー）</td></tr>
       <tr><td>合計金額（v3.1）</td><td><b>18·900・brand #E87825</b>（見積サマリーの税込合計）。ラベル「合計」は <code>Subheading</code> 18·700</td></tr>
-      <tr><td>ページ物ボタン（v3.1）</td><td><code>bg-[#7E22CE] text-white rounded</code>「＋ページ物を追加」。通常明細は <code>Secondary</code>（点線/枠）で区別</td></tr>
+      <tr><td>明細追加ボタン（v3.1）</td><td><b>ページ物</b>=<code>bg-[#7E22CE] text-white rounded</code>「＋ページ物を追加」／ <b>通常</b>=<b>白文字＋白枠・透明</b>（濃色面のゴースト）「＋通常を追加」。色で2種を区別</td></tr>
+      <tr><td>Ghost brand ボタン（v3.1）</td><td><code>text-brand border border-[#E5E7EB] rounded</code>・透明地。顧客の「＋新規」など軽量アクション（Primary/Secondaryとは別形態）</td></tr>
+      <tr><td>Danger（枠なしtext, v3.1）</td><td><code>text-[#EF4444]</code>・枠なし・w400「削除」。枠付き <code>border-red-500</code> 版とあわせ <b>Danger は2形態</b>（枠付き/枠なしtext）</td></tr>
       <tr><td>種別バッジ（v3.1）</td><td><b>14·700</b>＋<code>CustomerKind.color</code>（地域・団体 #1D4ED8 / 企業・個人 #92400E）。顧客一覧/詳細の種別表示</td></tr>
       <tr><td>カンバン列見出し（v3.1）</td><td><b>16·900</b>＋<code>OrderStatus.color</code>＋件数。工場カンバンの各列ヘッダー</td></tr>
       <tr><td>見積書PDFプレビュー</td><td><b>Bubble Style 対象外</b>：<code>#quote-pdf-page</code> は PDFプラグインのテンプレートで出力（社名/印影/登録番号/明細/合計税込/振込先の体裁はテンプレート側で定義）</td></tr>
@@ -184,7 +186,7 @@ tailwind.config = { theme: { extend: {
     <p class="text-sm text-ink-700">Bubble の「Styles」タブの要素タイプ順に、本システムで定義する共有Styleを整理。<b>同じ見た目は1つのStyleを使い回す</b>。現行モックに該当要素が無いものは「—」＝<b>定義不要</b>（必要になった時点で追加）。Text の各Styleの詳細値は §1-2 を参照。</p>
     <table><thead><tr><th style="width:130px">Bubble 要素</th><th>定義する Style</th><th>仕様（Tailwind相当 / 備考）</th></tr></thead><tbody>
       <tr><td>Text</td><td>Heading XL / Subheading / Bold SM / Body SM / Body XS / Mono XS / Mono SM / Label / Field Label / Caption / Caption XS / Section Title / Status badge / Tag chip / Overdue label / Required mark / Item-No badge / Total amount / Page-item label / <b>Kind badge</b> / <b>Column title</b> <span class="text-ink-500">（末尾2つ=顧客/カンバンで追加）</span></td><td>24·900 黒（受注/見積番号は <b>mono変種</b>） ／ 16–18·700（色条件:黒/<b>赤=印刷の納期強調</b>） ／ 14·700 黒 ／ 14·400 黒 ／ 12·400 黒 ／ 12·400 mono（<b>補助は#707070</b>） ／ 14 mono（色/太さ条件付き） ／ 12·700 #707070 ／ 12·700 黒 ／ 14·400 #707070 ／ 12·400 #707070 ／ 14–18·700（色条件:白=濃色帯/黒=明色パネル） ／ 14·700 ＋状態色 ／ <b>12–14</b>·700 白＋Tag色背景 ／ 12·700 #9333EA(紫) ／ 12·700 #DC2626（必須*） ／ 12·900 白＋色背景（明細#N） ／ <b>18–24·900</b> ＋色(brand/黒/#707070)・¥は等幅（<b>合計/KPI数値</b>） ／ 12·700 #7E22CE（ページ物） ／ <b>14·700 ＋種別色</b>（地域=#1D4ED8/企業=#92400E） ／ <b>16·900 ＋状態色</b>（カンバン列見出し）</td></tr>
-      <tr><td>Button</td><td>Primary / Secondary / Danger / <b>Page (紫)</b></td><td><code>bg-brand text-white rounded px-4 py-2 font-bold</code> ／ <code>border border-[#E5E7EB] rounded px-3 py-1.5</code> ／ <code>border-red-500 text-red-500</code> ／ <b><code>bg-[#7E22CE] text-white</code>（＋ページ物を追加）</b></td></tr>
+      <tr><td>Button</td><td>Primary / Secondary / Danger / Page (紫) / <b>Add (normal)</b> / <b>Ghost brand</b></td><td><code>bg-brand text-white rounded px-4 py-2 font-bold</code> ／ <code>border border-[#E5E7EB] rounded px-3 py-1.5</code> ／ <code>border-red-500 text-red-500</code>（<b>＋枠なしtext変種=#EF4444のみ</b>） ／ <code>bg-[#7E22CE] text-white</code>（ページ物） ／ <b><code>白文字＋白枠・透明</code></b>（濃色面の＋通常を追加） ／ <b><code>text-brand border-[#E5E7EB] 透明</code></b>（＋新規）</td></tr>
       <tr><td>Input</td><td>Field – Base</td><td><code>border border-ink-300 rounded px-2 py-1.5 text-sm</code>（focus=brand）</td></tr>
       <tr><td>Multiline Input</td><td>Field – Base（共用）</td><td>同上（textarea：備考・メモ）</td></tr>
       <tr><td>Dropdown</td><td>Field – Base（共用）</td><td>同上（顧客・担当者・用紙・インク等）</td></tr>
