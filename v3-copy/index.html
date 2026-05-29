@@ -193,7 +193,7 @@ tailwind.config = {
   var STYLE_FULL = {
     '14/400/#707070'      : 'Caption (muted SM)',
     '12/700/#707070'      : 'Label (muted XS·Bold)',
-    '14/700/#1A1A1A'      : 'Bold SM (見出し/表頭)',
+    '14/700/#1A1A1A'      : 'Bold SM',
     '24/900/#1A1A1A'      : 'Heading XL',
     '14/400/#1A1A1A'      : 'Body SM',
     '12/400/#707070'      : 'Caption XS',
@@ -355,7 +355,7 @@ tailwind.config = {
       var ts = textStyle(t);
       styleHtml = '<div class="sty"><span class="styname">▦ Style: '+ts.name+'</span>'
                 + '<div class="stymeta"><span class="sw" style="background:'+ts.color+'"></span>'+ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' / mono':'')+'</div>'
-                + (ts.cond ? '<div class="cond">※色は条件付き（状態/アラート連動）。共有Styleは1つ＋条件で色を変更</div>' : '')
+                + (ts.cond ? '<div class="cond">* Color is conditional (status / alert-driven). Use one shared Style + conditional color.</div>' : '')
                 + '</div>';
     }
     tip.innerHTML = '<div class="cat" style="color:'+COL[r.cat]+'">'+CATJP[r.cat]+'</div>'
