@@ -278,6 +278,50 @@ tailwind.config = { theme: { extend: {
     </tbody></table>
     </div>
     <div class="note text-xs">Italic/Underline は全Button未使用（–）。アイコンは文字グリフ運用のため Icon は文字色・文字サイズに準拠（Bubbleの Icon 要素を使う場合は size≈16・color=文字色）。Spacing は行内のボタン間（<code>gap-2</code>=8px）、Gap はアイコンとラベルの間隔。無効状態は <code>opacity 40%</code>（条件）。hover は約0.15s の色/背景トランジション。</div>
+
+    <!-- 1-6 Input Style 詳細プロパティ -->
+    <h3 class="font-black text-lg">1-6. Input（Field 系）詳細プロパティ（Bubble Style 設定値）</h3>
+    <p class="text-sm text-ink-700">入力系の設定値。text/number/date/select/textarea は<b>1つの「Field – Base」を共用</b>。<b>focus は実機では既定（枠色変更なし）</b>＝brand化は任意。checkbox/radio は<b>native（accent 既定・約13px）</b>でbrand化は任意。Placeholder は既定（薄表示）。</p>
+    <style>
+      #inprops, #ctprops { font-size:11px; }
+      #inprops th, #inprops td, #ctprops th, #ctprops td { padding:4px 7px; white-space:nowrap; }
+      #inprops td:first-child, #inprops th:first-child, #ctprops td:first-child, #ctprops th:first-child { font-weight:700; position:sticky; left:0; background:#fff; }
+      #inprops thead th:first-child, #ctprops thead th:first-child { background:#1A1A1A; }
+    </style>
+    <div style="overflow-x:auto; border:1px solid #D1D5DB; border-radius:6px;">
+    <table id="inprops"><thead><tr>
+      <th>Element / Style</th><th>Padding</th><th>Font</th><th>Size</th><th>Weight</th><th>Align</th><th>Font color</th><th>Placeholder</th><th>Height</th><th>Opacity</th><th>Radius</th><th>B-style</th><th>B-width</th><th>B-color</th><th>BG color</th><th>Focus</th>
+    </tr></thead><tbody>
+      <tr><td>Input（Field – Base）</td><td>6 / 8（py-1.5 px-2）</td><td>Noto Sans JP</td><td>14</td><td>400</td><td>left</td><td>#1A1A1A</td><td>既定（薄表示）</td><td>~34–36</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>#FFFFFF</td><td>既定（任意でbrand枠）</td></tr>
+      <tr><td>Multiline Input</td><td>6 / 8</td><td>Noto Sans JP</td><td>14</td><td>400</td><td>left</td><td>#1A1A1A</td><td>既定</td><td>auto（複数行）</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>#FFFFFF</td><td>既定</td></tr>
+      <tr><td>Dropdown（select）</td><td>6 / 8</td><td>Noto Sans JP</td><td>14</td><td>400</td><td>left</td><td>#1A1A1A</td><td>—（caret付）</td><td>~36</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>#FFFFFF</td><td>既定</td></tr>
+      <tr><td>Search Box</td><td>6 / 8</td><td>Noto Sans JP</td><td>14</td><td>400</td><td>left</td><td>#1A1A1A</td><td>既定（例:検索…）</td><td>~34</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>#FFFFFF</td><td>既定</td></tr>
+      <tr><td>Date/Time Picker</td><td>6 / 8</td><td>Noto Sans JP</td><td>14</td><td>400</td><td>left</td><td>#1A1A1A</td><td>—</td><td>~36</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>#FFFFFF</td><td>既定</td></tr>
+      <tr><td>Checkbox</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>~13–16</td><td>100%</td><td>native</td><td>native</td><td>native</td><td>native</td><td>native（accent既定）</td><td>—</td></tr>
+      <tr><td>Radio Buttons</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>~13–16</td><td>100%</td><td>native（円）</td><td>native</td><td>native</td><td>native</td><td>native（accent既定）</td><td>—</td></tr>
+      <tr><td>File Uploader</td><td>6 / 8</td><td>Noto Sans JP</td><td>14</td><td>400</td><td>left</td><td>#1A1A1A</td><td>—</td><td>~36</td><td>100%</td><td>4</td><td>solid</td><td>1px</td><td>#E5E7EB</td><td>transparent</td><td>既定</td></tr>
+    </tbody></table>
+    </div>
+    <div class="note text-xs">ラベルは Text Style <b>Field Label</b>（12·700 黒）/必須印は <b>Required mark</b>（§1-4）。focus枠・checkbox/radioのaccentはモックでは<b>既定のまま</b>。brand に揃える場合は条件/Styleで任意設定（Phase 1では必須でない）。</div>
+
+    <!-- 1-7 Container 詳細プロパティ -->
+    <h3 class="font-black text-lg">1-7. コンテナ（Group / RG / Popup / FloatingGroup）詳細プロパティ</h3>
+    <p class="text-sm text-ink-700">コンテナ系の設定値。<b>Group – Card</b> が基本（白・角丸4・shadow-sm）。Popup は<b>角丸8(rounded-lg)＋shadow-lg＋backdrop</b>。RG-Row は上罫線 #E5E7EB＋hover。FloatingGroup はモック未使用（sticky追従時のみ任意）。</p>
+    <div style="overflow-x:auto; border:1px solid #D1D5DB; border-radius:6px;">
+    <table id="ctprops"><thead><tr>
+      <th>Container / Style</th><th>Padding</th><th>Gap</th><th>Opacity</th><th>Radius</th><th>Shadow</th><th>B-style</th><th>B-width</th><th>B-color</th><th>BG color</th><th>Position</th><th>Layout / 備考</th>
+    </tr></thead><tbody>
+      <tr><td>Group – Card</td><td>16（p-4）／0も可</td><td>8–16</td><td>100%</td><td>4</td><td>shadow-sm（0 1px 2px /5%）</td><td>none</td><td>0</td><td>–</td><td>#FFFFFF</td><td>static</td><td>block/flex/grid・基本カード</td></tr>
+      <tr><td>Group – Title Bar</td><td>8 / 16（py-2 px-4）</td><td>—</td><td>100%</td><td>4（rounded-t・上のみ）</td><td>none</td><td>none</td><td>0</td><td>–</td><td>#1A1A1A（or 状態色）</td><td>static</td><td>flex・帯見出し（文字=Section Title 白）</td></tr>
+      <tr><td>Group – Section（layout）</td><td>0</td><td>8–16</td><td>100%</td><td>0</td><td>none</td><td>none</td><td>0</td><td>–</td><td>transparent</td><td>static</td><td>flex/grid・レイアウト専用（無地）</td></tr>
+      <tr><td>Repeating Group – List</td><td>0</td><td>0</td><td>100%</td><td>（親カード依存）</td><td>（親カード）</td><td>none</td><td>0</td><td>–</td><td>transparent / #FFFFFF</td><td>static</td><td>縦並び・50件/頁</td></tr>
+      <tr><td>RG – Row</td><td>8 / 12（py-2 px-3）</td><td>—</td><td>100%</td><td>0</td><td>none</td><td>solid（上のみ）</td><td>1px（top）</td><td>#E5E7EB</td><td>transparent（hover bg-brand/5）</td><td>static</td><td>行高 ~37・cursor pointer</td></tr>
+      <tr><td>Popup – Modal（panel）</td><td>16–20</td><td>8–16</td><td>100%</td><td>8（rounded-lg）</td><td>shadow-lg（0 10px 15px /10%）</td><td>none</td><td>0</td><td>–</td><td>#FFFFFF</td><td>fixed（中央）</td><td>新規/編集 顧客モーダル</td></tr>
+      <tr><td>Popup – Backdrop</td><td>0</td><td>—</td><td>—</td><td>0</td><td>none</td><td>none</td><td>0</td><td>–</td><td>#000000 ~50%</td><td>fixed inset-0</td><td>背景幕（クリックで閉）</td></tr>
+      <tr><td>FloatingGroup – Card</td><td>16</td><td>8–16</td><td>100%</td><td>4</td><td>shadow-sm</td><td>none</td><td>0</td><td>–</td><td>#FFFFFF</td><td><b>sticky/fixed</b></td><td><b>任意</b>（モック未使用。追従が要る時のみ）/ FG_Toast=右下固定</td></tr>
+    </tbody></table>
+    </div>
+    <div class="note text-xs">影の実値：<code>shadow-sm</code>=0 1px 2px rgba(0,0,0,.05) ／ <code>shadow-lg</code>=0 10px 15px rgba(0,0,0,.1)。Group-Card の padding はセクションにより 0（テーブル内包時）〜16。RG/Table の罫線・Popup角丸・backdrop は全画面の実測一致。</div>
   </section>
 
   <!-- ============ データモデル ============ -->
