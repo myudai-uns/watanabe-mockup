@@ -38,6 +38,7 @@ tailwind.config = { theme: { extend: {
     </div>
     <nav class="text-xs flex flex-wrap gap-1">
       <a href="#proc" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">構築手順</a>
+      <a href="#naming" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">命名/UI規約</a>
       <a href="#model" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">データモデル</a>
       <a href="#option" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">Option Set</a>
       <a href="#logic" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">計算・採番・条件</a>
@@ -81,6 +82,94 @@ tailwind.config = { theme: { extend: {
       <li><b>権限/privacy rules・レスポンシブ調整</b>（本書 §5）。</li>
       <li><b>検証</b>：シードデータでモックと画面・計算・条件表示を1:1突合。</li>
     </ol>
+  </section>
+
+  <!-- ============ 命名規則 & UI規約 ============ -->
+  <section id="naming" class="card p-6 space-y-5">
+    <h2 class="text-2xl font-black">1. 命名規則 ＆ UI / スタイル規約</h2>
+    <p class="text-sm text-ink-700">v3.1新設。<b>本章はモック（<code>index.html</code> / <code>app.js</code>）を正として実値を明文化</b>したもの。研修生の実装ブレ（特にエレメント名・条件表示・配色）を防ぐための規約です。新規の値は定義せず、既存の表記・スタイルに一致させています。</p>
+
+    <!-- 1-1 命名規則 -->
+    <h3 class="font-black text-lg">1-1. オブジェクト命名規則</h3>
+    <table><thead><tr><th>対象</th><th>規則</th><th>例</th></tr></thead><tbody>
+      <tr><td><b>Data Type</b></td><td>英語・PascalCase・<b>単数形</b></td><td>Customer / Order / OrderItem / QuotePattern / FactoryRecord / ChangeLog / Settings</td></tr>
+      <tr><td><b>Option Set</b></td><td>英語・PascalCase。Displayは日本語可、英数キーが要る場合のみ <code>value</code> 属性に短縮キー</td><td>OrderStatus / InkPattern / UserRole（値: <code>4Cx4C</code> / <code>single</code>）</td></tr>
+      <tr><td><b>Field</b></td><td>英語・snake_case。真偽=<code>is_</code>／日時=<code>_at</code>／日付=<code>_date</code>／金額=<code>_amount</code>・<code>subtotal_</code>／参照=対象名／list=複数形</td><td>is_active / started_at / received_date / total_amount / customer / tags</td></tr>
+      <tr><td><b>Route（URL hash）</b></td><td>小文字＋スラッシュ区切り</td><td>#orders / #order/:id / #order/:id/edit / #customer/:id / #factory</td></tr>
+      <tr><td><b>Page</b></td><td>小文字・用途名</td><td>index(dashboard) / order / orders / customer / quote / factory / login</td></tr>
+      <tr><td><b>Reusable Element</b></td><td><code>RE_</code> ＋ 役割（英語）</td><td>RE_HeaderNav / RE_StatusBadge / RE_SectionCard / RE_OrderRow / RE_KanbanCard</td></tr>
+      <tr><td><b>Custom state</b></td><td>snake_case ＋ 用途</td><td>mode（new/view/edit）/ is_dirty（顧客メモ未保存）/ selected_pattern</td></tr>
+      <tr><td><b>Workflow</b></td><td>「動詞＋対象」。Backend は <code>bw_</code> 接頭</td><td>Save order / Create quote / Change status to 印刷中 ／ bw_remind_today_delivery</td></tr>
+    </tbody></table>
+
+    <h4 class="font-bold text-sm mt-1">エレメント（UI要素）の接頭辞</h4>
+    <p class="text-xs text-ink-500 mb-1">Bubbleの要素名は「種別接頭辞 ＋ 用途（日本語可）」で統一。検索性とPrivacy/条件表示の指定ミスを防ぐ。</p>
+    <table><thead><tr><th>種別</th><th>接頭辞</th><th>例</th><th>種別</th><th>接頭辞</th><th>例</th></tr></thead><tbody>
+      <tr><td>Group</td><td><code>GRP_</code></td><td>GRP_受付情報</td><td>Text</td><td><code>TXT_</code></td><td>TXT_合計</td></tr>
+      <tr><td>RepeatingGroup</td><td><code>RG_</code></td><td>RG_受注一覧</td><td>Button</td><td><code>BTN_</code></td><td>BTN_保存</td></tr>
+      <tr><td>Input</td><td><code>INP_</code></td><td>INP_小計税抜</td><td>Checkbox</td><td><code>CHK_</code></td><td>CHK_ミシン</td></tr>
+      <tr><td>Dropdown</td><td><code>DD_</code></td><td>DD_ステータス</td><td>Popup/Modal</td><td><code>POP_</code></td><td>POP_新規顧客</td></tr>
+      <tr><td>Icon / Image</td><td><code>IC_ / IMG_</code></td><td>IC_検索</td><td>FloatingGroup</td><td><code>FG_</code></td><td>FG_見積サマリー</td></tr>
+    </tbody></table>
+    <div class="note text-xs">原則：<b>内部名は英語、画面に出る文言（ラベル/ボタン文字）だけ日本語</b>。ローマ字読み（kingaku 等）は使わない。Data Type/Field 名はモック §2 の表記と完全一致させる。</div>
+
+    <!-- 1-2 UI規約 -->
+    <h3 class="font-black text-lg">1-2. UI / スタイル規約（mock実値準拠）</h3>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div>
+        <h4 class="font-bold text-sm mb-1">フォント</h4>
+        <table><thead><tr><th>用途</th><th>サイズ（Tailwind / px）</th><th>太さ</th></tr></thead><tbody>
+          <tr><td>本文・ラベル（最多）</td><td><code>text-xs</code> / 12px</td><td>font-bold(700)</td></tr>
+          <tr><td>標準テキスト・入力値</td><td><code>text-sm</code> / 14px</td><td>400〜700</td></tr>
+          <tr><td>小見出し</td><td><code>text-lg</code> / 18px</td><td>font-bold(700)</td></tr>
+          <tr><td>セクション見出し</td><td><code>text-2xl</code> / 24px</td><td>font-black(900)</td></tr>
+        </tbody></table>
+        <p class="text-xs text-ink-500">書体 = <b>Noto Sans JP</b>（400/500/700/900）。<code>text-base</code>(16px) は不使用。補足のみ font-normal。</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-sm mb-1">角丸 / 枠 / 影</h4>
+        <table><thead><tr><th>項目</th><th>標準値</th></tr></thead><tbody>
+          <tr><td>角丸（全要素共通）</td><td><code>rounded</code> = <b>4px</b>（カード/ボタン/入力/バッジ/トースト）</td></tr>
+          <tr><td>例外</td><td>大カード上辺 <code>rounded-t</code> ／ 丸要素 <code>rounded-full</code>（rounded-lg=8pxは限定）</td></tr>
+          <tr><td>入力枠</td><td><code>border border-ink-300</code>（#B5B5B5）、focus=brand</td></tr>
+          <tr><td>影</td><td>カード <code>shadow-sm</code> ／ モーダル <code>shadow-lg</code></td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <h4 class="font-bold text-sm mb-1">余白 / 間隔</h4>
+        <table><tbody>
+          <tr><td>ボタン</td><td><code>px-3〜4 / py-1.5〜2</code></td></tr>
+          <tr><td>テーブルセル</td><td><code>px-2〜3 / py-1.5</code></td></tr>
+          <tr><td>カード内</td><td><code>p-3 / p-4</code></td></tr>
+          <tr><td>要素間 gap</td><td><code>gap-2</code>(8px)標準・<code>gap-3</code>(12px)</td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <h4 class="font-bold text-sm mb-1">カラートークン</h4>
+        <table><tbody>
+          <tr><td>brand</td><td><code>#E87825</code>（primary/active）/ dark <code>#B85D16</code> / light <code>#FFF4EC</code></td></tr>
+          <tr><td>ok</td><td><code>#3F9D5E</code> / dark <code>#2A7A44</code> / light <code>#E8F5EE</code></td></tr>
+          <tr><td>ink</td><td>900 <code>#1A1A1A</code> / 700 <code>#3A3A3A</code> / 500 <code>#707070</code> / 300 <code>#B5B5B5</code></td></tr>
+          <tr><td>背景 / danger</td><td>bg <code>#F3F4F6</code>・card <code>#fff</code> / danger <code>#EF4444</code></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <h4 class="font-bold text-sm mt-1">コンポーネント標準（Bubbleで Reusable / Style 化推奨）</h4>
+    <table><thead><tr><th>部品</th><th>標準クラス（Tailwind相当）</th></tr></thead><tbody>
+      <tr><td>主ボタン</td><td><code>bg-brand text-white rounded px-4 py-2 font-bold</code></td></tr>
+      <tr><td>副ボタン</td><td><code>border border-ink-300 text-ink-900 rounded px-3 py-1.5</code></td></tr>
+      <tr><td>入力 / select</td><td><code>border border-ink-300 rounded px-2 py-1.5 text-sm</code></td></tr>
+      <tr><td>カード / セクション</td><td><code>bg-white rounded shadow-sm p-4</code></td></tr>
+      <tr><td>ステータスバッジ</td><td><code>.st</code>＝<b>背景なし・文字色のみ・font-bold・サイズは親継承</b>。色は <code>OrderStatus.color</code> と一致（見積=#1E3A8A / 受注=#DC2626 / 印刷中=#B45309 / 完成=#2A7A44 / 納品済み=#6B7280 / 納期超過=#7C3AED）</td></tr>
+      <tr><td>ヘッダー / ナビ</td><td>ヘッダー <code>bg-ink-900</code>、ナビ <code>bg-ink-700</code>、active <code>bg-brand</code></td></tr>
+      <tr><td>トースト</td><td>右下(bottom 60 / right 20)、bg ink-900 / ok #3F9D5E / err #EF4444、<code>rounded</code>、約2秒で自動消去</td></tr>
+    </tbody></table>
+
+    <div class="note text-xs">
+      <b>表示モード（view）</b>：モックは <code>body.view-mode</code> で input/select/textarea を pointer-events:none・背景透明にし、<code>.edit-only</code> を非表示、<code>.view-allow</code> のみ操作可。Bubble では custom state <code>mode=view</code> 時に同等の条件表示で再現する。<br>
+      <b>レスポンシブ</b>：Phase 1 は<b>デスクトップ前提</b>（モバイル対応は対象外, §要件6-4）。
+    </div>
   </section>
 
   <!-- ============ データモデル ============ -->
