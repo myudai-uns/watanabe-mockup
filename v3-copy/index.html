@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 v3-copy ｜ Bubbleエレメント型ビューア（ダッシュボード）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { 'sans': ['Noto Sans JP', 'sans-serif'] },
+      colors: {
+        brand: { DEFAULT: '#E87825', dark: '#B85D16', light: '#FFF4EC' },
+        ok: { DEFAULT: '#3F9D5E', dark: '#2A7A44', light: '#E8F5EE' },
+        ink: { 900: '#1A1A1A', 700: '#3A3A3A', 500: '#707070', 300: '#B5B5B5' },
+      },
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Noto Sans JP', sans-serif; background: #F3F4F6; }
+  .nav-btn.active, .side-link.active { background: #E87825 !important; color: white !important; font-weight: 700; }
+  .scroll-pad { padding-bottom: 40px; }
+  /* v2.6: 受注確認モード（read-only表示） */
+  body.view-mode input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+  body.view-mode input[type="date"]::-webkit-inner-spin-button,
+  body.view-mode input[type="number"]::-webkit-inner-spin-button,
+  body.view-mode input[type="number"]::-webkit-outer-spin-button { display: none !important; -webkit-appearance: none; }
+  body.view-mode input, body.view-mode select, body.view-mode textarea {
+    pointer-events: none !important;
+    background-image: none !important;
+    background-color: transparent !important;
+  }
+  body.view-mode select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    padding-right: 0.5rem !important;
+  }
+  body.view-mode input[type="file"] { display: none; }
+  body.view-mode .edit-only { display: none !important; }
+  body.view-mode button:not(.view-allow) { pointer-events: none; opacity: 0.5; }
+  body.view-mode .view-allow,
+  body.view-mode .view-allow * { pointer-events: auto !important; opacity: 1 !important; }
+  body.view-mode .view-allow input,
+  body.view-mode .view-allow select,
+  body.view-mode .view-allow textarea { background-color: white !important; }
+  [draggable=true] { cursor: grab; }
+  [draggable=true]:active { cursor: grabbing; }
+  .drag-over { background: rgba(232,120,37,0.2) !important; outline: 2px dashed #E87825; }
+  .drag-ghost { opacity: 0.4; }
+  .st { display: inline-block; padding: 0; font-size: inherit; font-weight: 700; white-space: nowrap; background: transparent; }
+  .st-見積もり段階 { color: #1E3A8A; }
+  .st-受注 { color: #DC2626; }
+  .st-製版中 { color: #2563EB; }
+  .st-校正中 { color: #7C3AED; }
+  .st-印刷中 { color: #B45309; }
+  .st-完成 { color: #2A7A44; }
+  .st-納品済 { color: #6B7280; }
+  .st-キャンセル { color: #DC2626; }
+  .st-待機 { color: #6B7280; }
+  .st-作業中 { color: #B45309; }
+  .st-出荷待ち { color: #2563EB; }
+  .st-納品済み { color: #6B7280; }
+  .st-経過 { color: #7C3AED; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 60px; right: 20px; z-index: 100; }
+  .toast-item { background: #1A1A1A; color: white; padding: 10px 16px; border-radius: 6px; margin-top: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.2s; }
+  .toast-item.show { opacity: 1; transform: translateY(0); }
+  .toast-item.ok { background: #3F9D5E; }
+  .toast-item.err { background: #EF4444; }
+
+  @media print {
+    body { background: white; }
+    body * { visibility: hidden !important; }
+    #quote-pdf-page, #quote-pdf-page * { visibility: visible !important; }
+    #quote-pdf-page { position: absolute !important; left: 0; top: 0; right: 0; width: 100% !important; max-width: none !important; padding: 12mm !important; box-shadow: none !important; border: none !important; }
+    .print-page { page-break-after: always; }
+  }
+
+  /* ===== Bubble element-type viewer (v3-copy / dashboard only) ===== */
+  #bbl-tip { position: fixed; z-index: 9999; pointer-events: none; display: none;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 12px; line-height: 1.4;
+    background: #0c0e16; color: #fff; border-radius: 8px; padding: 8px 11px;
+    box-shadow: 0 14px 40px -12px rgba(0,0,0,.7); max-width: 280px; border: 1px solid rgba(255,255,255,.15); }
+  #bbl-tip .cat { font-size: 10px; font-weight: 700; letter-spacing: .05em; opacity: .9; }
+  #bbl-tip .typ { font-size: 15px; font-weight: 900; margin-top: 1px; }
+  #bbl-tip .tag { font-size: 10px; opacity: .6; margin-top: 2px; font-family: monospace; }
+  #bbl-panel { position: fixed; top: 86px; right: 14px; z-index: 9998; width: 250px;
+    background: rgba(12,14,22,.96); color: #EDF0F7; border: 1px solid rgba(255,255,255,.14);
+    border-radius: 14px; padding: 13px 14px; font-size: 12px; box-shadow: 0 18px 50px -16px rgba(0,0,0,.7);
+    backdrop-filter: blur(8px); }
+  #bbl-panel h4 { font-size: 12.5px; font-weight: 900; margin-bottom: 2px; }
+  #bbl-panel .sub { font-size: 10.5px; color: #AEB6C8; margin-bottom: 9px; }
+  #bbl-panel .row { display: flex; align-items: center; gap: 7px; margin: 4px 0; }
+  #bbl-panel .row b { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+  #bbl-panel .toggle { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; cursor: pointer;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 9px; padding: 7px 10px; font-weight: 700; }
+  #bbl-panel .toggle input { width: 15px; height: 15px; accent-color: #E87825; }
+  #bbl-panel .note { font-size: 10px; color: #6E7689; margin-top: 8px; line-height: 1.5; }
+  #bbl-panel .off { font-size: 10.5px; color: #f6c177; margin-top: 6px; display: none; }
+  body:not(.bbl-on-dash) #bbl-panel .off { display: block; }
+</style>
+</head>
+<body class="text-ink-900">
+
+<!-- 上部バー -->
+<header class="bg-ink-900 text-white sticky top-0 z-50 no-print">
+  <div class="flex items-center justify-between px-6 py-2">
+    <div class="flex items-center gap-3">
+      <div class="font-bold text-sm">渡辺謄写堂　業務管理システム <span class="text-xs text-brand font-normal">v3-copy</span></div>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-ink-300">ログイン中:</span>
+      <a href="#login" id="current-user-link" class="bg-ink-700 text-white px-3 py-1 rounded text-xs font-bold hover:bg-ink-500" title="クリックでログイン画面へ">—</a>
+      <button id="btn-reset" class="px-3 py-1 border border-red-400/50 text-red-300 rounded hover:bg-red-500/20 text-xs">リセット</button>
+    </div>
+  </div>
+  <nav class="bg-ink-700 px-6 py-2 flex flex-wrap gap-1 text-sm overflow-x-auto">
+    <a href="#dashboard" data-screen="dashboard" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">ダッシュボード</a>
+    <a href="#orders" data-screen="orders" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">受注一覧</a>
+    <a href="#order/new" data-screen="order_new" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">新規受注</a>
+    <a href="#customers" data-screen="customers" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">顧客一覧</a>
+    <a href="#factory" data-screen="factory" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">工場カンバン</a>
+  </nav>
+</header>
+
+<main id="main" class="scroll-pad p-6 bg-gray-100 min-h-screen">
+  <!-- 動的に描画 -->
+</main>
+
+<!-- Toast container -->
+<div id="toast"></div>
+
+<!-- Modal container -->
+<div id="modal-root"></div>
+
+<!-- ===== Bubble element-type viewer UI ===== -->
+<div id="bbl-panel">
+  <h4>🫧 Bubbleエレメント型ビューア</h4>
+  <div class="sub">ダッシュボードの各要素にホバーすると、Bubbleでの要素タイプを表示します。</div>
+  <div class="row"><b style="background:#2563EB"></b>Visual element（表示系）</div>
+  <div class="row"><b style="background:#16A34A"></b>Input form（入力系）</div>
+  <label class="toggle"><input type="checkbox" id="bbl-toggle" checked> 判定表示を有効化</label>
+  <div class="off">▶ ダッシュボード（#dashboard）に移動すると有効になります。</div>
+  <div class="note">対象＝画面本体(#main)の要素のみ。ヘッダー/ナビ等の共通枠は除外。判定はBubble再現用のガイドです。</div>
+</div>
+<div id="bbl-tip"></div>
+
+<script src="app.js"></script>
+<script>
+/* ===== Bubble element-type annotator (dashboard only) ===== */
+(function(){
+  var COL = { visual:'#2563EB', input:'#16A34A' };
+  var CATJP = { visual:'Visual element', input:'Input form' };
+  var tip = document.getElementById('bbl-tip');
+  var toggle = document.getElementById('bbl-toggle');
+  var enabled = true;
+  var cur = null, curOutline = '';
+
+  toggle.addEventListener('change', function(){ enabled = toggle.checked; if(!enabled) clearHL(); });
+
+  function onDashboard(){
+    var h = location.hash.slice(1) || 'dashboard';
+    return h === 'dashboard' || h.indexOf('dashboard') === 0;
+  }
+  function syncBodyFlag(){ document.body.classList.toggle('bbl-on-dash', onDashboard()); }
+  window.addEventListener('hashchange', function(){ syncBodyFlag(); clearHL(); });
+  syncBodyFlag();
+
+  function V(t){ return {cat:'visual', type:t}; }
+  function I(t){ return {cat:'input', type:t}; }
+  function hasText(el){ return (el.textContent||'').trim().length > 0; }
+  function hasDirectText(el){
+    for (var i=0;i<el.childNodes.length;i++){ var n=el.childNodes[i];
+      if (n.nodeType===3 && n.textContent.trim().length>0) return true; }
+    return false;
+  }
+
+  function classify(el){
+    if (!el || el.nodeType !== 1) return null;
+    if (el.closest('#bbl-panel') || el.id === 'bbl-tip') return null;
+    var tag = el.tagName;
+
+    // --- Input form ---
+    if (tag === 'TEXTAREA') return I('Multiline Input');
+    if (tag === 'SELECT')   return I('Dropdown');
+    if (tag === 'INPUT'){
+      var ty = (el.getAttribute('type') || 'text').toLowerCase();
+      if (ty === 'checkbox') return I('Checkbox');
+      if (ty === 'radio')    return I('RadioButtons');
+      if (ty === 'range')    return I('SliderInput');
+      if (['date','time','datetime-local','month','week'].indexOf(ty) >= 0) return I('Date/Time Picker');
+      if (ty === 'file'){ var ac = el.getAttribute('accept')||''; return I(/image/.test(ac) ? 'PictureUploader' : 'FileUploader'); }
+      if (ty === 'search') return I('SearchBox');
+      var hint = ((el.placeholder||'') + (el.id||'') + (el.name||'')).toLowerCase();
+      if (/検索|search/.test(hint)) return I('SearchBox');
+      return I('Input');
+    }
+
+    // --- Visual element ---
+    if (tag === 'IMG')   return V('Image');
+    if (tag === 'SVG' || tag === 'svg') return V('Icon');
+    if (tag === 'VIDEO') return V('Video');
+    if (tag === 'IFRAME'){ var s = el.getAttribute('src')||''; return V(/maps\.|google\.[^/]+\/maps/.test(s) ? 'Map' : 'HTML'); }
+    if (tag === 'HR')    return V('Shape');
+    if (el.getAttribute('role') === 'alert' || /\b(alert|toast)\b/.test(el.className||'')) return V('Alert');
+    if (tag === 'BUTTON') return V('Button');
+    if (tag === 'A')      return V('Link');
+    if (tag === 'I' && /\b(icon|fa-|material)\b/.test(el.className||'')) return V('Icon');
+
+    // --- Text-bearing leaves ---
+    var textTags = ['SPAN','P','H1','H2','H3','H4','H5','H6','TD','TH','LI','LABEL','STRONG','B','SMALL','EM','CODE','TIME','DT','DD'];
+    if (textTags.indexOf(tag) >= 0 && hasText(el)) return V('Text');
+    if (tag === 'DIV' && hasDirectText(el))        return V('Text');
+    return null;
+  }
+
+  function clearHL(){
+    if (cur){ cur.style.outline = curOutline; cur = null; }
+    tip.style.display = 'none';
+  }
+
+  document.addEventListener('mousemove', function(e){
+    if (!enabled || !onDashboard()){ clearHL(); return; }
+    var t = e.target;
+    if (!t || !t.closest || !t.closest('#main')){ clearHL(); return; }
+    var r = classify(t);
+    if (!r){ clearHL(); return; }
+
+    if (t !== cur){
+      if (cur) cur.style.outline = curOutline;
+      cur = t; curOutline = t.style.outline;
+      t.style.outline = '2px solid ' + COL[r.cat];
+      t.style.outlineOffset = '1px';
+    }
+    tip.innerHTML = '<div class="cat" style="color:'+COL[r.cat]+'">'+CATJP[r.cat]+'</div>'
+                  + '<div class="typ">'+r.type+'</div>'
+                  + '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>';
+    tip.style.display = 'block';
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var x = e.clientX + 16, y = e.clientY + 16;
+    if (x + tw > window.innerWidth - 8)  x = e.clientX - tw - 16;
+    if (y + th > window.innerHeight - 8) y = e.clientY - th - 16;
+    tip.style.left = x + 'px';
+    tip.style.top  = y + 'px';
+  }, true);
+
+  document.addEventListener('mouseleave', clearHL);
+})();
+</script>
+</body>
+</html>
