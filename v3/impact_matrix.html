@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 v3 — 要件×仕様 詳細トレーサビリティ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Archivo:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#0a0b10;--bg1:#10121b;--bg2:#171a26;
+  --glass:rgba(255,255,255,.045);--glass2:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.09);--line2:rgba(255,255,255,.16);
+  --ink:#EDF0F7;--ink2:#AEB6C8;--ink3:#6E7689;
+  --brand:#E87825;--brand2:#FFB166;--green:#34D399;
+  --c1:#5B9DF9;--c2:#22D3EE;--c3:#E87825;--c4:#A78BFA;--c5:#F472B6;--c6:#34D399;
+  --gdata:#5BD1C9;--gopt:#FBBF55;--glogic:#FF8FB0;--gscr:#A78BFA;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP',sans-serif;color:var(--ink);
+  background:radial-gradient(1100px 650px at 10% -8%,rgba(232,120,37,.14),transparent 55%),
+    radial-gradient(1000px 650px at 92% 2%,rgba(91,157,249,.12),transparent 55%),
+    linear-gradient(180deg,var(--bg0),var(--bg1) 42%,var(--bg2));
+  background-attachment:fixed;min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1500px;margin:0 auto;padding:30px 20px 80px}
+a{color:var(--brand2)}
+
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.13em;
+  color:var(--brand2);background:rgba(232,120,37,.10);border:1px solid rgba(232,120,37,.28);padding:6px 13px;border-radius:999px}
+.kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+h1{font-size:clamp(24px,3.6vw,40px);font-weight:900;line-height:1.15;margin:14px 0 8px;letter-spacing:-.01em}
+h1 .grad{background:linear-gradient(100deg,#fff,#FFD9B8 45%,var(--brand2) 75%,var(--brand));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:920px;color:var(--ink2);font-size:14px}
+.lead b{color:var(--ink)}
+.nav{margin-top:10px;font-size:12.5px;color:var(--ink3)}
+
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(12px)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 16px;margin:22px 0 14px}
+.search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;background:var(--glass2);border:1px solid var(--line);border-radius:11px;padding:8px 12px}
+.search input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:13.5px}
+.search input::placeholder{color:var(--ink3)}
+.tgroup{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tlabel{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.05em;margin-right:2px}
+.fchip{font-family:inherit;font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer;background:var(--glass2);
+  border:1px solid var(--line);padding:6px 11px;border-radius:9px;transition:.16s}
+.fchip:hover{color:#fff;border-color:var(--line2)}
+.fchip.off{opacity:.4}
+.fchip[data-ch].on{color:#0a0b10}
+.btn{font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;background:var(--glass2);border:1px solid var(--line);
+  color:var(--ink2);padding:7px 12px;border-radius:10px;transition:.16s}
+.btn:hover{color:#fff;border-color:var(--line2)}
+.btn.accent{background:linear-gradient(120deg,var(--brand),#c4621a);color:#fff;border-color:transparent}
+
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.stat{flex:1;min-width:120px;padding:11px 15px}
+.stat .sv{font-family:'Archivo';font-weight:900;font-size:24px;line-height:1;background:linear-gradient(120deg,#fff,var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .sl{font-size:10.5px;color:var(--ink3);font-weight:700;margin-top:5px}
+
+.explorer{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:clamp(60px,9vw,160px);padding:16px 14px}
+#wires{position:absolute;left:0;top:0;z-index:1;overflow:visible;pointer-events:none}
+.col{position:relative;z-index:2;min-width:0}
+.colhead{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(16,18,27,.96),rgba(16,18,27,.7));
+  backdrop-filter:blur(6px);padding:8px 4px 9px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.colhead .ct{font-size:13px;font-weight:900}
+.colhead .cs{font-size:11px;color:var(--ink3)}
+.colR .colhead{text-align:right}
+
+.grp{margin-bottom:14px}
+.grph{display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 9px;border-radius:10px;background:var(--glass2);
+  border:1px solid var(--line);user-select:none}
+.colR .grph{flex-direction:row-reverse;text-align:right}
+.grph:hover{border-color:var(--line2)}
+.grph .gtag{font-family:'Archivo';font-size:10px;font-weight:900;color:#0a0b10;padding:1px 7px;border-radius:6px}
+.grph .gname{font-weight:900;font-size:12.5px;flex:1}
+.grph .gcnt{font-family:'Archivo';font-size:11px;color:var(--ink3)}
+.grph .gcar{font-size:10px;color:var(--ink3);transition:.2s}
+.grp.closed .gcar{transform:rotate(-90deg)}
+.grp.closed .items{display:none}
+.items{display:flex;flex-direction:column;gap:5px;padding:7px 2px 2px}
+
+.item{position:relative;border:1px solid var(--line);background:var(--glass2);border-radius:9px;padding:7px 10px;cursor:pointer;
+  transition:.15s;font-size:12px}
+.item:hover{border-color:var(--line2);transform:translateX(2px)}
+.colR .item:hover{transform:translateX(-2px)}
+.item .it{font-weight:700;line-height:1.35}
+.item .id{font-size:10.5px;color:var(--ink3);margin-top:1px;line-height:1.35}
+.item .imeta{display:flex;align-items:center;gap:6px;margin-bottom:1px}
+.colR .item .imeta{flex-direction:row-reverse}
+.item .icode{font-family:'Archivo';font-size:9.5px;font-weight:700;color:var(--ink3);letter-spacing:.02em}
+.item .icnt{margin-left:auto;font-family:'Archivo';font-size:10px;font-weight:900;color:var(--ink3);
+  background:rgba(255,255,255,.06);border-radius:20px;padding:0 7px;min-width:20px;text-align:center}
+.colR .item .icnt{margin-left:0;margin-right:auto}
+.itL{border-left:3px solid var(--cc)}
+.colR .item{border-left:none;border-right:3px solid var(--gg)}
+.item.on{background:color-mix(in srgb,var(--hl) 18%,transparent);border-color:color-mix(in srgb,var(--hl) 55%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--hl) 40%,transparent),0 8px 22px -14px var(--hl)}
+.item.lit{background:color-mix(in srgb,var(--hl,#34D399) 13%,transparent);border-color:color-mix(in srgb,var(--hl,#34D399) 45%,transparent)}
+.item.fade{opacity:.22;filter:saturate(.4)}
+.item.hide{display:none}
+.spectag{font-size:8.5px;font-weight:900;color:#0a0b10;border-radius:5px;padding:0 5px;letter-spacing:.02em}
+.soflag{display:inline-block;font-size:9px;font-weight:700;color:#f6c177;border:1px solid rgba(246,193,119,.4);border-radius:5px;padding:0 5px;margin-left:5px}
+.gapflag{display:inline-block;font-size:9px;font-weight:700;color:#f6a;border:1px solid rgba(255,102,170,.4);border-radius:5px;padding:0 5px;margin-left:5px}
+
+/* readout */
+.readout{margin-top:18px;padding:18px 20px}
+.readout h3{font-size:13.5px;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.readout h3 .bdot{width:8px;height:8px;border-radius:3px;background:var(--brand);box-shadow:0 0 10px var(--brand)}
+#roBody{font-size:13px;color:var(--ink2)}
+#roBody .row{padding:8px 0;border-bottom:1px solid var(--line)}
+#roBody .row:last-child{border-bottom:none}
+#roBody .src{font-weight:900;color:#fff}
+#roBody .arrow{color:var(--brand2);margin:0 8px;font-weight:900}
+.tag2{display:inline-block;font-size:11px;color:#bdf3da;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);
+  padding:1px 8px;border-radius:7px;margin:3px 4px 0 0}
+.tag2.rv{color:#cfe0ff;background:rgba(91,157,249,.12);border-color:rgba(91,157,249,.3)}
+.hintbox{font-size:12px;color:var(--ink3)}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink2);margin-top:10px}
+.legend i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+.legend i b{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+.foot{margin-top:30px;text-align:center;color:var(--ink3);font-size:12px}
+
+@media(max-width:980px){
+  .explorer{grid-template-columns:1fr;gap:24px}
+  #wires{display:none}
+  .colR .grph,.colR .item .imeta{flex-direction:row}
+  .colR .item{border-right:none;border-left:3px solid var(--gg)}
+  .colR .colhead{text-align:left}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <span class="kicker"><span class="dot"></span>渡辺謄写堂 業務管理システム v3.0 ／ 詳細トレーサビリティ・マトリクス</span>
+  <h1>要件 1件 <span class="grad">⇄</span> 仕様の field / option 1件</h1>
+  <p class="lead">
+    左＝<b>要件定義書の最下層</b>（各画面の機能・入力フィールド・ワークフロー規則・権限・非機能の一つ一つ）。
+    右＝<b>仕様書の最下層</b>（各 Data Type の field・各 Option Set・各計算/条件ロジック・各ルート/Reusable）。
+    項目を<b>クリック（複数可）</b>すると対応する相手だけが点灯し配線されます。ホバーでプレビュー、もう一方の列を起点にすると<b>逆引き</b>になります。
+  </p>
+  <div class="nav">概観版（章レベル）：<a href="impact_map.html">影響マップ →</a></div>
+
+  <!-- toolbar -->
+  <div class="panel toolbar">
+    <div class="search">🔎<input id="q" placeholder="要件・フィールド名で検索（例: 値引き / status / 税抜 / カンバン）"></div>
+    <div class="tgroup">
+      <span class="tlabel">要件 章</span>
+      <span class="fchip" data-ch="1" style="--cc:var(--c1)">①画面</span>
+      <span class="fchip" data-ch="2" style="--cc:var(--c2)">②機能</span>
+      <span class="fchip" data-ch="3" style="--cc:var(--c3)">③WF</span>
+      <span class="fchip" data-ch="4" style="--cc:var(--c4)">④データ</span>
+      <span class="fchip" data-ch="5" style="--cc:var(--c5)">⑤権限</span>
+      <span class="fchip" data-ch="6" style="--cc:var(--c6)">⑥非機能</span>
+    </div>
+    <div class="tgroup">
+      <span class="tlabel">仕様 種別</span>
+      <span class="fchip" data-g="data">§2 Data</span>
+      <span class="fchip" data-g="option">§3 Option</span>
+      <span class="fchip" data-g="logic">§4 Logic</span>
+      <span class="fchip" data-g="screen">§5 画面/権限</span>
+    </div>
+    <button class="btn" id="expandBtn">全展開</button>
+    <button class="btn" id="clearBtn">選択クリア</button>
+    <button class="btn" id="allWires">全配線 ON/OFF</button>
+  </div>
+
+  <div class="stats">
+    <div class="panel stat"><div class="sv" id="stReq">0</div><div class="sl">要件 項目（左）</div></div>
+    <div class="panel stat"><div class="sv" id="stSpec">0</div><div class="sl">仕様 要素（右）</div></div>
+    <div class="panel stat"><div class="sv" id="stLink">0</div><div class="sl">対応リンク 総数</div></div>
+    <div class="panel stat"><div class="sv" id="stSel">0</div><div class="sl">選択中</div></div>
+    <div class="panel stat"><div class="sv" id="stSO">0</div><div class="sl">仕様先行（要件未記載）</div></div>
+    <div class="panel stat"><div class="sv" id="stGap">0</div><div class="sl">仕様未整備（要件のみ）</div></div>
+  </div>
+
+  <!-- explorer -->
+  <div class="panel explorer" id="explorer">
+    <svg id="wires"></svg>
+    <div class="col colL">
+      <div class="colhead"><div class="ct">要件定義書 ─ 最下層の要件</div><div class="cs">章 → 画面/機能群 → 要件 1件</div></div>
+      <div id="reqCol"></div>
+    </div>
+    <div class="col colR">
+      <div class="colhead"><div class="ct">ハンドオフ仕様書 ─ field / option / logic</div><div class="cs">種別 → Data Type/Set群 → 要素 1件</div></div>
+      <div id="specCol"></div>
+    </div>
+  </div>
+
+  <div class="panel readout">
+    <h3><span class="bdot"></span>対応の詳細</h3>
+    <div id="roBody"><div class="hintbox">左の要件、または右の仕様要素をクリックしてください。選択した項目の対応が一件ずつここに表示されます。</div></div>
+    <div class="legend">
+      <i><b style="background:var(--c1)"></b>①</i><i><b style="background:var(--c2)"></b>②</i><i><b style="background:var(--c3)"></b>③</i>
+      <i><b style="background:var(--c4)"></b>④</i><i><b style="background:var(--c5)"></b>⑤</i><i><b style="background:var(--c6)"></b>⑥</i>
+      <i><b style="background:var(--gdata)"></b>§2 Data</i><i><b style="background:var(--gopt)"></b>§3 Option</i>
+      <i><b style="background:var(--glogic)"></b>§4 Logic</i><i><b style="background:var(--gscr)"></b>§5 画面/権限</i>
+      <i><span class="soflag">仕様先行</span>要件に未記載</i><i><span class="gapflag">未整備</span>仕様に専用領域なし</i>
+    </div>
+  </div>
+
+  <div class="foot">出典：<a href="requirements_v3.0.html">要件定義書 v3.0</a> ／ <a href="bubble_handoff.html">ハンドオフ仕様書</a> ・ 対応分析 Unsee ・ 2026-05-29</div>
+</div>
+
+<script>
+/* ============ SPEC ELEMENTS (right) : [id, g, type, name, detail] ============ */
+const G={data:'§2',option:'§3',logic:'§4',screen:'§5'};
+const GCOL={data:'var(--gdata)',option:'var(--gopt)',logic:'var(--glogic)',screen:'var(--gscr)'};
+const SPEC=[
+/* Customer */
+['cu_company','data','Customer','company_name','会社名'],['cu_indiv','data','Customer','individual_name','個人名'],
+['cu_kind','data','Customer','kind','種別(OptionSet)'],['cu_area','data','Customer','area','地域(OptionSet)'],
+['cu_phone','data','Customer','phone','電話'],['cu_fax','data','Customer','fax','FAX'],
+['cu_addr','data','Customer','address','住所'],['cu_notes','data','Customer','notes','顧客メモ(未保存警告対象)'],
+/* Paper */
+['pa_name','data','Paper','paper_name','表示名'],['pa_quality','data','Paper','quality','紙質'],
+['pa_color','data','Paper','color','色'],['pa_kg','data','Paper','thickness_kg','斤量'],
+['pa_size','data','Paper','paper_size','サイズ'],['pa_price','data','Paper','unit_price','用紙単価(UI非表示)'],
+['pa_major','data','Paper','is_major','よく使う紙判定'],
+/* User */
+['us_name','data','User','name','氏名(6名)'],['us_role','data','User','role','役職(代表/製版/工場/事務/経理)'],['us_email','data','User','email','メール'],
+/* Order */
+['or_num','data','Order','order_number','採番 YYMMDD-NNN'],['or_title','data','Order','title','品名(明細titleを連結)'],
+['or_cust','data','Order','customer','→Customer'],['or_recd','data','Order','received_date','受付日'],
+['or_deld','data','Order','delivered_date','納品日'],['or_recby','data','Order','received_by','→User 担当'],
+['or_recm','data','Order','reception_method','受付方法(OptionSet)'],['or_dtype','data','Order','delivery_type','納期区分(OptionSet)'],
+['or_dstart','data','Order','delivery_date_start','納期(代表)'],['or_dend','data','Order','delivery_date_end','納期終了(範囲指定)'],
+['or_proof','data','Order','first_proof_date','初校日'],['or_used','data','Order','used_date','使用日'],
+['or_status','data','Order','status','ステータス(OptionSet)'],['or_memo','data','Order','memo','備考'],
+['or_total','data','Order','total_amount','税込合計'],['or_dstat','data','Order','data_status','入稿データ(OptionSet)'],
+['or_disc','data','Order','discount_amount','値引き額'],['or_discr','data','Order','discount_reason','値引き理由'],
+['or_disclt','data','Order','discount_label_type','値引き名目種別(OptionSet)'],['or_showd','data','Order','show_discount','値引き表示フラグ'],
+['or_tags','data','Order','tags','タグ(list OptionSet)'],['or_att','data','Order','attachments','添付(list file)'],
+['or_crby','data','Order','created_by','起票者'],['or_ts','data','Order','created/updated_at','作成/更新時刻'],
+/* OrderItem */
+['oi_order','data','OrderItem','order','→Order 親'],['oi_type','data','OrderItem','type','normal/page(OptionSet)'],
+['oi_title','data','OrderItem','title','品名(必須)'],['oi_paper','data','OrderItem','paper','→Paper'],
+['oi_paperm','data','OrderItem','paper_other_memo','用紙自由入力'],['oi_qty','data','OrderItem','quantity','数量'],
+['oi_ink','data','OrderItem','ink_pattern','インク(OptionSet)'],['oi_fold','data','OrderItem','folding','折り(OptionSet)'],
+['oi_mishin','data','OrderItem','mishin_count','ミシン本数(0/1/2)'],['oi_hole','data','OrderItem','hole_position','穴(OptionSet)'],
+['oi_nori','data','OrderItem','nori_position','のり(OptionSet)'],['oi_num','data','OrderItem','numbering_enabled/from/to','ナンバリング'],
+['oi_yacho','data','OrderItem','yacho_style','野丁式'],['oi_lam','data','OrderItem','lamination','ラミネート(OptionSet)'],
+['oi_tax','data','OrderItem','tax_rate','固定10'],['oi_sub','data','OrderItem','subtotal','税抜小計(自由入力)'],
+['oi_unit','data','OrderItem','unit_price','派生単価 round(subtotal/qty)'],['oi_deliv','data','OrderItem','delivery_type/start/end','明細単位の納期'],
+['oi_proof','data','OrderItem','first_proof_date/used_date','明細単位の初校/使用日'],['oi_notes','data','OrderItem','item_notes','明細メモ'],
+['oi_psize','data','OrderItem','page_size','ページサイズ(OptionSet)'],['oi_psizec','data','OrderItem','page_size_custom','サイズ自由'],
+['oi_pcount','data','OrderItem','page_count','ページ数'],['oi_pcover','data','OrderItem','page_cover','表紙仕様'],['oi_pbody','data','OrderItem','page_body','本文仕様'],
+/* Quote */
+['qu_num','data','Quote','quote_number','採番 Q-YYMMDD-NNN'],['qu_order','data','Quote','order','→Order'],
+['qu_issued','data','Quote','issued_date','発行日'],['qu_valid','data','Quote','valid_until','有効期限(既定+1ヶ月)'],
+['qu_send','data','Quote','send_method','送付方法(OptionSet)'],['qu_status','data','Quote','status','状態(OptionSet)'],
+['qu_memo','data','Quote','memo','備考(振込先等)'],['qu_total','data','Quote','total_amount','採用税込額'],['qu_pat','data','Quote','patterns','list QuotePattern'],
+/* QuotePattern */
+['qp_item','data','QuotePattern','item','→OrderItem'],['qp_label','data','QuotePattern','label','パターン名'],
+['qp_amount','data','QuotePattern','amount','金額(税抜)'],['qp_acc','data','QuotePattern','accepted','採用フラグ(1見積1採用)'],
+['qp_showd','data','QuotePattern','show_discount','値引き表示'],['qp_disc','data','QuotePattern','discount_amount','値引き額'],
+['qp_disclt','data','QuotePattern','discount_label_type','名目種別'],['qp_disctx','data','QuotePattern','discount_label_text','自由記載名目'],
+/* FactoryRecord */
+['fr_order','data','FactoryRecord','order','→Order(1:1)'],['fr_start','data','FactoryRecord','started_at','印刷開始時刻'],
+['fr_comp','data','FactoryRecord','completed_at','完了時刻'],['fr_actq','data','FactoryRecord','actual_quantity','実出来高'],
+['fr_memo','data','FactoryRecord','factory_memo','工場メモ'],['fr_compby','data','FactoryRecord','completed_by','完了担当'],
+/* ContactLog (spec-only) */
+['cl_cust','data','ContactLog','customer','→Customer'],['cl_at','data','ContactLog','logged_at','日時'],
+['cl_type','data','ContactLog','contact_type','連絡手段(OptionSet)'],['cl_sum','data','ContactLog','summary','内容'],['cl_user','data','ContactLog','user','記録者'],
+/* ChangeLog */
+['ch_tgt','data','ChangeLog','target_type/id','対象種別/ID'],['ch_by','data','ChangeLog','changed_by','操作者'],
+['ch_at','data','ChangeLog','changed_at','日時'],['ch_sum','data','ChangeLog','change_summary','変更内容'],
+/* Settings */
+['se_inv','data','Settings','invoice_number','インボイス登録番号'],['se_comp','data','Settings','company_name/postal/address','社名/郵便/住所'],
+['se_tel','data','Settings','company_phone/fax','電話/FAX'],['se_bank','data','Settings','bank_info/holder','振込先口座/名義'],['se_hol','data','Settings','holidays','休業日(営業日計算)'],
+/* Option Sets */
+['os_status','option','OrderStatus','OrderStatus','見積もり段階/受注/印刷中/完成/納品済み ★color'],
+['os_tag','option','Tag','Tag','新規/急ぎ/リピート/ご祝儀/特殊紙/重要顧客 ★color'],
+['os_ink','option','InkPattern','InkPattern','9種 ★mult係数(将来自動見積)'],
+['os_dtype','option','DeliveryType','DeliveryType','予定/必ず/範囲指定/仮'],
+['os_disclt','option','DiscountLabelType','DiscountLabelType','値引き/JA全農../自由記載'],
+['os_area','option','Area','Area','亀谷/元町/東和/岩代/市街/その他'],
+['os_recm','option','ReceptionMethod','ReceptionMethod','電話/来客/FAX/メール/LINE/その他'],
+['os_dstat','option','DataStatus','DataStatus','持込/ゼロから作成/未受領'],
+['os_kind','option','CustomerKind','CustomerKind','地域・団体/企業・個人'],
+['os_fold','option','FoldingType','FoldingType','なし/2つ折/3つ折'],
+['os_hole','option','HolePosition','HolePosition','なし/天2穴/左2穴'],
+['os_nori','option','NoriPosition','NoriPosition','なし/天のり/左のり'],
+['os_lam','option','LaminationOption','LaminationOption','なし/PP艶あり/艶なし/パウチ'],
+['os_psize','option','PageSize','PageSize','A4/B5/A5/自由'],
+['os_send','option','SendMethod','SendMethod','郵送/メール/LINE/直接手渡し'],
+['os_ctype','option','ContactType','ContactType','電話/来客/メール/LINE/FAX'],
+['os_qstat','option','QuoteStatus','QuoteStatus','作成中/発行済/受諾/失注'],
+['os_itype','option','ItemType','ItemType','normal/page'],
+/* Logic */
+['lo_money','logic','金額','明細小計/unit_price','subtotal税抜保持・unit_price=round(subtotal/qty)'],
+['lo_sum','logic','金額','合算/値引按分','Σsubtotal・afterDiscount=max(0,小計−値引)・ratio按分'],
+['lo_tax','logic','金額','消費税10%','round(afterDiscount×10%)・total=afterDiscount+税'],
+['lo_conv','logic','金額','税抜⇄税込換算','税込=round(税抜×1.1)/税抜=round(税込×100/110)'],
+['lo_numO','logic','採番','受注番号','YYMMDD-連番3桁'],
+['lo_numQ','logic','採番','見積番号','Q-YYMMDD-連番3桁'],
+['lo_stat','logic','連動','単一ステータス管理','Order.status に統一・カンバンも5列'],
+['lo_start','logic','連動','印刷中→started_at','現時刻セット(未設定時)'],
+['lo_comp','logic','連動','完成/納品→completed_at/by','時刻・担当セット(未設定時)'],
+['lo_deld','logic','連動','納品済み→delivered_date','当日セット(未設定時)'],
+['lo_over','logic','連動','納期超過表示','status∉{納品済,見積} かつ超過→「N日経過」'],
+['lo_disc','logic','条件','値引き名目の表示解決','自由記載/JA/値引き を出し分け'],
+['lo_cdrow','logic','条件','値引き行の表示','show_discount && amount>0'],
+['lo_ctent','logic','条件','仮=納期日免除/範囲=終了日','delivery_type連動'],
+['lo_cview','logic','条件','viewモード読取専用','custom state で切替'],
+['lo_cnew','logic','条件','新規起票ステータス2種','見積もり段階/受注のみ'],
+/* Screen / Reusable / 権限 */
+['sc_dash','screen','Route','#dashboard','ダッシュボード+履歴RG'],
+['sc_orders','screen','Route','#orders','受注一覧RG・クイック絞込=URLパラメータ'],
+['sc_onew','screen','Route','#order/new','新規起票(state:new)'],
+['sc_oview','screen','Route','#order/:id','受注確認(state:view)'],
+['sc_oedit','screen','Route','#order/:id/edit','受注編集(state:edit)'],
+['sc_cust','screen','Route','#customer/:id','顧客詳細(メモ未保存警告)'],
+['sc_quote','screen','Route','#quote/:id','見積書(PDFプラグイン)'],
+['sc_fact','screen','Route','#factory','工場カンバン 5列+Draggable'],
+['sc_login','screen','Route','#login / #password_reset','ログイン等'],
+['sc_print','screen','Route','#print','印刷ビュー→PDF生成'],
+['re_hdr','screen','Reusable','ヘッダー+ナビ','全ページ共通'],
+['re_badge','screen','Reusable','ステータスバッジ','OrderStatus color 駆動'],
+['re_card','screen','Reusable','タイトル帯+カード','各セクション再利用'],
+['re_rg','screen','Reusable','一覧行/カンバンカード','Repeating Group セル'],
+['pe_priv','screen','権限','privacy rules','ロール別の編集可否(要件確定後)'],
+];
+
+/* ============ REQUIREMENTS (left) : {id,ch,grp,t,d,m,gap} ============ */
+const CHCOL={1:'var(--c1)',2:'var(--c2)',3:'var(--c3)',4:'var(--c4)',5:'var(--c5)',6:'var(--c6)'};
+const CHN={1:'①',2:'②',3:'③',4:'④',5:'⑤',6:'⑥'};
+function R(id,ch,grp,t,m,d,gap){return {id,ch,grp,t,d:d||'',m:m.split(' ').filter(Boolean),gap:!!gap};}
+const REQ=[
+/* ===== 第1章 画面一覧（12画面→ルート/Reusable） ===== */
+R('s_login',1,'1. 画面一覧','ログイン画面 /login','sc_login','メール+パスワード認証画面'),
+R('s_pwd',1,'1. 画面一覧','パスワードリセット /password_reset','sc_login','リセットリンク送信'),
+R('s_dash',1,'1. 画面一覧','ダッシュボード /','sc_dash re_hdr','KPI俯瞰の起点'),
+R('s_orders',1,'1. 画面一覧','受注一覧 /orders','sc_orders re_hdr re_rg','全受注の一覧'),
+R('s_onew',1,'1. 画面一覧','受注新規起票 /order_new','sc_onew re_hdr re_card','受注入力'),
+R('s_oview',1,'1. 画面一覧','受注確認(閲覧) /order?id','sc_oview re_hdr re_card re_badge','読取専用'),
+R('s_oedit',1,'1. 画面一覧','受注編集 /order?id(編集)','sc_oedit re_hdr re_card','起票と同フォーム'),
+R('s_quote',1,'1. 画面一覧','見積書 /quote?id','sc_quote re_hdr','PDF作成'),
+R('s_fact',1,'1. 画面一覧','工場カンバン /factory','sc_fact re_hdr re_rg re_badge','5列カンバン'),
+R('s_clist',1,'1. 画面一覧','顧客一覧 /customers','re_hdr re_rg','※§5に専用ルート未記載',true),
+R('s_cust',1,'1. 画面一覧','顧客詳細 /customer?id','sc_cust re_hdr re_card','顧客詳細'),
+R('s_print',1,'1. 画面一覧','受注票印刷ビュー /print_order','sc_print','A4横'),
+R('s_hdr',1,'1. 画面一覧','共通: グローバルヘッダー/ナビ','re_hdr','全画面共通バー'),
+R('s_toast',1,'1. 画面一覧','共通: トースト通知','','※仕様書に専用要素なし(実装で追補)',true),
+
+/* ===== 第2章 各画面の機能一覧 ===== */
+/* 2-1 ログイン */
+R('f211',2,'2-1 ログイン','ユーザー認証','sc_login us_email','メール/パスワード認証'),
+R('f212',2,'2-1 ログイン','ログイン状態保持(30日)','sc_login','セッション保持チェック'),
+R('f213',2,'2-1 ログイン','パスワードリセット遷移','sc_login'),
+R('f214',2,'2-1 ログイン','ログイン後リダイレクト','sc_login sc_dash','成功→ダッシュボード'),
+R('f215',2,'2-1 ログイン','未ログイン時リダイレクト','sc_login pe_priv','保護ページ→login'),
+/* 2-2 パスワードリセット */
+R('f221',2,'2-2 PWリセット','リセットメール送信','sc_login us_email'),
+R('f222',2,'2-2 PWリセット','ログインへ戻る','sc_login'),
+/* 2-3 ダッシュボード */
+R('f231',2,'2-3 ダッシュボード','KPIカード5種','sc_dash or_status or_dstart or_total lo_over','本日納品/進行中/3日以内/超過/売上見込み'),
+R('f232',2,'2-3 ダッシュボード','KPIカードクリック絞込','sc_dash sc_orders','受注一覧へ条件付き遷移'),
+R('f233',2,'2-3 ダッシュボード','本日納品予定テーブル','sc_dash or_dstart or_cust oi_title oi_qty or_status'),
+R('f234',2,'2-3 ダッシュボード','最近の変更履歴(8件)','sc_dash ch_sum ch_by ch_at re_rg'),
+R('f235',2,'2-3 ダッシュボード','受注詳細への遷移','sc_dash sc_oview'),
+/* 2-4 受注一覧 */
+R('f241',2,'2-4 受注一覧','受注テーブル表示','sc_orders re_rg or_num or_recd or_cust or_title or_tags oi_qty or_dstart or_total or_status re_badge'),
+R('f242',2,'2-4 受注一覧','顧客名検索','sc_orders or_cust cu_company cu_indiv'),
+R('f243',2,'2-4 受注一覧','ステータスフィルタ(5種)','sc_orders or_status os_status'),
+R('f244',2,'2-4 受注一覧','日付範囲フィルタ','sc_orders or_recd'),
+R('f245',2,'2-4 受注一覧','タグフィルタ','sc_orders or_tags os_tag'),
+R('f246',2,'2-4 受注一覧','クイック絞り込み','sc_orders sc_dash or_status or_dstart lo_over'),
+R('f247',2,'2-4 受注一覧','フィルタクリア','sc_orders'),
+R('f248',2,'2-4 受注一覧','ページネーション(50件)','sc_orders re_rg'),
+R('f249',2,'2-4 受注一覧','納期超過表示(N日経過/紫)','sc_orders lo_over or_dstart or_status'),
+R('f24a',2,'2-4 受注一覧','新規受注起票ボタン','sc_orders sc_onew'),
+R('f24b',2,'2-4 受注一覧','受注詳細への遷移','sc_orders sc_oview'),
+/* 2-5 受注新規起票 */
+R('f251',2,'2-5 新規起票','受付情報入力','sc_onew or_cust or_recd or_recby or_recm os_recm us_name'),
+R('f252',2,'2-5 新規起票','新規顧客登録(モーダル)','sc_onew cu_company cu_indiv cu_kind cu_area cu_phone cu_fax cu_addr cu_notes os_kind os_area or_cust'),
+R('f253',2,'2-5 新規起票','通常明細の追加','sc_onew oi_type os_itype oi_title oi_paper pa_name oi_qty oi_ink os_ink oi_sub lo_conv'),
+R('f254',2,'2-5 新規起票','ページ物明細の追加','sc_onew oi_type oi_psize os_psize oi_psizec oi_qty oi_pcount oi_pcover oi_pbody oi_sub lo_conv'),
+R('f255',2,'2-5 新規起票','明細の削除','sc_onew oi_order'),
+R('f256',2,'2-5 新規起票','加工オプション設定','sc_onew oi_mishin oi_fold os_fold oi_hole os_hole oi_nori os_nori oi_num oi_yacho oi_lam os_lam'),
+R('f257',2,'2-5 新規起票','納期設定(明細ごと)','sc_onew oi_deliv os_dtype lo_ctent'),
+R('f258',2,'2-5 新規起票','案件属性設定','sc_onew or_dstat os_dstat or_tags os_tag or_att'),
+R('f259',2,'2-5 新規起票','ステータス選択(起票時2種)','sc_onew or_status os_status lo_cnew'),
+R('f25a',2,'2-5 新規起票','見積サマリー(リアルタイム)','sc_onew oi_sub lo_money lo_tax or_total'),
+R('f25b',2,'2-5 新規起票','過去発注コピー','sc_onew or_cust oi_title oi_paper oi_qty oi_ink oi_sub'),
+R('f25c',2,'2-5 新規起票','保存と起票(バリデーション+採番)','sc_onew lo_numO or_num or_title lo_money fr_order ch_sum sc_oview'),
+R('f25d',2,'2-5 新規起票','備考(フリーメモ)','sc_onew or_memo'),
+/* 2-6 受注確認 */
+R('f261',2,'2-6 受注確認','基本情報表示','sc_oview or_title or_cust cu_kind cu_area or_recby or_recd or_dstart or_proof or_used or_recm or_dstat or_discr'),
+R('f262',2,'2-6 受注確認','製作明細テーブル','sc_oview oi_type oi_paper oi_qty oi_ink oi_unit oi_sub oi_pcover oi_pbody'),
+R('f263',2,'2-6 受注確認','工場進捗表示','sc_oview fr_start fr_comp fr_actq fr_compby fr_memo or_status lo_stat'),
+R('f264',2,'2-6 受注確認','ステータス変更(5項目/削除=キャンセル)','sc_oview or_status os_status lo_stat lo_deld or_deld'),
+R('f265',2,'2-6 受注確認','見積書の作成/参照','sc_oview sc_quote lo_numQ qu_num'),
+R('f266',2,'2-6 受注確認','印刷ビューへの遷移','sc_oview sc_print'),
+R('f267',2,'2-6 受注確認','この仕様でコピー','sc_oview sc_onew or_cust oi_title oi_paper oi_qty'),
+R('f268',2,'2-6 受注確認','編集モードへの遷移','sc_oview sc_oedit lo_cview'),
+R('f269',2,'2-6 受注確認','受注の削除(関連も削除)','sc_oview oi_order fr_order qu_order'),
+R('f26a',2,'2-6 受注確認','変更履歴表示','sc_oview ch_tgt ch_by ch_at ch_sum re_rg'),
+R('f26b',2,'2-6 受注確認','添付ファイル表示','sc_oview or_att'),
+R('f26c',2,'2-6 受注確認','工場メモの編集','sc_oview fr_memo'),
+R('f26d',2,'2-6 受注確認','納期超過表示','sc_oview lo_over or_dstart'),
+/* 2-7 受注編集 */
+R('f271',2,'2-7 受注編集','既存データの読み込み','sc_oedit or_cust or_recd oi_title oi_sub'),
+R('f272',2,'2-7 受注編集','全フィールドの編集','sc_oedit or_cust or_recby oi_title oi_paper oi_qty oi_ink or_tags or_att or_memo'),
+R('f273',2,'2-7 受注編集','ステータス変更(全5種)','sc_oedit or_status os_status'),
+R('f274',2,'2-7 受注編集','変更の保存(履歴記録)','sc_oedit lo_money ch_sum lo_stat sc_oview'),
+R('f275',2,'2-7 受注編集','変更の破棄','sc_oedit sc_oview'),
+R('f276',2,'2-7 受注編集','受注の削除','sc_oedit oi_order fr_order qu_order'),
+R('f277',2,'2-7 受注編集','確認画面へ戻る','sc_oedit sc_oview lo_cview'),
+/* 2-8 見積書 */
+R('f281',2,'2-8 見積書','見積書基本情報入力','sc_quote qu_order or_cust qu_issued qu_valid qu_send os_send qu_status os_qstat qu_memo'),
+R('f282',2,'2-8 見積書','明細ごとの金額設定','sc_quote qp_item qp_amount qp_label'),
+R('f283',2,'2-8 見積書','採用パターンの選択(ラジオ)','sc_quote qp_acc qu_pat'),
+R('f284',2,'2-8 見積書','値引き設定','sc_quote qp_showd qp_disc qp_disclt os_disclt qp_disctx lo_disc lo_cdrow'),
+R('f285',2,'2-8 見積書','PDFプレビュー表示','sc_quote se_comp se_tel se_inv se_bank qu_num qu_issued qu_valid qp_amount qp_label'),
+R('f286',2,'2-8 見積書','PDF出力(印刷)','sc_quote'),
+R('f287',2,'2-8 見積書','送信済み管理','sc_quote qu_status os_qstat'),
+R('f288',2,'2-8 見積書','自動保存','sc_quote'),
+R('f289',2,'2-8 見積書','受注との金額同期','sc_quote qp_amount qp_acc or_total qu_total'),
+R('f28a',2,'2-8 見積書','受注に戻る','sc_quote sc_oview'),
+/* 2-9 工場カンバン */
+R('f291',2,'2-9 カンバン','5列カンバン表示','sc_fact or_status os_status re_badge'),
+R('f292',2,'2-9 カンバン','カンバンカード表示','sc_fact or_num or_title or_cust oi_paper oi_qty or_tags or_dstart re_rg'),
+R('f293',2,'2-9 カンバン','ドラッグ&ドロップ(状態直接変更)','sc_fact or_status lo_stat lo_start lo_comp lo_deld or_deld'),
+R('f294',2,'2-9 カンバン','納期アラート表示','sc_fact or_dstart lo_over'),
+R('f295',2,'2-9 カンバン','受注詳細への遷移','sc_fact sc_oview'),
+/* 2-10 顧客一覧 */
+R('f2a1',2,'2-10 顧客一覧','顧客テーブル表示','re_rg cu_company cu_indiv cu_kind cu_area cu_phone cu_fax or_total'),
+R('f2a2',2,'2-10 顧客一覧','顧客名検索','cu_company cu_indiv'),
+R('f2a3',2,'2-10 顧客一覧','種別フィルタ','cu_kind os_kind'),
+R('f2a4',2,'2-10 顧客一覧','ページネーション','re_rg'),
+R('f2a5',2,'2-10 顧客一覧','新規顧客追加(モーダル)','cu_company cu_indiv cu_kind cu_area cu_phone cu_fax cu_addr cu_notes os_kind os_area'),
+R('f2a6',2,'2-10 顧客一覧','顧客詳細への遷移','sc_cust'),
+R('f2a7',2,'2-10 顧客一覧','累計売上の自動集計','or_total or_cust lo_tax'),
+/* 2-11 顧客詳細 */
+R('f2b1',2,'2-11 顧客詳細','顧客基本情報表示','sc_cust cu_company cu_indiv cu_kind cu_area cu_phone cu_fax cu_addr cu_notes'),
+R('f2b2',2,'2-11 顧客詳細','KPIパネル表示','sc_cust or_total or_deld lo_tax'),
+R('f2b3',2,'2-11 顧客詳細','過去発注履歴テーブル','sc_cust or_num or_recd or_title or_tags oi_qty or_deld or_total or_status re_rg'),
+R('f2b4',2,'2-11 顧客詳細','この仕様でコピー','sc_cust sc_onew oi_title oi_paper oi_qty'),
+R('f2b5',2,'2-11 顧客詳細','この顧客で新規受注','sc_cust sc_onew or_cust'),
+R('f2b6',2,'2-11 顧客詳細','顧客編集(モーダル)','sc_cust cu_company cu_indiv cu_kind cu_area cu_phone cu_fax cu_addr cu_notes'),
+R('f2b7',2,'2-11 顧客詳細','メモ編集・未保存警告','sc_cust cu_notes','custom stateで離脱時確認'),
+/* 2-12 印刷ビュー */
+R('f2c1',2,'2-12 印刷ビュー','A4横レイアウト表示','sc_print'),
+R('f2c2',2,'2-12 印刷ビュー','受注ヘッダー表示','sc_print or_num or_recd or_recby or_recm'),
+R('f2c3',2,'2-12 印刷ビュー','件名・顧客・納期表示','sc_print or_title or_cust cu_kind or_dstart lo_over'),
+R('f2c4',2,'2-12 印刷ビュー','全明細の表示','sc_print oi_paper oi_qty oi_ink oi_fold oi_pcover oi_pbody'),
+R('f2c5',2,'2-12 印刷ビュー','金額表示(税込太字)','sc_print or_total'),
+R('f2c6',2,'2-12 印刷ビュー','印刷実行','sc_print'),
+R('f2c7',2,'2-12 印刷ビュー','受注に戻る','sc_print sc_oview'),
+
+/* ===== 第3章 機能別ワークフロー詳細（規則・処理） ===== */
+R('w31',3,'3 ワークフロー','ログインフロー(認証→dashboard)','sc_login sc_dash us_email'),
+R('w32',3,'3 ワークフロー','受注番号 採番 YYMMDD-NNN','lo_numO or_num'),
+R('w33',3,'3 ワークフロー','受注タイトル導出(品名/連結)','or_title oi_title'),
+R('w34',3,'3 ワークフロー','代表納期の同期(items[0])','or_dtype or_dstart oi_deliv'),
+R('w35',3,'3 ワークフロー','合計金額の計算(Σ小計+税10%)','lo_money lo_sum lo_tax oi_sub or_total'),
+R('w36',3,'3 ワークフロー','工場記録の作成(FactoryRecord 1件)','fr_order'),
+R('w37',3,'3 ワークフロー','変更履歴の記録(新規起票)','ch_sum ch_tgt ch_by ch_at'),
+R('w38',3,'3 ワークフロー','バリデーション(顧客/明細1+/品名/納期日)','or_cust oi_title oi_deliv lo_ctent'),
+R('w39',3,'3 ワークフロー','受注ステータス遷移(5項目)','os_status or_status lo_stat'),
+R('w3a',3,'3 ワークフロー','ステータス自動記録(開始/完了/納品時刻)','lo_start lo_comp lo_deld fr_start fr_comp fr_compby or_deld'),
+R('w3b',3,'3 ワークフロー','見積 採番 Q-YYMMDD-NNN','lo_numQ qu_num'),
+R('w3c',3,'3 ワークフロー','見積パターン 1:1 同期','qu_pat qp_item qp_label'),
+R('w3d',3,'3 ワークフロー','値引き名目の表示解決','lo_disc qp_disclt qp_disctx os_disclt'),
+R('w3e',3,'3 ワークフロー','税抜⇄税込 相互換算','lo_conv oi_sub oi_tax'),
+R('w3f',3,'3 ワークフロー','値引き按分(ratio)','lo_sum or_disc qp_disc'),
+R('w3g',3,'3 ワークフロー','条件表示: 値引き行','lo_cdrow qp_showd qp_disc'),
+R('w3h',3,'3 ワークフロー','条件表示: 仮=納期日免除/範囲=終了日','lo_ctent oi_deliv'),
+R('w3i',3,'3 ワークフロー','条件表示: viewモード読取専用','lo_cview sc_oview'),
+R('w3j',3,'3 ワークフロー','条件表示: 新規ステータス2種限定','lo_cnew os_status'),
+R('w3k',3,'3 ワークフロー','仕様コピー(顧客/明細/メモ/タグ,納期リセット)','or_cust oi_title oi_paper oi_qty or_memo or_tags sc_onew'),
+
+/* ===== 第4章 データモデル概要（型レベル） ===== */
+R('d_user',4,'4 データモデル','User を管理','us_name us_role us_email'),
+R('d_cust',4,'4 データモデル','Customer を管理','cu_company cu_indiv cu_kind cu_area cu_phone cu_fax cu_addr cu_notes'),
+R('d_paper',4,'4 データモデル','Paper(用紙マスタ) を管理','pa_name pa_quality pa_color pa_kg pa_size pa_price pa_major'),
+R('d_order',4,'4 データモデル','Order を管理','or_num or_title or_cust or_recd or_deld or_recby or_recm or_dtype or_dstart or_dend or_proof or_used or_status or_memo or_total or_dstat or_disc or_discr or_disclt or_showd or_tags or_att or_crby or_ts'),
+R('d_item',4,'4 データモデル','OrderItem を管理','oi_order oi_type oi_title oi_paper oi_paperm oi_qty oi_ink oi_fold oi_mishin oi_hole oi_nori oi_num oi_yacho oi_lam oi_tax oi_sub oi_unit oi_deliv oi_proof oi_notes oi_psize oi_psizec oi_pcount oi_pcover oi_pbody'),
+R('d_quote',4,'4 データモデル','Quote / QuotePattern を管理','qu_num qu_order qu_issued qu_valid qu_send qu_status qu_memo qu_total qu_pat qp_item qp_label qp_amount qp_acc qp_showd qp_disc qp_disclt qp_disctx'),
+R('d_fact',4,'4 データモデル','FactoryRecord を管理','fr_order fr_start fr_comp fr_actq fr_memo fr_compby'),
+R('d_chg',4,'4 データモデル','ChangeLog を管理','ch_tgt ch_by ch_at ch_sum'),
+R('d_status',4,'4 データモデル','ステータス一覧(5項目に統一)','os_status'),
+R('d_master',4,'4 データモデル','マスタ(選択肢一覧)','os_recm os_dtype os_ink os_fold os_hole os_nori os_lam os_dstat os_tag os_send os_qstat os_disclt os_psize os_area os_kind os_itype'),
+
+/* ===== 第5章 ユーザーロールと権限 ===== */
+R('p51',5,'5 権限','全画面の閲覧','pe_priv us_role'),
+R('p52',5,'5 権限','受注の新規起票','pe_priv us_role sc_onew'),
+R('p53',5,'5 権限','受注の編集','pe_priv us_role sc_oedit'),
+R('p54',5,'5 権限','受注ステータス変更','pe_priv us_role or_status'),
+R('p55',5,'5 権限','受注の削除(=キャンセル対応)','pe_priv us_role sc_oview'),
+R('p56',5,'5 権限','見積書の作成・編集','pe_priv us_role sc_quote'),
+R('p57',5,'5 権限','工場カンバンの操作','pe_priv us_role sc_fact'),
+R('p58',5,'5 権限','顧客の登録・編集','pe_priv us_role sc_cust cu_company'),
+R('p59',5,'5 権限','用紙マスタの管理','pe_priv us_role pa_name pa_price'),
+R('p5a',5,'5 権限','ユーザーの招待・管理','pe_priv us_role us_name us_email'),
+R('p5b',5,'5 権限','設定・データ書出','pe_priv us_role se_comp se_bank'),
+
+/* ===== 第6章 非機能要件 ===== */
+R('n61',6,'6 非機能','性能(一覧3秒/検索2秒/PDF5秒)','sc_orders sc_quote','※仕様書に数値KPI領域なし',true),
+R('n62',6,'6 非機能','セキュリティ(SSL/HTTPS強制)','sc_login','Bubble標準'),
+R('n63',6,'6 非機能','パスワード(8文字/英大小+数字)','sc_login us_email'),
+R('n64',6,'6 非機能','ブルートフォース防止(試行制限)','sc_login','※仕様書に明示なし',true),
+R('n65',6,'6 非機能','セッション保持30日','sc_login'),
+R('n66',6,'6 非機能','XSS/Injection対策(Bubble標準)','','※Bubble標準エスケープ(専用領域なし)',true),
+R('n67',6,'6 非機能','日次バックアップ(DBスナップショット)','','※仕様書に専用領域なし',true),
+R('n68',6,'6 非機能','週次バックアップ(月3AM→GDrive)','','※仕様書に専用領域なし',true),
+R('n69',6,'6 非機能','月次アーカイブ(6ヶ月超の履歴)','ch_at','※仕様書に専用領域なし',true),
+R('n6a',6,'6 非機能','推奨ブラウザ Chrome 最新','','※仕様書に環境領域なし',true),
+R('n6b',6,'6 非機能','カスタムドメイン system.toshado.jp','','※仕様書に領域なし',true),
+R('n6c',6,'6 非機能','タイムゾーン Asia/Tokyo','','※仕様書に領域なし',true),
+R('n6d',6,'6 非機能','自動通知(本日納品8:00 等)','','※仕様書に通知領域なし(Backend WF要)',true),
+R('n6e',6,'6 非機能','金額計算ルール(税率10%固定/換算/値引)','lo_money lo_conv lo_tax lo_sum oi_sub oi_tax or_total'),
+];
+
+/* ============ INDEXES ============ */
+const specById={};SPEC.forEach(s=>specById[s[0]]={id:s[0],g:s[1],ty:s[2],name:s[3],detail:s[4]});
+const reqById={};REQ.forEach(r=>reqById[r.id]=r);
+const rev={};SPEC.forEach(s=>rev[s[0]]=[]);
+let linkTotal=0;
+REQ.forEach(r=>r.m.forEach(sid=>{if(rev[sid]){rev[sid].push(r.id);linkTotal++;}}));
+const specOnly=SPEC.filter(s=>rev[s[0]].length===0).map(s=>s[0]);
+const gapReqs=REQ.filter(r=>r.gap).map(r=>r.id);
+
+/* ============ BUILD LEFT ============ */
+const reqCol=document.getElementById('reqCol');
+const reqGrpOrder=[];REQ.forEach(r=>{const k=r.ch+'|'+r.grp;if(!reqGrpOrder.includes(k))reqGrpOrder.push(k);});
+reqGrpOrder.forEach(k=>{
+  const [ch,grp]=k.split('|');const items=REQ.filter(r=>r.ch==ch&&r.grp===grp);
+  const g=document.createElement('div');g.className='grp closed';g.dataset.ch=ch;
+  let html=`<div class="grph" style="--cc:${CHCOL[ch]}"><span class="gtag" style="background:${CHCOL[ch]}">${CHN[ch]}</span><span class="gname">${grp}</span><span class="gcnt">${items.length}</span><span class="gcar">▼</span></div><div class="items">`;
+  items.forEach(r=>{
+    html+=`<div class="item itL" data-rid="${r.id}" style="--cc:${CHCOL[ch]};--hl:${CHCOL[ch]}">
+      <div class="imeta"><span class="icode">REQ ${CHN[ch]}</span><span class="icnt">${r.m.length}</span></div>
+      <div class="it">${r.t}${r.gap?'<span class="gapflag">未整備</span>':''}</div>${r.d?`<div class="id">${r.d}</div>`:''}</div>`;
+  });
+  html+='</div>';g.innerHTML=html;reqCol.appendChild(g);
+});
+
+/* ============ BUILD RIGHT ============ */
+const specCol=document.getElementById('specCol');
+const specGrpOrder=[];SPEC.forEach(s=>{const k=s[1]+'|'+s[2];if(!specGrpOrder.includes(k))specGrpOrder.push(k);});
+specGrpOrder.forEach(k=>{
+  const [g0,ty]=k.split('|');const items=SPEC.filter(s=>s[1]==g0&&s[2]===ty);
+  const g=document.createElement('div');g.className='grp closed';g.dataset.g=g0;
+  let html=`<div class="grph" style="--cc:${GCOL[g0]}"><span class="gtag" style="background:${GCOL[g0]}">${G[g0]}</span><span class="gname">${ty}</span><span class="gcnt">${items.length}</span><span class="gcar">▼</span></div><div class="items">`;
+  items.forEach(s=>{
+    const so=rev[s[0]].length===0;
+    html+=`<div class="item" data-sid="${s[0]}" style="--gg:${GCOL[g0]};--hl:${GCOL[g0]}">
+      <div class="imeta"><span class="spectag" style="background:${GCOL[g0]}">${s[2]}</span><span class="icnt">${rev[s[0]].length}</span></div>
+      <div class="it">${s[3]}${so?'<span class="soflag">仕様先行</span>':''}</div><div class="id">${s[4]}</div></div>`;
+  });
+  html+='</div>';g.innerHTML=html;specCol.appendChild(g);
+});
+
+/* group collapse */
+document.querySelectorAll('.grph').forEach(h=>h.onclick=()=>{h.parentElement.classList.toggle('closed');requestAnimationFrame(drawWires);});
+
+/* ============ STATE ============ */
+let selReq=new Set(),selSpec=new Set(),hoverR=null,hoverS=null,showAll=false;
+const explorer=document.getElementById('explorer');
+const svg=document.getElementById('wires');
+const NS='http://www.w3.org/2000/svg';
+
+function activeReqs(){const s=new Set(selReq);if(hoverR)s.add(hoverR);return s;}
+function activeSpecs(){const s=new Set(selSpec);if(hoverS)s.add(hoverS);return s;}
+
+function computeHighlights(){
+  // which specs lit (from active reqs) and which reqs lit (from active specs)
+  const aR=activeReqs(),aS=activeSpecs();
+  const litSpec=new Set(),litReq=new Set();
+  aR.forEach(rid=>reqById[rid].m.forEach(sid=>litSpec.add(sid)));
+  aS.forEach(sid=>rev[sid].forEach(rid=>litReq.add(rid)));
+  return {aR,aS,litSpec,litReq};
+}
+
+function render(){
+  const {aR,aS,litSpec,litReq}=computeHighlights();
+  const anyR=aR.size>0,anyS=aS.size>0,any=anyR||anyS;
+  document.querySelectorAll('.item[data-rid]').forEach(el=>{
+    const id=el.dataset.rid;el.classList.remove('on','lit','fade');
+    if(aR.has(id))el.classList.add('on');
+    else if(litReq.has(id))el.classList.add('lit');
+    else if(any)el.classList.add('fade');
+  });
+  document.querySelectorAll('.item[data-sid]').forEach(el=>{
+    const id=el.dataset.sid;el.classList.remove('on','lit','fade');
+    if(aS.has(id))el.classList.add('on');
+    else if(litSpec.has(id))el.classList.add('lit');
+    else if(any)el.classList.add('fade');
+  });
+  // auto-open groups holding active/lit items so their wires are visible
+  const openR=new Set([...aR,...litReq]),openS=new Set([...aS,...litSpec]);
+  if(openR.size||openS.size){
+    document.querySelectorAll('.item[data-rid]').forEach(el=>{if(openR.has(el.dataset.rid))el.closest('.grp').classList.remove('closed');});
+    document.querySelectorAll('.item[data-sid]').forEach(el=>{if(openS.has(el.dataset.sid))el.closest('.grp').classList.remove('closed');});
+  }
+  document.getElementById('stSel').textContent=selReq.size+selSpec.size;
+  drawWires();renderReadout(aR,aS);
+}
+
+function drawWires(){
+  svg.innerHTML='';
+  const er=explorer.getBoundingClientRect();
+  svg.setAttribute('width',er.width);svg.setAttribute('height',explorer.scrollHeight);
+  let pairs=[];
+  if(showAll){REQ.forEach(r=>r.m.forEach(sid=>pairs.push([r.id,sid,r.ch])));}
+  else{
+    const {aR,aS}=computeHighlights();
+    aR.forEach(rid=>reqById[rid].m.forEach(sid=>pairs.push([rid,sid,reqById[rid].ch])));
+    aS.forEach(sid=>rev[sid].forEach(rid=>{if(!pairs.some(p=>p[0]===rid&&p[1]===sid))pairs.push([rid,sid,reqById[rid].ch]);}));
+  }
+  pairs.forEach(([rid,sid,ch])=>{
+    const a=document.querySelector(`.item[data-rid="${rid}"]`),b=document.querySelector(`.item[data-sid="${sid}"]`);
+    if(!a||!b)return;
+    if(a.closest('.grp').classList.contains('closed')||b.closest('.grp').classList.contains('closed'))return;
+    if(a.classList.contains('hide')||b.classList.contains('hide'))return;
+    const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
+    const x1=ar.right-er.left,y1=ar.top-er.top+ar.height/2;
+    const x2=br.left-er.left,y2=br.top-er.top+br.height/2;
+    const mx=(x1+x2)/2;
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d',`M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    p.setAttribute('fill','none');p.setAttribute('stroke',cssvar('--c'+ch));
+    p.setAttribute('stroke-width',showAll?1:1.8);p.setAttribute('stroke-linecap','round');
+    p.style.opacity=showAll?.16:.85;
+    if(!showAll)p.style.filter=`drop-shadow(0 0 5px ${cssvar('--c'+ch)}aa)`;
+    svg.appendChild(p);
+  });
+}
+function cssvar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+
+function renderReadout(aR,aS){
+  const ro=document.getElementById('roBody');
+  if(aR.size===0&&aS.size===0){ro.innerHTML='<div class="hintbox">左の要件、または右の仕様要素をクリックしてください。選択した項目の対応が一件ずつここに表示されます。</div>';return;}
+  let html='';
+  [...aR].forEach(rid=>{
+    const r=reqById[rid];
+    const tags=r.m.length?r.m.map(sid=>{const s=specById[sid];return `<span class="tag2">${G[s.g]} ${s.ty}.${s.name}</span>`;}).join(''):'<span class="tag2" style="color:#f6c177;border-color:rgba(246,193,119,.4);background:rgba(246,193,119,.08)">対応する仕様要素なし（実装で追補）</span>';
+    html+=`<div class="row"><span class="src" style="color:${CHCOL[r.ch]}">要件 ${CHN[r.ch]} ${r.t}</span><span class="arrow">→</span> 仕様 ${r.m.length}件<div style="margin-top:5px">${tags}</div></div>`;
+  });
+  [...aS].forEach(sid=>{
+    const s=specById[sid];const rs=rev[sid];
+    const tags=rs.length?rs.map(rid=>{const r=reqById[rid];return `<span class="tag2 rv" style="border-color:${CHCOL[r.ch]}66">${CHN[r.ch]} ${r.t}</span>`;}).join(''):'<span class="tag2" style="color:#f6c177;border-color:rgba(246,193,119,.4);background:rgba(246,193,119,.08)">この要素を必要とする要件なし（仕様先行）</span>';
+    html+=`<div class="row"><span class="src" style="color:${cssvar(GCOL[s.g].replace('var(','').replace(')',''))||'#fff'}">${G[s.g]} ${s.ty}.${s.name}</span><span class="arrow">←</span> 要件 ${rs.length}件<div style="margin-top:5px">${tags}</div></div>`;
+  });
+  ro.innerHTML=html;
+}
+
+/* ============ INTERACTION ============ */
+reqCol.addEventListener('click',e=>{const it=e.target.closest('.item[data-rid]');if(!it)return;
+  const id=it.dataset.rid;selReq.has(id)?selReq.delete(id):selReq.add(id);render();});
+specCol.addEventListener('click',e=>{const it=e.target.closest('.item[data-sid]');if(!it)return;
+  const id=it.dataset.sid;selSpec.has(id)?selSpec.delete(id):selSpec.add(id);render();});
+reqCol.addEventListener('mouseover',e=>{const it=e.target.closest('.item[data-rid]');if(it){hoverR=it.dataset.rid;render();}});
+reqCol.addEventListener('mouseout',e=>{if(e.target.closest('.item[data-rid]')){hoverR=null;render();}});
+specCol.addEventListener('mouseover',e=>{const it=e.target.closest('.item[data-sid]');if(it){hoverS=it.dataset.sid;render();}});
+specCol.addEventListener('mouseout',e=>{if(e.target.closest('.item[data-sid]')){hoverS=null;render();}});
+
+document.getElementById('clearBtn').onclick=()=>{selReq.clear();selSpec.clear();render();};
+let allOpen=false;
+document.getElementById('expandBtn').onclick=()=>{allOpen=!allOpen;
+  document.querySelectorAll('.grp').forEach(g=>g.classList.toggle('closed',!allOpen));
+  document.getElementById('expandBtn').textContent=allOpen?'全折りたたみ':'全展開';
+  document.getElementById('expandBtn').classList.toggle('accent',allOpen);requestAnimationFrame(drawWires);};
+document.getElementById('allWires').onclick=()=>{showAll=!showAll;document.getElementById('allWires').classList.toggle('accent',showAll);
+  if(showAll){allOpen=true;document.querySelectorAll('.grp').forEach(g=>g.classList.remove('closed'));
+    document.getElementById('expandBtn').textContent='全折りたたみ';document.getElementById('expandBtn').classList.add('accent');}
+  render();};
+
+/* filters */
+const chOn=new Set(),gOn=new Set();
+document.querySelectorAll('.fchip[data-ch]').forEach(c=>c.onclick=()=>{const v=c.dataset.ch;
+  chOn.has(v)?chOn.delete(v):chOn.add(v);c.classList.toggle('on',chOn.has(v));c.style.background=chOn.has(v)?CHCOL[v]:'';applyFilter();});
+document.querySelectorAll('.fchip[data-g]').forEach(c=>c.onclick=()=>{const v=c.dataset.g;
+  gOn.has(v)?gOn.delete(v):gOn.add(v);c.classList.toggle('on',gOn.has(v));applyFilter();});
+const q=document.getElementById('q');q.oninput=applyFilter;
+function applyFilter(){
+  const term=q.value.trim().toLowerCase();
+  document.querySelectorAll('.item[data-rid]').forEach(el=>{
+    const r=reqById[el.dataset.rid];
+    let ok=(chOn.size===0||chOn.has(String(r.ch)));
+    if(ok&&term){ok=(r.t+r.grp+r.d+r.m.map(m=>specById[m]?specById[m].name:'').join(' ')).toLowerCase().includes(term);}
+    el.classList.toggle('hide',!ok);
+  });
+  document.querySelectorAll('.item[data-sid]').forEach(el=>{
+    const s=specById[el.dataset.sid];
+    let ok=(gOn.size===0||gOn.has(s.g));
+    if(ok&&term){ok=(s.name+s.ty+s.detail).toLowerCase().includes(term);}
+    el.classList.toggle('hide',!ok);
+  });
+  // hide empty groups; when searching, auto-open groups that still have visible items
+  document.querySelectorAll('.grp').forEach(g=>{
+    const vis=[...g.querySelectorAll('.item')].some(i=>!i.classList.contains('hide'));
+    g.style.display=vis?'':'none';
+    if(term&&vis)g.classList.remove('closed');
+  });
+  requestAnimationFrame(drawWires);
+}
+
+/* stats + init */
+document.getElementById('stReq').textContent=REQ.length;
+document.getElementById('stSpec').textContent=SPEC.length;
+document.getElementById('stLink').textContent=linkTotal;
+document.getElementById('stSO').textContent=specOnly.length;
+document.getElementById('stGap').textContent=gapReqs.length;
+window.addEventListener('resize',()=>requestAnimationFrame(drawWires));
+window.addEventListener('load',()=>{render();setTimeout(()=>{selReq.add('f284');render();},300);});
+render();
+</script>
+</body>
+</html>
