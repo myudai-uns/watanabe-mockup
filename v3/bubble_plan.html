@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>渡辺謄写堂 × Bubble 構築プラン（インタラクティブ）</title>
+<title>渡辺謄写堂 × Bubble つくる計画（さわって分かる版）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -12,29 +12,29 @@
   *{ box-sizing:border-box; margin:0; padding:0; }
   body{ font-family:'Noto Sans JP',sans-serif; background:var(--gray); color:var(--ink); -webkit-font-smoothing:antialiased; }
   .wrap{ max-width:1080px; margin:0 auto; padding:0 18px 40px; }
-  .hero{ background:var(--ink); color:#fff; padding:34px 0 28px; }
+  .hero{ background:var(--ink); color:#fff; padding:32px 0 26px; }
   .hero .wrap{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; }
-  .eyebrow{ font-size:12px; letter-spacing:.18em; color:var(--orange); font-weight:700; }
-  h1{ font-size:32px; font-weight:900; line-height:1.15; margin-top:4px; }
+  .eyebrow{ font-size:12px; letter-spacing:.16em; color:var(--orange); font-weight:700; }
+  h1{ font-size:30px; font-weight:900; line-height:1.15; margin-top:4px; }
   h1 small{ display:block; font-size:14px; font-weight:500; color:#B9BdC6; margin-top:6px; }
   .delivery{ text-align:right; }
   .delivery .lbl{ font-size:12px; color:#B9BdC6; font-weight:700; }
   .delivery .date{ font-size:40px; font-weight:900; color:#fff; line-height:1; }
   .delivery .date b{ color:var(--orange); }
   .delivery .sub{ font-size:12px; color:var(--green); font-weight:700; margin-top:4px; }
-  .hint{ background:var(--ink2); color:#cfd2d8; font-size:11.5px; font-weight:700; text-align:center; padding:7px; }
+  .hint{ background:var(--ink2); color:#dfe2e8; font-size:12px; font-weight:700; text-align:center; padding:9px; }
   .hint b{ color:var(--orange); }
 
   section{ margin-top:30px; opacity:0; transform:translateY(18px); transition:opacity .55s ease, transform .55s ease; }
   section.in{ opacity:1; transform:none; }
-  .sechead{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-  .sechead .no{ background:var(--ink); color:#fff; font-weight:900; font-size:13px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+  .sechead{ display:flex; align-items:center; gap:10px; margin-bottom:13px; flex-wrap:wrap; }
+  .sechead .no{ background:var(--ink); color:#fff; font-weight:900; font-size:13px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .sechead h2{ font-size:19px; font-weight:900; }
-  .sechead .tag{ margin-left:auto; font-size:11px; font-weight:700; color:var(--muted); }
+  .sechead .tag{ margin-left:auto; font-size:11px; font-weight:700; color:var(--green-d); background:#E3F2E9; padding:3px 9px; border-radius:20px; }
   .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
   .stat{ background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.06); border-left:5px solid var(--orange); }
   .stat .k{ font-size:11px; color:var(--muted); font-weight:700; }
-  .stat .v{ font-size:22px; font-weight:900; margin-top:2px; }
+  .stat .v{ font-size:20px; font-weight:900; margin-top:2px; }
   .stat.g{ border-color:var(--green); } .stat.b{ border-color:var(--blue); }
 
   /* flow */
@@ -44,9 +44,13 @@
   .step.hl{ outline-color:var(--green); }
   .step .n{ font-size:11px; font-weight:900; color:var(--orange); }
   .step .t{ font-size:13px; font-weight:700; margin-top:2px; line-height:1.25; }
+  .step .term{ font-size:10px; color:#9aa0aa; margin-top:3px; }
   .step .p{ position:absolute; top:8px; right:10px; font-size:12px; font-weight:900; color:var(--green); }
-  .step.hot{ background:var(--orange); } .step.hot .n{ color:#fff; } .step.hot .p{ color:#16181D; }
-  .step.warn{ background:#7a3b12; }
+  .step.hot{ background:var(--orange); } .step.hot .n{ color:#fff; } .step.hot .p{ color:#16181D; } .step.hot .term{ color:#ffe1c9; }
+  .step.warn{ background:#7a3b12; } .step.warn .term{ color:#e0b596; }
+  .explain{ margin-top:10px; background:#fff; border-left:5px solid var(--green); border-radius:8px; padding:12px 14px; font-size:13.5px; font-weight:700; line-height:1.55; min-height:54px; box-shadow:0 1px 2px rgba(0,0,0,.05); transition:border-color .2s; }
+  .explain .ttl{ color:var(--green-d); font-size:12px; }
+  .explain.idle{ color:var(--muted); font-weight:700; border-left-color:#cfd3da; }
 
   /* bars */
   .toggle{ display:flex; gap:6px; margin-bottom:12px; align-items:center; flex-wrap:wrap; }
@@ -54,43 +58,47 @@
   .toggle button{ font:inherit; font-size:12px; font-weight:900; padding:6px 13px; border:none; border-radius:20px; cursor:pointer; background:#fff; color:#16181D; box-shadow:0 1px 2px rgba(0,0,0,.1); transition:.15s; }
   .toggle button.on{ background:var(--orange); color:#fff; }
   .bars{ background:#fff; border-radius:12px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
-  .bar{ display:flex; align-items:center; gap:10px; margin:7px 0; cursor:default; }
-  .bar .lab{ width:210px; font-size:12.5px; font-weight:700; text-align:right; flex-shrink:0; transition:color .15s; }
+  .bar{ display:flex; align-items:center; gap:10px; margin:7px 0; cursor:pointer; }
+  .bar .lab{ width:215px; font-size:12.5px; font-weight:700; text-align:right; flex-shrink:0; transition:color .15s; }
   .bar .track{ flex:1; background:var(--gray); border-radius:6px; height:20px; overflow:hidden; transition:box-shadow .15s; }
   .bar .fill{ height:100%; border-radius:6px; background:var(--orange); width:0; transition:width .9s cubic-bezier(.22,.61,.36,1); }
   .bar .pct{ width:42px; font-size:13px; font-weight:900; text-align:right; }
   .bar.peak .fill{ background:var(--orange); } .bar.mid .fill{ background:var(--orange-d); } .bar.low .fill{ background:#C9A07B; }
   .bar.hl .lab{ color:var(--orange-d); } .bar.hl .track{ box-shadow:0 0 0 2px var(--orange); }
   .insight{ margin-top:12px; background:#FFF1E6; border-left:5px solid var(--orange); border-radius:8px; padding:10px 14px; font-size:13px; font-weight:700; }
+  .barwhy{ margin-top:8px; font-size:12.5px; font-weight:700; color:#3a3a3a; background:#F3F4F6; border-radius:8px; padding:9px 13px; min-height:20px; }
+  .barwhy.idle{ color:var(--muted); }
 
   /* gantt */
   .gantt{ background:#fff; border-radius:12px; padding:18px 16px 14px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
   .grow{ display:flex; align-items:center; gap:8px; margin:6px 0; cursor:pointer; }
-  .grow .gl{ width:118px; font-size:11.5px; font-weight:700; text-align:right; flex-shrink:0; color:#3a3a3a; transition:color .15s; }
+  .grow .gl{ width:128px; font-size:11.5px; font-weight:700; text-align:right; flex-shrink:0; color:#3a3a3a; transition:color .15s; }
   .gbar{ flex:1; display:flex; height:22px; border-radius:5px; overflow:hidden; background:var(--gray); transition:box-shadow .15s; }
   .seg{ height:100%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff; white-space:nowrap; transition:filter .15s; width:0; }
   .gantt.in .seg{ width:100%; transition:width .8s cubic-bezier(.22,.61,.36,1); }
   .grow:hover .seg{ filter:brightness(1.1); }
   .grow.hl .gbar{ box-shadow:0 0 0 2px var(--orange); } .grow.hl .gl{ color:var(--orange-d); }
-  .axis{ display:flex; margin-left:126px; margin-top:6px; font-size:10px; color:var(--muted); font-weight:700; }
+  .axis{ display:flex; margin-left:136px; margin-top:6px; font-size:10px; color:var(--muted); font-weight:700; }
   .axis span{ flex:1; text-align:left; }
-  .mile{ display:flex; margin-left:126px; margin-top:8px; position:relative; height:46px; }
+  .mile{ display:flex; margin-left:136px; margin-top:8px; position:relative; height:46px; }
   .mpin{ position:absolute; transform:translateX(-50%); text-align:center; cursor:default; }
   .mpin .dot{ width:12px; height:12px; border-radius:50%; background:var(--green); margin:0 auto; border:2px solid #fff; box-shadow:0 0 0 1px var(--green); transition:transform .15s; }
   .mpin:hover .dot{ transform:scale(1.5); }
   .mpin .mt{ font-size:9.5px; font-weight:900; margin-top:3px; color:var(--green-d); line-height:1.15; }
   .mpin.fin .dot{ background:var(--red); box-shadow:0 0 0 1px var(--red); } .mpin.fin .mt{ color:var(--red); }
-  .gdetail{ margin-top:14px; font-size:12.5px; background:#F3F4F6; border-left:4px solid var(--orange); border-radius:6px; padding:10px 14px; line-height:1.5; }
+  .gdetail{ margin-top:14px; font-size:13px; background:#F3F4F6; border-left:4px solid var(--orange); border-radius:6px; padding:11px 14px; line-height:1.6; font-weight:700; }
+  .gdetail.idle{ color:var(--muted); }
   .gdetail b{ color:var(--orange-d); }
 
   /* skill */
   .two{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .panel{ background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
   .panel h3{ font-size:14px; font-weight:900; margin-bottom:8px; }
-  .gauge{ height:12px; background:var(--gray); border-radius:6px; overflow:hidden; margin:6px 0 4px; }
-  .gauge i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--green),var(--orange)); transition:width 1s ease .2s; }
+  .gauge{ height:14px; background:var(--gray); border-radius:7px; overflow:hidden; margin:6px 0 6px; position:relative; }
+  .gauge i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--green),var(--orange)); transition:width 1.1s ease .2s; }
   section.in .gauge i{ width:58%; }
-  .lvl{ font-size:12px; font-weight:900; }
+  .gauge span{ position:absolute; right:8px; top:-1px; font-size:10px; font-weight:900; color:#16181D; }
+  .lvl{ font-size:12.5px; font-weight:900; }
   ul.chk{ list-style:none; font-size:12.5px; }
   ul.chk li{ padding:3px 0 3px 20px; position:relative; }
   ul.chk li:before{ content:'✓'; position:absolute; left:0; color:var(--green-d); font-weight:900; }
@@ -98,11 +106,11 @@
 
   .risk{ background:var(--ink); color:#fff; border-radius:12px; padding:18px; }
   .risk h3{ font-size:14px; font-weight:900; color:var(--orange); margin-bottom:10px; }
-  .risk .r{ display:flex; gap:10px; padding:7px 0; border-top:1px solid #2c2f37; font-size:13px; }
+  .risk .r{ display:flex; gap:10px; padding:8px 0; border-top:1px solid #2c2f37; font-size:13px; line-height:1.5; }
   .risk .r:first-of-type{ border-top:none; }
   .risk .r b{ color:#fff; } .risk .r .num{ color:var(--orange); font-weight:900; flex-shrink:0; }
   footer{ text-align:center; font-size:11px; color:var(--muted); padding:26px 0 0; }
-  @media(max-width:680px){ .grid3,.two{ grid-template-columns:1fr; } .step{ flex-basis:calc(50% - 8px); } .bar .lab{ width:120px; } .delivery{ text-align:left; } }
+  @media(max-width:680px){ .grid3,.two{ grid-template-columns:1fr; } .step{ flex-basis:calc(50% - 8px); } .bar .lab{ width:130px; } .delivery{ text-align:left; } .axis,.mile{ margin-left:0; } }
 </style>
 </head>
 <body>
@@ -110,113 +118,124 @@
 <div class="hero">
   <div class="wrap">
     <div>
-      <div class="eyebrow">WATANABE TOSHADO × BUBBLE</div>
-      <h1>業務管理システム 構築プラン<small>HTMLモック v3 を正とした Bubble 実装 ／ 担当1名（Bubble歴 約4か月）</small></h1>
+      <div class="eyebrow">渡辺謄写堂 × Bubble</div>
+      <h1>業務管理システムを つくる計画<small>見本（HTMLモック v3）と同じものを Bubble で作ります ／ つくる人：1名（Bubble歴 約4か月の学生）</small></h1>
     </div>
     <div class="delivery">
-      <div class="lbl">最終納品</div>
+      <div class="lbl">かんせい（納品）の日</div>
       <div class="date">6/<b>18</b></div>
-      <div class="sub">2026 ・ 着手 5/28 から約3週間</div>
+      <div class="sub">2026年 ・ 5/28スタートで 約3週間</div>
     </div>
   </div>
 </div>
-<div class="hint">▶ <b>インタラクティブ資料</b>：工程カードやガントに<b>カーソルを合わせると連動ハイライト</b>。工数バーは<b>シナリオ切替</b>、ガントは<b>クリックで詳細</b>。</div>
+<div class="hint">▶ <b>さわって動く資料です</b>：カードに触れると<b>説明がふえる</b>／割合は<b>「学生」と「プロ」で切り替え</b>／予定のバーは<b>クリックで中身が出る</b></div>
 
 <div class="wrap">
 
   <!-- 概要 -->
   <section>
     <div class="grid3">
-      <div class="stat"><div class="k">対象</div><div class="v">案件管理 一式</div></div>
-      <div class="stat g"><div class="k">体制</div><div class="v">1名 ＋ メンター伴走</div></div>
-      <div class="stat b"><div class="k">期間</div><div class="v">5/28 → 6/18</div></div>
+      <div class="stat"><div class="k">何を作る？</div><div class="v">注文・見積の管理アプリ</div></div>
+      <div class="stat g"><div class="k">だれが作る？</div><div class="v">学生1名 ＋ 先生が補助</div></div>
+      <div class="stat b"><div class="k">いつまで？</div><div class="v">5/28 → 6/18</div></div>
     </div>
   </section>
 
   <!-- 構築フロー -->
   <section>
-    <div class="sechead"><span class="no">1</span><h2>構築フロー</h2><span class="tag">ホバーで連動 ▸ データ → 部品 → 表示 → 入力 → 複雑機能</span></div>
+    <div class="sechead"><span class="no">1</span><h2>作る順番（9ステップ）</h2><span class="tag">カードに触れると説明が出ます</span></div>
     <div class="flow">
-      <div class="step" data-step="1"><div class="n">STEP 01</div><div class="t">Option Set</div><div class="p">3%</div></div>
-      <div class="step" data-step="2"><div class="n">STEP 02</div><div class="t">Data Type</div><div class="p">5%</div></div>
-      <div class="step" data-step="3"><div class="n">STEP 03</div><div class="t">シードCSV投入</div><div class="p">2%</div></div>
-      <div class="step" data-step="4"><div class="n">STEP 04</div><div class="t">Reusable部品</div><div class="p">7%</div></div>
-      <div class="step" data-step="5"><div class="n">STEP 05</div><div class="t">表示画面（RG）</div><div class="p">15%</div></div>
-      <div class="step hot" data-step="6"><div class="n">STEP 06</div><div class="t">入力フォーム＋WF</div><div class="p">32%</div></div>
-      <div class="step warn" data-step="7"><div class="n">STEP 07</div><div class="t">複雑機能 D&amp;D/PDF</div><div class="p">21%</div></div>
-      <div class="step" data-step="8"><div class="n">STEP 08</div><div class="t">権限・レスポンシブ</div><div class="p">9%</div></div>
-      <div class="step" data-step="9"><div class="n">STEP 09</div><div class="t">QA・検証</div><div class="p">6%</div></div>
+      <div class="step" data-step="1" data-desc="「ステータス」や「地域」みたいに“決まった選択肢”を先に登録しておく作業。一度作れば、全部の画面で同じ選択肢を使い回せます。">
+        <div class="n">STEP 01</div><div class="t">選択肢のリストを作る</div><div class="term">＊専門語：Option Set</div><div class="p">3%</div></div>
+      <div class="step" data-step="2" data-desc="注文・お客さん・見積など、データをしまう“箱”と、その中の項目（名前・金額・日付など）を決めます。アプリの土台になる部分。">
+        <div class="n">STEP 02</div><div class="t">情報をしまう箱を作る</div><div class="term">＊専門語：Data Type</div><div class="p">5%</div></div>
+      <div class="step" data-step="3" data-desc="見本用のデータをまとめて読み込みます。早い段階で本物っぽいデータが入るので、動きをすぐ試せます。">
+        <div class="n">STEP 03</div><div class="t">見本データを読み込む</div><div class="term">＊専門語：CSV取込</div><div class="p">2%</div></div>
+      <div class="step" data-step="4" data-desc="ヘッダー（上の帯）や状態を示す色バッジなど、どの画面でも使う部品を1回だけ作って全部で使い回します。最初に作ると後がラク。">
+        <div class="n">STEP 04</div><div class="t">使い回す共通パーツ</div><div class="term">＊専門語：Reusable</div><div class="p">7%</div></div>
+      <div class="step" data-step="5" data-desc="注文一覧やダッシュボードなど、情報を“見るだけ”の画面を作ります。同じ形をくり返し並べる表示が中心で、比較的やさしい。">
+        <div class="n">STEP 05</div><div class="t">見るだけの画面</div><div class="term">＊専門語：一覧/詳細表示</div><div class="p">15%</div></div>
+      <div class="step hot" data-step="6" data-desc="新しく入力して保存する仕組み。明細の追加・削除、税抜き⇄税込みの自動計算、注文番号の自動付けまで。いちばん手間がかかる山場です。">
+        <div class="n">STEP 06</div><div class="t">入力して保存する仕組み</div><div class="term">＊専門語：フォーム＋処理</div><div class="p">32%</div></div>
+      <div class="step warn" data-step="7" data-desc="カードをつかんで動かす工場ボードや、見積書をPDFで出す機能など。追加の部品が必要で、学生にとっては初めての領域。2番目の山場。">
+        <div class="n">STEP 07</div><div class="t">むずかしい機能</div><div class="term">＊カード操作・PDF出力</div><div class="p">21%</div></div>
+      <div class="step" data-step="8" data-desc="役職によって見える内容を変える設定（だれが何を見られるか）と、スマホでも崩れない見た目の調整。設定ミスをしやすいので時間を見ておきます。">
+        <div class="n">STEP 08</div><div class="t">見える範囲・スマホ対応</div><div class="term">＊権限／レスポンシブ</div><div class="p">9%</div></div>
+      <div class="step" data-step="9" data-desc="見本どおりに動くか、計算や画面の切り替わりを1つずつ確認して直す最終チェック。ここで品質を仕上げます。">
+        <div class="n">STEP 09</div><div class="t">最終チェック</div><div class="term">＊専門語：動作確認</div><div class="p">6%</div></div>
     </div>
+    <div class="explain idle" id="flowex"><span class="ttl">▶ ここに説明が出ます</span><br>上の9枚のカードに触れると、それぞれが「何をする作業か」をやさしく説明します。</div>
   </section>
 
   <!-- 工数比率 -->
   <section>
-    <div class="sechead"><span class="no">2</span><h2>工数比率</h2><span class="tag">合計100</span></div>
+    <div class="sechead"><span class="no">2</span><h2>どこに時間がかかる？</h2><span class="tag">ボタンで切替・バーに触れて理由</span></div>
     <div class="toggle">
-      <span class="lab">シナリオ：</span>
-      <button data-sc="intern" class="on">学生1名（学習込み）</button>
-      <button data-sc="base">経験者基準</button>
+      <span class="lab">だれが作る？：</span>
+      <button data-sc="intern" class="on">学生（はじめて多め）</button>
+      <button data-sc="base">プロ（経験者）</button>
     </div>
     <div class="bars">
-      <div class="bar peak" data-step="6" data-intern="32" data-base="30"><div class="lab">⑥ 入力フォーム＋workflow</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar peak" data-step="7" data-intern="21" data-base="16"><div class="lab">⑦ 複雑機能 (D&amp;D/PDF/未保存)</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar mid" data-step="5" data-intern="15" data-base="18"><div class="lab">⑤ 表示画面（一覧・詳細）</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar mid" data-step="8" data-intern="9" data-base="8"><div class="lab">⑧ 権限・レスポンシブ</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar low" data-step="4" data-intern="7" data-base="8"><div class="lab">④ Reusable部品</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar low" data-step="9" data-intern="6" data-base="7"><div class="lab">⑨ QA・検証</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar low" data-step="2" data-intern="5" data-base="7"><div class="lab">② Data Type</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar low" data-step="1" data-intern="3" data-base="4"><div class="lab">① Option Set</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
-      <div class="bar low" data-step="3" data-intern="2" data-base="2"><div class="lab">③ シードCSV投入</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar peak" data-step="6" data-intern="32" data-base="30" data-why="入力・計算・保存・番号付けと“処理”がいちばん多いから。"><div class="lab">⑥ 入力して保存する仕組み</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar peak" data-step="7" data-intern="21" data-base="16" data-why="カード操作やPDFは追加部品が必要で、学生は初めてだから時間がふくらむ。"><div class="lab">⑦ むずかしい機能</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar mid" data-step="5" data-intern="15" data-base="18" data-why="同じ形のくり返し表示が中心で、比較的らく。"><div class="lab">⑤ 見るだけの画面</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar mid" data-step="8" data-intern="9" data-base="8" data-why="見える範囲の設定はミスしやすいので、念のため時間を見る。"><div class="lab">⑧ 見える範囲・スマホ対応</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="4" data-intern="7" data-base="8" data-why="最初に共通パーツを作っておくと、後の画面づくりが速くなる。"><div class="lab">④ 共通パーツ</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="9" data-intern="6" data-base="7" data-why="最後の確認。見本と1つずつ照らし合わせる。"><div class="lab">⑨ 最終チェック</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="2" data-intern="5" data-base="7" data-why="情報をしまう箱を決める。設計が済んでいれば速い。"><div class="lab">② 情報の箱</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="1" data-intern="3" data-base="4" data-why="決まった選択肢を登録するだけ。短時間。"><div class="lab">① 選択肢のリスト</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="3" data-intern="2" data-base="2" data-why="見本データを読み込むだけ。短時間。"><div class="lab">③ 見本データ読込</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
       <div class="insight" id="insight"></div>
+      <div class="barwhy idle" id="barwhy">▶ バーに触れると「なぜこの割合か」が出ます。</div>
     </div>
   </section>
 
   <!-- スケジュール（ガント） -->
   <section>
-    <div class="sechead"><span class="no">3</span><h2>スケジュール</h2><span class="tag">クリックで詳細 ▸ 5/28 〜 6/18（22日）</span></div>
+    <div class="sechead"><span class="no">3</span><h2>いつ何をする？（予定表）</h2><span class="tag">バーをクリックで中身が出ます</span></div>
     <div class="gantt" id="gantt">
-      <div class="grow" data-steps="" data-ph="0"><div class="gl">0 準備</div><div class="gbar"><div class="seg" style="background:#5a6068">5/28</div></div></div>
-      <div class="grow" data-steps="1,2,3,4" data-ph="1"><div class="gl">1 基盤</div><div class="gbar"><div class="seg" style="background:var(--blue)">Option/Data/CSV/Reusable</div></div></div>
-      <div class="grow" data-steps="5" data-ph="2"><div class="gl">2 表示</div><div class="gbar"><div class="seg" style="background:#3b7fd1">一覧・詳細・カンバン表示</div></div></div>
-      <div class="grow" data-steps="6" data-ph="3"><div class="gl">3 入力/WF</div><div class="gbar"><div class="seg" style="background:var(--orange)">フォーム・明細・税計算・採番・保存</div></div></div>
-      <div class="grow" data-steps="7,8" data-ph="4"><div class="gl">4 複雑+権限</div><div class="gbar"><div class="seg" style="background:var(--orange-d)">D&amp;D・PDF・Privacy・レスポンシブ</div></div></div>
-      <div class="grow" data-steps="9" data-ph="5"><div class="gl">5 QA・修正</div><div class="gbar"><div class="seg" style="background:var(--green)">突合・修正・最終レビュー</div></div></div>
-      <div class="grow" data-steps="" data-ph="6"><div class="gl">予備/納品</div><div class="gbar"><div class="seg" style="width:50%;background:#9aa0a8">バッファ</div><div class="seg" style="width:50%;background:var(--red)">納品</div></div></div>
+      <div class="grow" data-steps="" data-ph="0"><div class="gl">0 じゅんび</div><div class="gbar"><div class="seg" style="background:#5a6068">5/28</div></div></div>
+      <div class="grow" data-steps="1,2,3,4" data-ph="1"><div class="gl">1 土台づくり</div><div class="gbar"><div class="seg" style="background:var(--blue)">選択肢・箱・見本データ・共通パーツ</div></div></div>
+      <div class="grow" data-steps="5" data-ph="2"><div class="gl">2 見る画面</div><div class="gbar"><div class="seg" style="background:#3b7fd1">一覧・詳細・工場ボードの見た目</div></div></div>
+      <div class="grow" data-steps="6" data-ph="3"><div class="gl">3 入力の仕組み</div><div class="gbar"><div class="seg" style="background:var(--orange)">フォーム・税計算・番号・保存（山場）</div></div></div>
+      <div class="grow" data-steps="7,8" data-ph="4"><div class="gl">4 むずかしい機能</div><div class="gbar"><div class="seg" style="background:var(--orange-d)">カード操作・PDF・見える範囲・スマホ</div></div></div>
+      <div class="grow" data-steps="9" data-ph="5"><div class="gl">5 最終チェック</div><div class="gbar"><div class="seg" style="background:var(--green)">見本と照合・直し・最終確認</div></div></div>
+      <div class="grow" data-steps="" data-ph="6"><div class="gl">予備／かんせい</div><div class="gbar"><div class="seg" style="width:50%;background:#9aa0a8">予備の余白</div><div class="seg" style="width:50%;background:var(--red)">かんせい</div></div></div>
       <div class="axis"><span>5/28</span><span>6/1</span><span>6/4</span><span>6/8</span><span>6/11</span><span>6/14</span><span>6/18</span></div>
       <div class="mile">
-        <div class="mpin" style="left:18%"><div class="dot"></div><div class="mt">M1 基盤<br>5/31</div></div>
-        <div class="mpin" style="left:32%"><div class="dot"></div><div class="mt">M2 表示<br>6/3 ﾚﾋﾞｭｰ①</div></div>
-        <div class="mpin" style="left:59%"><div class="dot"></div><div class="mt">M3 登録/計算<br>6/9 ﾚﾋﾞｭｰ②</div></div>
-        <div class="mpin" style="left:77%"><div class="dot"></div><div class="mt">M4 全機能<br>6/13 ﾚﾋﾞｭｰ③</div></div>
-        <div class="mpin" style="left:91%"><div class="dot"></div><div class="mt">M5 QA<br>6/16</div></div>
-        <div class="mpin fin" style="left:100%"><div class="dot"></div><div class="mt">納品<br>6/18</div></div>
+        <div class="mpin" style="left:18%"><div class="dot"></div><div class="mt">区切り1 土台<br>5/31</div></div>
+        <div class="mpin" style="left:32%"><div class="dot"></div><div class="mt">区切り2 画面<br>6/3 確認①</div></div>
+        <div class="mpin" style="left:59%"><div class="dot"></div><div class="mt">区切り3 入力<br>6/9 確認②</div></div>
+        <div class="mpin" style="left:77%"><div class="dot"></div><div class="mt">区切り4 全機能<br>6/13 確認③</div></div>
+        <div class="mpin" style="left:91%"><div class="dot"></div><div class="mt">区切り5 点検<br>6/16</div></div>
+        <div class="mpin fin" style="left:100%"><div class="dot"></div><div class="mt">かんせい<br>6/18</div></div>
       </div>
-      <div class="gdetail" id="gdetail">▶ 各フェーズの帯をクリックすると、作業内容とマイルストーンを表示します。</div>
+      <div class="gdetail idle" id="gdetail">▶ 上の色のついたバーをクリックすると、その期間に「やること」と「区切りの目標」が出ます。</div>
     </div>
   </section>
 
   <!-- 担当者プロフィール -->
   <section>
-    <div class="sechead"><span class="no">4</span><h2>担当者の習熟度</h2><span class="tag">Bubble開発ガレージ研修・約4か月</span></div>
+    <div class="sechead"><span class="no">4</span><h2>作る人のレベル</h2><span class="tag">Bubbleをはじめて約4か月</span></div>
     <div class="two">
       <div class="panel">
         <h3>レベル：初級の上 〜 中級の入口</h3>
-        <div class="gauge"><i></i></div>
-        <div class="lvl" style="color:var(--orange-d)">研修で案件管理アプリを1本完成（＝渡辺謄写堂とほぼ同型）</div>
+        <div class="gauge"><i></i><span>58</span></div>
+        <div class="lvl" style="color:var(--orange-d)">研修で「注文管理アプリ」を1個完成ずみ（＝今回作るものとほぼ同じ種類）</div>
         <ul class="chk" style="margin-top:8px">
-          <li>Data Type・RepeatingGroup・基本ワークフロー</li>
-          <li>ログイン/権限・フォーム・Option Set</li>
-          <li>自己解決力あり（詰まりを翌朝には自力解消）</li>
+          <li>情報の箱づくり・リスト表示・基本の保存処理</li>
+          <li>ログイン・見える範囲・入力フォーム</li>
+          <li>つまずいても、自分で調べて直せる</li>
         </ul>
       </div>
       <div class="panel">
-        <h3 style="color:var(--orange-d)">支援が要る弱点</h3>
+        <h3 style="color:var(--orange-d)">手伝いが必要なところ</h3>
         <ul class="chk warn" style="margin-top:2px">
-          <li>Privacy Rules（OnlyWhen）</li>
-          <li>Current cell's 〜 vs Current User のデータ文脈</li>
-          <li>動的(Option Set)と static 値の取り違え</li>
-          <li>レイアウトの Fixed / Fit、プラン/DB運用</li>
-          <li><b>D&amp;D・PDF プラグインは研修未経験</b></li>
+          <li>だれが何を見られるかの設定</li>
+          <li>「今の行のデータ」と「今のユーザー」の取りちがえ</li>
+          <li>選択肢の出し方をまちがえやすい</li>
+          <li>高さの設定（伸びない・見えない）</li>
+          <li><b>カード操作・PDFは、まだやったことがない</b></li>
         </ul>
       </div>
     </div>
@@ -224,73 +243,76 @@
 
   <!-- リスクと条件 -->
   <section>
-    <div class="sechead"><span class="no">5</span><h2>成否を分ける条件</h2></div>
+    <div class="sechead"><span class="no">5</span><h2>成功のカギ（守らないと間に合わない）</h2></div>
     <div class="risk">
-      <h3>これを外すと 6/18 に届かない</h3>
-      <div class="r"><span class="num">01</span><div><b>6/4までにメンターが D&amp;D・PDF の POC（お手本）を用意。</b> 研修未経験の2機能が最大の変動要因。雛形があれば6/10〜の詰まりを回避。</div></div>
-      <div class="r"><span class="num">02</span><div><b>M1(5/31) と M3(6/9) を死守。</b> 基盤と入力/WFが遅れると後段が将棋倒し。Privacy Rules はレビュー②③でメンター確認を必須に。</div></div>
-      <div class="r"><span class="num">03</span><div><b>ほぼ毎日（週末含む）稼働が前提。</b> 6/9時点で入力/WF未完なら黄信号 → 要件は固定のため、descope ではなく <b>メンターがPlugin部を巻き取る／ペア作業</b>で吸収。</div></div>
+      <h3>この3つを外すと 6/18 に届きません</h3>
+      <div class="r"><span class="num">01</span><div><b>6/4までに、先生が「カード操作」と「PDF」の見本を先に作る。</b> 学生は初めてなので、見本があれば6/10からの作業で詰まらない。</div></div>
+      <div class="r"><span class="num">02</span><div><b>区切り1（5/31）と 区切り3（6/9）を必ず守る。</b> 土台と入力の仕組みが遅れると、後がぜんぶ後ろにずれる。見える範囲の設定は確認②③で先生がチェック。</div></div>
+      <div class="r"><span class="num">03</span><div><b>ほぼ毎日（土日も）作業する前提。</b> 6/9で入力の仕組みが終わっていなければ赤信号 → 作る内容は減らさず、むずかしい部分を先生が手伝う。</div></div>
     </div>
   </section>
 
-  <footer>渡辺謄写堂 業務管理システム v3 ／ Bubble構築プラン（インタラクティブ）｜ 詳細仕様は <b>bubble_handoff.html</b> 参照</footer>
+  <footer>渡辺謄写堂 業務管理システム v3 ／ つくる計画（さわって分かる版）｜ くわしい仕様は <b>bubble_handoff.html</b> を参照</footer>
 </div>
 
 <script>
 (function(){
-  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
 
-  // 1) スクロールで各セクションを表示
-  const io=new IntersectionObserver((es)=>es.forEach(e=>{
+  // 1) スクロールで各セクションを出す
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
     if(e.isIntersecting){ e.target.classList.add('in'); if(e.target.classList.contains('bars-host')) applyBars(); io.unobserve(e.target); }
-  }),{threshold:.15});
-  $$('section').forEach(s=>io.observe(s));
-  const gantt=$('#gantt'); if(gantt) new IntersectionObserver((es,o)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');o.unobserve(e.target);}}),{threshold:.2}).observe(gantt);
+  });},{threshold:.15});
+  $$('section').forEach(function(s){io.observe(s);});
+  var gantt=$('#gantt'); if(gantt){ new IntersectionObserver(function(es,o){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');o.unobserve(e.target);}});},{threshold:.2}).observe(gantt); }
 
-  // 2) 工数バー：シナリオ切替＋カウントアップ
-  let sc='intern';
-  function countUp(el,to){ const from=parseInt(el.textContent)||0,t0=performance.now(),d=600;
-    (function tick(t){ const k=Math.min(1,(t-t0)/d); el.textContent=Math.round(from+(to-from)*k); if(k<1)requestAnimationFrame(tick); })(performance.now()); }
+  // 2) 工数バー：切替＋数字カウントアップ＋理由（さわると情報が増える）
+  var sc='intern';
+  function countUp(el,to){ var from=parseInt(el.textContent)||0,t0=performance.now(),d=600;
+    (function tick(t){ var k=Math.min(1,(t-t0)/d); el.textContent=Math.round(from+(to-from)*k); if(k<1)requestAnimationFrame(tick); })(performance.now()); }
   function applyBars(){
-    let sum=0, c67=0;
-    $$('.bar').forEach(b=>{ const v=+b.dataset[sc]; b.querySelector('.fill').style.width=v+'%'; countUp(b.querySelector('.pct'),v); sum+=v; if(b.dataset.step==='6'||b.dataset.step==='7')c67+=v; });
+    $$('.bar').forEach(function(b){ var v=+b.getAttribute('data-'+sc); b.querySelector('.fill').style.width=v+'%'; countUp(b.querySelector('.pct'),v); });
     $('#insight').innerHTML = sc==='intern'
-      ? '⑥＋⑦＝<b>全体の53%</b>。学習込みでプラグイン機能(⑦)の比重が増す。レイアウト自体は軽い。'
-      : '経験者なら ⑥＋⑦＝<b>46%</b>。学生だと⑦が16→21%に膨らむのが差分（プラグイン未経験のため）。';
+      ? '⑥と⑦だけで<b>全体の半分（53%）</b>。「入力の仕組み」と「むずかしい機能」が時間を食います。見た目づくりは意外と軽い。'
+      : 'プロなら⑥＋⑦は<b>46%</b>。学生は「むずかしい機能」が初めてなので、16%→21%にふくらむのが差です。';
   }
-  // barsを内包するsectionにフラグ
-  const barsSection = $('.bars') && $('.bars').closest('section'); if(barsSection) barsSection.classList.add('bars-host');
-  // 既に表示済みなら即適用
+  var barsSection = $('.bars') ? $('.bars').closest('section') : null; if(barsSection) barsSection.classList.add('bars-host');
   if(barsSection && barsSection.classList.contains('in')) applyBars();
-  $$('.toggle button').forEach(btn=>btn.addEventListener('click',()=>{
-    $$('.toggle button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); sc=btn.dataset.sc; applyBars();
-  }));
+  $$('.toggle button').forEach(function(btn){ btn.addEventListener('click',function(){
+    $$('.toggle button').forEach(function(b){b.classList.remove('on');}); btn.classList.add('on'); sc=btn.getAttribute('data-sc'); applyBars();
+  });});
+  // バーに触れると理由が出る（＝静かなときより情報が増える）
+  $$('.bar').forEach(function(b){ var n=b.getAttribute('data-step');
+    b.addEventListener('mouseenter',function(){ var w=$('#barwhy'); w.classList.remove('idle'); w.textContent='▶ '+b.querySelector('.lab').textContent.trim()+'：'+b.getAttribute('data-why'); hl([n],true); });
+    b.addEventListener('mouseleave',function(){ hl([n],false); });
+  });
 
-  // 3) 工程 ⇄ バー ⇄ ガント の連動ハイライト
+  // 3) 作る順番 ⇄ バー ⇄ 予定表 の連動＋カードの説明（さわると説明が増える）
   function hl(steps,on){
-    steps.forEach(n=>{ $$('.step[data-step="'+n+'"]').forEach(e=>e.classList.toggle('hl',on)); $$('.bar[data-step="'+n+'"]').forEach(e=>e.classList.toggle('hl',on)); });
-    $$('.grow').forEach(g=>{ const gs=(g.dataset.steps||'').split(',').filter(Boolean); g.classList.toggle('hl', on && steps.some(n=>gs.includes(String(n)))); });
+    steps.forEach(function(n){ $$('.step[data-step="'+n+'"]').forEach(function(e){e.classList.toggle('hl',on);}); $$('.bar[data-step="'+n+'"]').forEach(function(e){e.classList.toggle('hl',on);}); });
+    $$('.grow').forEach(function(g){ var gs=(g.getAttribute('data-steps')||'').split(',').filter(Boolean); g.classList.toggle('hl', on && steps.some(function(n){return gs.indexOf(String(n))>=0;})); });
   }
-  $$('.step').forEach(s=>{ const n=s.dataset.step;
-    s.addEventListener('mouseenter',()=>hl([n],true)); s.addEventListener('mouseleave',()=>hl([n],false)); });
-  $$('.bar').forEach(b=>{ const n=b.dataset.step;
-    b.addEventListener('mouseenter',()=>hl([n],true)); b.addEventListener('mouseleave',()=>hl([n],false)); });
+  $$('.step').forEach(function(s){ var n=s.getAttribute('data-step');
+    s.addEventListener('mouseenter',function(){ var ex=$('#flowex'); ex.classList.remove('idle'); ex.innerHTML='<span class="ttl">▶ '+s.querySelector('.t').textContent+'（'+s.querySelector('.p').textContent+'）</span><br>'+s.getAttribute('data-desc'); hl([n],true); });
+    s.addEventListener('mouseleave',function(){ hl([n],false); });
+  });
 
-  // 4) ガント：ホバー連動＋クリックで詳細
-  const PH={
-    '0':'<b>0 準備（5/28）</b>：仕様書読込・Bubbleアプリ作成・プラグイン選定。<b>メンターにD&D/PDFのPOC（お手本）を依頼</b>。',
-    '1':'<b>1 基盤（5/29–5/31）</b>：Option Set → Data Type/リレーション → シードCSV投入 → Reusable（ヘッダー/ステータスバッジ=color/カード）。 ▸ <b>M1 基盤完了 5/31</b>',
-    '2':'<b>2 表示（6/1–6/3）</b>：受注一覧・ダッシュボード → 顧客一覧/詳細・受注確認(読取) → 見積書(表示)・カンバンの列/カード表示。 ▸ <b>M2 6/3 レビュー①</b>',
-    '3':'<b>3 入力/WF（6/4–6/9・最重）</b>：フォーム・明細の動的追加削除 → 税抜⇄税込相互計算・合計/消費税/値引按分 → 採番・保存WF・ステータス連動 → 見積編集(値引名目) → 顧客メモ未保存警告。 ▸ <b>M3 6/9 レビュー②</b>',
-    '4':'<b>4 複雑機能＋権限（6/10–6/13）</b>：工場カンバンD&D → 見積PDF出力 → Privacy Rules/権限別表示 → レスポンシブ。 ▸ <b>M4 6/13 レビュー③</b>',
-    '5':'<b>5 QA・修正（6/14–6/16）</b>：シードデータでモックと1:1突合(計算/遷移/条件/採番) → 修正 → 最終レビュー。 ▸ <b>M5 6/16</b>',
-    '6':'<b>予備/納品</b>：6/17 予備バッファ（理想は無作業）／ <b>6/18 最終納品</b>（共有URL・簡易説明）。'
+  // 4) 予定表：クリックで中身が出る＋ホバー連動
+  var PH={
+    '0':'<b>0 じゅんび（5/28）</b>：何を作るか確認し、Bubbleを用意。むずかしい機能の“見本”を先生に先に作ってもらうよう頼みます。',
+    '1':'<b>1 土台づくり（5/29〜5/31）</b>：選択肢のリスト → 情報の箱 → 見本データ読込 → 共通パーツ。 ▶ <b>区切り1：土台かんせい 5/31</b>',
+    '2':'<b>2 見る画面（6/1〜6/3）</b>：注文一覧・ダッシュボード → お客さん・注文の確認画面（見るだけ）→ 見積・工場ボードの見た目。 ▶ <b>区切り2：6/3 確認①</b>',
+    '3':'<b>3 入力の仕組み（6/4〜6/9・いちばん大変）</b>：入力フォーム・明細の追加削除・税抜き⇄税込みの自動計算・番号付け・保存・見積の編集・保存し忘れの警告。 ▶ <b>区切り3：6/9 確認②</b>',
+    '4':'<b>4 むずかしい機能＋見える範囲（6/10〜6/13）</b>：カードを動かす工場ボード・見積PDF・見える範囲の設定・スマホ対応。 ▶ <b>区切り4：6/13 確認③</b>',
+    '5':'<b>5 最終チェック（6/14〜6/16）</b>：見本どおりか1つずつ確認して直す。 ▶ <b>区切り5：6/16</b>',
+    '6':'<b>予備／かんせい</b>：6/17は予備の余白（できれば触らない）／ <b>6/18 完成品を渡す</b>。'
   };
-  $$('.grow').forEach(g=>{
-    const steps=(g.dataset.steps||'').split(',').filter(Boolean);
-    g.addEventListener('mouseenter',()=>{ g.classList.add('hl'); if(steps.length)hl(steps,true); });
-    g.addEventListener('mouseleave',()=>{ g.classList.remove('hl'); if(steps.length)hl(steps,false); });
-    g.addEventListener('click',()=>{ $('#gdetail').innerHTML=PH[g.dataset.ph]||''; });
+  $$('.grow').forEach(function(g){
+    var steps=(g.getAttribute('data-steps')||'').split(',').filter(Boolean);
+    g.addEventListener('mouseenter',function(){ g.classList.add('hl'); if(steps.length)hl(steps,true); });
+    g.addEventListener('mouseleave',function(){ g.classList.remove('hl'); if(steps.length)hl(steps,false); });
+    g.addEventListener('click',function(){ var d=$('#gdetail'); d.classList.remove('idle'); d.innerHTML=PH[g.getAttribute('data-ph')]||''; });
   });
 })();
 </script>
