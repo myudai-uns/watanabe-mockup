@@ -96,6 +96,11 @@ tailwind.config = {
   #bbl-tip .chips { margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
   #bbl-tip .chip { font-size: 10px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
   #bbl-tip .arr { color: #6E7689; font-size: 11px; }
+  #bbl-tip .sty { margin-top: 6px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 5px; }
+  #bbl-tip .styname { font-size: 12px; font-weight: 900; color: #FFD9B8; }
+  #bbl-tip .stymeta { font-size: 10px; color: #AEB6C8; margin-top: 2px; display: flex; align-items: center; gap: 5px; font-family: monospace; }
+  #bbl-tip .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid rgba(255,255,255,.35); flex-shrink: 0; }
+  #bbl-tip .cond { font-size: 9.5px; color: #f6c177; margin-top: 3px; line-height: 1.4; }
   #bbl-panel .cleg { font-size: 9.5px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
   #bbl-panel { position: fixed; top: 86px; right: 14px; z-index: 9998; width: 250px;
     background: rgba(12,14,22,.96); color: #EDF0F7; border: 1px solid rgba(255,255,255,.14);
@@ -182,6 +187,46 @@ tailwind.config = {
   var curC = null, curCOutline = '';
   var SKIP = '__skip__';
   var CCOL = { 'Group':'#64748b', 'Repeating Group':'#E87825', 'Table':'#F59E0B', 'Popup':'#A855F7', 'FloatingGroup':'#06B6D4', 'GroupFocus':'#EC4899' };
+
+  // ---- Text Style catalog（共通の見た目＝共通のStyle名）----
+  // full signature(size/weight/color[/mono]) → 共有スタイル名
+  var STYLE_FULL = {
+    '14/400/#707070'      : 'Caption (muted SM)',
+    '12/700/#707070'      : 'Label (muted XS·Bold)',
+    '14/700/#1A1A1A'      : 'Bold SM (見出し/表頭)',
+    '24/900/#1A1A1A'      : 'Heading XL',
+    '14/400/#1A1A1A'      : 'Body SM',
+    '12/400/#707070'      : 'Caption XS',
+    '16/700/#FFFFFF'      : 'Section Title (on dark)',
+    '12/400/#1A1A1A/mono' : 'Mono XS (No.)',
+    '12/400/#1A1A1A'      : 'Body XS'
+  };
+  // core signature(size/weight[/mono]) → 色違いを束ねる共有スタイル名（色は条件付き扱い）
+  var STYLE_CORE = { '24/900':'Heading XL' };
+
+  function rgbToHex(c){
+    var m = (c||'').match(/\d+/g); if (!m) return c;
+    return '#' + m.slice(0,3).map(function(n){ return (+n).toString(16).padStart(2,'0'); }).join('').toUpperCase();
+  }
+  function textStyle(el){
+    var cs = getComputedStyle(el);
+    var size = Math.round(parseFloat(cs.fontSize));
+    var weight = cs.fontWeight;
+    var color = rgbToHex(cs.color);
+    var mono = /mono/i.test(cs.fontFamily);
+    var italic = cs.fontStyle === 'italic';
+    var underline = /underline/.test(cs.textDecorationLine || '');
+    var sig  = size + '/' + weight + '/' + color + (mono?'/mono':'') + (italic?'/i':'') + (underline?'/u':'');
+    var core = size + '/' + weight + (mono?'/mono':'');
+    var isStatus = !!(el.className && (' '+el.className+' ').indexOf(' st ') >= 0) ||
+                   (el.className && /\bst-/.test(el.className));
+    var name, cond = false;
+    if (isStatus){ name = 'Status badge'; cond = true; }
+    else if (STYLE_FULL[sig]) { name = STYLE_FULL[sig]; }
+    else if (STYLE_CORE[core]) { name = STYLE_CORE[core]; cond = true; }
+    else { name = 'Text ' + size + '·' + weight + (mono?' mono':'') + (italic?' italic':''); }
+    return { name:name, size:size, weight:weight, color:color, mono:mono, cond:cond };
+  }
 
   toggle.addEventListener('change', function(){ enabled = toggle.checked; if(!enabled) clearHL(); });
 
@@ -305,9 +350,18 @@ tailwind.config = {
     } else {
       chips = '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
     }
+    var styleHtml = '';
+    if (r.type === 'Text'){
+      var ts = textStyle(t);
+      styleHtml = '<div class="sty"><span class="styname">▦ Style: '+ts.name+'</span>'
+                + '<div class="stymeta"><span class="sw" style="background:'+ts.color+'"></span>'+ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' / mono':'')+'</div>'
+                + (ts.cond ? '<div class="cond">※色は条件付き（状態/アラート連動）。共有Styleは1つ＋条件で色を変更</div>' : '')
+                + '</div>';
+    }
     tip.innerHTML = '<div class="cat" style="color:'+COL[r.cat]+'">'+CATJP[r.cat]+'</div>'
                   + '<div class="typ">'+r.type+'</div>'
                   + '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>'
+                  + styleHtml
                   + '<div class="ctn">所属コンテナ（外→内・'+ci.types.length+'層）</div>'
                   + '<div class="chips">'+chips+'</div>';
     tip.style.display = 'block';
