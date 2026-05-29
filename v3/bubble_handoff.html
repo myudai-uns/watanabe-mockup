@@ -200,8 +200,8 @@ tailwind.config = { theme: { extend: {
       <tr><td>Slider Input</td><td>—</td><td>未使用</td></tr>
       <tr><td>Group</td><td>Card / Title Bar / Section</td><td><code>bg-white rounded shadow-sm p-4</code> ／ タイトル帯 <code>bg-ink-900(or色) text-white rounded-t</code> ／ レイアウト用は無地</td></tr>
       <tr><td>Repeating Group</td><td>RG – List / RG – Row</td><td>行 <code>border-t #E5E7EB hover:bg-brand/5</code>・50件/頁（受注一覧・履歴・カンバン・顧客一覧）。ページネーション帯も <code>border-t #E5E7EB</code></td></tr>
-      <tr><td>Popup</td><td>Popup – Modal</td><td><code>bg-white rounded shadow-lg</code>（新規/編集 顧客モーダル）</td></tr>
-      <tr><td>Floating Group</td><td>FloatingGroup – Card</td><td>右サイド見積サマリー等 ／ トースト容器</td></tr>
+      <tr><td>Popup</td><td>Popup – Modal</td><td>panel：<code>bg-white rounded-lg(8) shadow-lg</code> ＋ backdrop：<code>fixed inset-0 bg-black/50</code>（新規/編集 顧客モーダル。角丸は<b>8px=rounded-lg</b>・実測一致）</td></tr>
+      <tr><td>Floating Group</td><td>FloatingGroup – Card</td><td><b>任意（sticky追従が必要な場合のみ）</b>。※モックの見積サマリーは<b>静的な Group – Card</b>（FloatingではないがGroupで再現可）。確実な用途は <code>FG_Toast</code>（トースト容器・右下固定）</td></tr>
       <tr><td>Group Focus</td><td>—</td><td>未使用（将来のポップオーバー/メニュー用）</td></tr>
       <tr><td>Alert</td><td>Toast – Default / OK / Error</td><td>bg <code>#1A1A1A</code> ／ <code>#3F9D5E</code> ／ <code>#EF4444</code>・white・rounded・右下・約2秒で自動消去</td></tr>
       <tr><td>Link</td><td>Link – Nav / Link – Inline</td><td>ナビ（white・active=<code>bg-brand</code>）／ 文中（<code>text-brand underline</code>）</td></tr>
