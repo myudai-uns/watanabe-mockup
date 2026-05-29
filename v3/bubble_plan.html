@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 × Bubble 構築プラン（インフォグラフィック）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{ --ink:#16181D; --ink2:#23262E; --gray:#E7E9ED; --orange:#E87825; --orange-d:#B85D16; --green:#3F9D5E; --green-d:#2A7A44; --red:#DC2626; --blue:#2563EB; --muted:#8A8F98; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Noto Sans JP',sans-serif; background:var(--gray); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 18px 40px; }
+  .hero{ background:var(--ink); color:#fff; padding:34px 0 28px; }
+  .hero .wrap{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; }
+  .eyebrow{ font-size:12px; letter-spacing:.18em; color:var(--orange); font-weight:700; }
+  h1{ font-size:32px; font-weight:900; line-height:1.15; margin-top:4px; }
+  h1 small{ display:block; font-size:14px; font-weight:500; color:#B9BdC6; margin-top:6px; }
+  .delivery{ text-align:right; }
+  .delivery .lbl{ font-size:12px; color:#B9BdC6; font-weight:700; }
+  .delivery .date{ font-size:40px; font-weight:900; color:#fff; line-height:1; }
+  .delivery .date b{ color:var(--orange); }
+  .delivery .sub{ font-size:12px; color:var(--green); font-weight:700; margin-top:4px; }
+  section{ margin-top:30px; }
+  .sechead{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .sechead .no{ background:var(--ink); color:#fff; font-weight:900; font-size:13px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
+  .sechead h2{ font-size:19px; font-weight:900; }
+  .sechead .tag{ margin-left:auto; font-size:11px; font-weight:700; color:var(--muted); }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .stat{ background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.06); border-left:5px solid var(--orange); }
+  .stat .k{ font-size:11px; color:var(--muted); font-weight:700; }
+  .stat .v{ font-size:22px; font-weight:900; margin-top:2px; }
+  .stat.g{ border-color:var(--green); } .stat.b{ border-color:var(--blue); }
+
+  /* flow */
+  .flow{ display:flex; flex-wrap:wrap; gap:8px; }
+  .step{ position:relative; background:var(--ink); color:#fff; border-radius:10px; padding:10px 12px; flex:1 1 calc(20% - 8px); min-width:150px; }
+  .step .n{ font-size:11px; font-weight:900; color:var(--orange); }
+  .step .t{ font-size:13px; font-weight:700; margin-top:2px; line-height:1.25; }
+  .step .p{ position:absolute; top:8px; right:10px; font-size:12px; font-weight:900; color:var(--green); }
+  .step.hot{ background:var(--orange); } .step.hot .n{ color:#fff; } .step.hot .p{ color:#16181D; }
+  .step.warn{ background:#7a3b12; }
+
+  /* bars */
+  .bars{ background:#fff; border-radius:12px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .bar{ display:flex; align-items:center; gap:10px; margin:7px 0; }
+  .bar .lab{ width:200px; font-size:12.5px; font-weight:700; text-align:right; flex-shrink:0; }
+  .bar .track{ flex:1; background:var(--gray); border-radius:6px; height:20px; overflow:hidden; }
+  .bar .fill{ height:100%; border-radius:6px; background:var(--orange); display:flex; align-items:center; }
+  .bar .pct{ width:40px; font-size:13px; font-weight:900; text-align:right; }
+  .bar.peak .fill{ background:var(--orange); } .bar.mid .fill{ background:var(--orange-d); } .bar.low .fill{ background:#C9A07B; }
+  .insight{ margin-top:12px; background:#FFF1E6; border-left:5px solid var(--orange); border-radius:8px; padding:10px 14px; font-size:13px; font-weight:700; }
+
+  /* gantt */
+  .gantt{ background:#fff; border-radius:12px; padding:18px 16px 14px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .grow{ display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .grow .gl{ width:118px; font-size:11.5px; font-weight:700; text-align:right; flex-shrink:0; color:#3a3a3a; }
+  .gbar{ flex:1; display:flex; height:22px; border-radius:5px; overflow:hidden; background:var(--gray); }
+  .seg{ height:100%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff; white-space:nowrap; }
+  .axis{ display:flex; margin-left:126px; margin-top:6px; font-size:10px; color:var(--muted); font-weight:700; }
+  .axis span{ flex:1; text-align:left; }
+  .mile{ display:flex; margin-left:126px; margin-top:8px; position:relative; height:46px; }
+  .mpin{ position:absolute; transform:translateX(-50%); text-align:center; }
+  .mpin .dot{ width:12px; height:12px; border-radius:50%; background:var(--green); margin:0 auto; border:2px solid #fff; box-shadow:0 0 0 1px var(--green); }
+  .mpin .mt{ font-size:9.5px; font-weight:900; margin-top:3px; color:var(--green-d); line-height:1.15; }
+  .mpin.fin .dot{ background:var(--red); box-shadow:0 0 0 1px var(--red); } .mpin.fin .mt{ color:var(--red); }
+
+  /* skill */
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .panel{ background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .panel h3{ font-size:14px; font-weight:900; margin-bottom:8px; }
+  .gauge{ height:12px; background:var(--gray); border-radius:6px; overflow:hidden; margin:6px 0 4px; }
+  .gauge i{ display:block; height:100%; width:58%; background:linear-gradient(90deg,var(--green),var(--orange)); }
+  .lvl{ font-size:12px; font-weight:900; }
+  ul.chk{ list-style:none; font-size:12.5px; }
+  ul.chk li{ padding:3px 0 3px 20px; position:relative; }
+  ul.chk li:before{ content:'✓'; position:absolute; left:0; color:var(--green-d); font-weight:900; }
+  ul.warn li:before{ content:'▲'; color:var(--orange-d); font-size:10px; top:4px; }
+
+  .risk{ background:var(--ink); color:#fff; border-radius:12px; padding:18px; }
+  .risk h3{ font-size:14px; font-weight:900; color:var(--orange); margin-bottom:10px; }
+  .risk .r{ display:flex; gap:10px; padding:7px 0; border-top:1px solid #2c2f37; font-size:13px; }
+  .risk .r:first-of-type{ border-top:none; }
+  .risk .r b{ color:#fff; } .risk .r .num{ color:var(--orange); font-weight:900; flex-shrink:0; }
+  footer{ text-align:center; font-size:11px; color:var(--muted); padding:26px 0 0; }
+  @media(max-width:680px){ .grid3,.two{ grid-template-columns:1fr; } .step{ flex-basis:calc(50% - 8px); } .bar .lab{ width:120px; } .delivery{ text-align:left; } }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">WATANABE TOSHADO × BUBBLE</div>
+      <h1>業務管理システム 構築プラン<small>HTMLモック v3 を正とした Bubble 実装 ／ 担当1名（Bubble歴 約4か月）</small></h1>
+    </div>
+    <div class="delivery">
+      <div class="lbl">最終納品</div>
+      <div class="date">6/<b>18</b></div>
+      <div class="sub">2026 ・ 着手 5/28 から約3週間</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- 概要 -->
+  <section>
+    <div class="grid3">
+      <div class="stat"><div class="k">対象</div><div class="v">案件管理 一式</div></div>
+      <div class="stat g"><div class="k">体制</div><div class="v">1名 ＋ メンター伴走</div></div>
+      <div class="stat b"><div class="k">期間</div><div class="v">5/28 → 6/18</div></div>
+    </div>
+  </section>
+
+  <!-- 構築フロー -->
+  <section>
+    <div class="sechead"><span class="no">1</span><h2>構築フロー</h2><span class="tag">データ → 部品 → 表示 → 入力 → 複雑機能</span></div>
+    <div class="flow">
+      <div class="step"><div class="n">STEP 01</div><div class="t">Option Set</div><div class="p">3%</div></div>
+      <div class="step"><div class="n">STEP 02</div><div class="t">Data Type</div><div class="p">5%</div></div>
+      <div class="step"><div class="n">STEP 03</div><div class="t">シードCSV投入</div><div class="p">2%</div></div>
+      <div class="step"><div class="n">STEP 04</div><div class="t">Reusable部品</div><div class="p">7%</div></div>
+      <div class="step"><div class="n">STEP 05</div><div class="t">表示画面（RG）</div><div class="p">15%</div></div>
+      <div class="step hot"><div class="n">STEP 06</div><div class="t">入力フォーム＋WF</div><div class="p">32%</div></div>
+      <div class="step warn"><div class="n">STEP 07</div><div class="t">複雑機能 D&amp;D/PDF</div><div class="p">21%</div></div>
+      <div class="step"><div class="n">STEP 08</div><div class="t">権限・レスポンシブ</div><div class="p">9%</div></div>
+      <div class="step"><div class="n">STEP 09</div><div class="t">QA・検証</div><div class="p">6%</div></div>
+    </div>
+  </section>
+
+  <!-- 工数比率 -->
+  <section>
+    <div class="sechead"><span class="no">2</span><h2>工数比率（学生1名・学習込み）</h2><span class="tag">合計100</span></div>
+    <div class="bars">
+      <div class="bar peak"><div class="lab">⑥ 入力フォーム＋workflow</div><div class="track"><div class="fill" style="width:32%"></div></div><div class="pct">32</div></div>
+      <div class="bar peak"><div class="lab">⑦ 複雑機能 (D&amp;D/PDF/未保存)</div><div class="track"><div class="fill" style="width:21%"></div></div><div class="pct">21</div></div>
+      <div class="bar mid"><div class="lab">⑤ 表示画面（一覧・詳細）</div><div class="track"><div class="fill" style="width:15%"></div></div><div class="pct">15</div></div>
+      <div class="bar mid"><div class="lab">⑧ 権限・レスポンシブ</div><div class="track"><div class="fill" style="width:9%"></div></div><div class="pct">9</div></div>
+      <div class="bar low"><div class="lab">④ Reusable部品</div><div class="track"><div class="fill" style="width:7%"></div></div><div class="pct">7</div></div>
+      <div class="bar low"><div class="lab">⑨ QA・検証</div><div class="track"><div class="fill" style="width:6%"></div></div><div class="pct">6</div></div>
+      <div class="bar low"><div class="lab">② Data Type</div><div class="track"><div class="fill" style="width:5%"></div></div><div class="pct">5</div></div>
+      <div class="bar low"><div class="lab">① Option Set</div><div class="track"><div class="fill" style="width:3%"></div></div><div class="pct">3</div></div>
+      <div class="bar low"><div class="lab">③ シードCSV投入</div><div class="track"><div class="fill" style="width:2%"></div></div><div class="pct">2</div></div>
+      <div class="insight">⑥＋⑦＝<b>全体の53%</b>。入力/workflow と プラグイン機能が工数を決める。レイアウト（タイトル＋コンテンツ）自体は軽い。</div>
+    </div>
+  </section>
+
+  <!-- スケジュール（ガント） -->
+  <section>
+    <div class="sechead"><span class="no">3</span><h2>スケジュール</h2><span class="tag">5/28 〜 6/18（22日）</span></div>
+    <div class="gantt">
+      <div class="grow"><div class="gl">0 準備</div><div class="gbar"><div class="seg" style="width:100%;background:#5a6068">5/28</div></div></div>
+      <div class="grow"><div class="gl">1 基盤</div><div class="gbar"><div class="seg" style="width:100%;background:var(--blue)">Option/Data/CSV/Reusable</div></div></div>
+      <div class="grow"><div class="gl">2 表示</div><div class="gbar"><div class="seg" style="width:100%;background:#3b7fd1">一覧・詳細・カンバン表示</div></div></div>
+      <div class="grow"><div class="gl">3 入力/WF</div><div class="gbar"><div class="seg" style="width:100%;background:var(--orange)">フォーム・明細・税計算・採番・保存</div></div></div>
+      <div class="grow"><div class="gl">4 複雑+権限</div><div class="gbar"><div class="seg" style="width:100%;background:var(--orange-d)">D&amp;D・PDF・Privacy・レスポンシブ</div></div></div>
+      <div class="grow"><div class="gl">5 QA・修正</div><div class="gbar"><div class="seg" style="width:100%;background:var(--green)">突合・修正・最終レビュー</div></div></div>
+      <div class="grow"><div class="gl">予備/納品</div><div class="gbar"><div class="seg" style="width:50%;background:#9aa0a8">バッファ</div><div class="seg" style="width:50%;background:var(--red)">納品</div></div></div>
+      <div class="axis"><span>5/28</span><span>6/1</span><span>6/4</span><span>6/8</span><span>6/11</span><span>6/14</span><span>6/18</span></div>
+      <div class="mile">
+        <div class="mpin" style="left:18%"><div class="dot"></div><div class="mt">M1 基盤<br>5/31</div></div>
+        <div class="mpin" style="left:32%"><div class="dot"></div><div class="mt">M2 表示<br>6/3 ﾚﾋﾞｭｰ①</div></div>
+        <div class="mpin" style="left:59%"><div class="dot"></div><div class="mt">M3 登録/計算<br>6/9 ﾚﾋﾞｭｰ②</div></div>
+        <div class="mpin" style="left:77%"><div class="dot"></div><div class="mt">M4 全機能<br>6/13 ﾚﾋﾞｭｰ③</div></div>
+        <div class="mpin" style="left:91%"><div class="dot"></div><div class="mt">M5 QA<br>6/16</div></div>
+        <div class="mpin fin" style="left:100%"><div class="dot"></div><div class="mt">納品<br>6/18</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 担当者プロフィール -->
+  <section>
+    <div class="sechead"><span class="no">4</span><h2>担当者の習熟度</h2><span class="tag">Bubble開発ガレージ研修・約4か月</span></div>
+    <div class="two">
+      <div class="panel">
+        <h3>レベル：初級の上 〜 中級の入口</h3>
+        <div class="gauge"><i></i></div>
+        <div class="lvl" style="color:var(--orange-d)">研修で案件管理アプリを1本完成（＝渡辺謄写堂とほぼ同型）</div>
+        <ul class="chk" style="margin-top:8px">
+          <li>Data Type・RepeatingGroup・基本ワークフロー</li>
+          <li>ログイン/権限・フォーム・Option Set</li>
+          <li>自己解決力あり（詰まりを翌朝には自力解消）</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3 style="color:var(--orange-d)">支援が要る弱点</h3>
+        <ul class="chk warn" style="margin-top:2px">
+          <li>Privacy Rules（OnlyWhen）</li>
+          <li>Current cell's 〜 vs Current User のデータ文脈</li>
+          <li>動的(Option Set)と static 値の取り違え</li>
+          <li>レイアウトの Fixed / Fit、プラン/DB運用</li>
+          <li><b>D&amp;D・PDF プラグインは研修未経験</b></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- リスクと条件 -->
+  <section>
+    <div class="sechead"><span class="no">5</span><h2>成否を分ける条件</h2></div>
+    <div class="risk">
+      <h3>これを外すと 6/18 に届かない</h3>
+      <div class="r"><span class="num">01</span><div><b>6/4までにメンターが D&amp;D・PDF の POC（お手本）を用意。</b> 研修未経験の2機能が最大の変動要因。雛形があれば6/10〜の詰まりを回避。</div></div>
+      <div class="r"><span class="num">02</span><div><b>M1(5/31) と M3(6/9) を死守。</b> 基盤と入力/WFが遅れると後段が将棋倒し。Privacy Rules はレビュー②③でメンター確認を必須に。</div></div>
+      <div class="r"><span class="num">03</span><div><b>ほぼ毎日（週末含む）稼働が前提。</b> 6/9時点で入力/WF未完なら黄信号 → 要件は固定のため、descope ではなく <b>メンターがPlugin部を巻き取る／ペア作業</b>で吸収。</div></div>
+    </div>
+  </section>
+
+  <footer>渡辺謄写堂 業務管理システム v3 ／ Bubble構築プラン インフォグラフィック ｜ 詳細仕様は <b>bubble_handoff.html</b> 参照</footer>
+</div>
+</body>
+</html>
