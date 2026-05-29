@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>渡辺謄写堂 v3-copy ｜ Bubbleエレメント型ビューア（ダッシュボード）</title>
+<title>渡辺謄写堂 v3-copy ｜ Bubble Element Inspector（ダッシュボード）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -26,30 +26,19 @@ tailwind.config = {
   body { font-family: 'Noto Sans JP', sans-serif; background: #F3F4F6; }
   .nav-btn.active, .side-link.active { background: #E87825 !important; color: white !important; font-weight: 700; }
   .scroll-pad { padding-bottom: 40px; }
-  /* v2.6: 受注確認モード（read-only表示） */
   body.view-mode input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
   body.view-mode input[type="date"]::-webkit-inner-spin-button,
   body.view-mode input[type="number"]::-webkit-inner-spin-button,
   body.view-mode input[type="number"]::-webkit-outer-spin-button { display: none !important; -webkit-appearance: none; }
   body.view-mode input, body.view-mode select, body.view-mode textarea {
-    pointer-events: none !important;
-    background-image: none !important;
-    background-color: transparent !important;
+    pointer-events: none !important; background-image: none !important; background-color: transparent !important;
   }
-  body.view-mode select {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    padding-right: 0.5rem !important;
-  }
+  body.view-mode select { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; padding-right: 0.5rem !important; }
   body.view-mode input[type="file"] { display: none; }
   body.view-mode .edit-only { display: none !important; }
   body.view-mode button:not(.view-allow) { pointer-events: none; opacity: 0.5; }
-  body.view-mode .view-allow,
-  body.view-mode .view-allow * { pointer-events: auto !important; opacity: 1 !important; }
-  body.view-mode .view-allow input,
-  body.view-mode .view-allow select,
-  body.view-mode .view-allow textarea { background-color: white !important; }
+  body.view-mode .view-allow, body.view-mode .view-allow * { pointer-events: auto !important; opacity: 1 !important; }
+  body.view-mode .view-allow input, body.view-mode .view-allow select, body.view-mode .view-allow textarea { background-color: white !important; }
   [draggable=true] { cursor: grab; }
   [draggable=true]:active { cursor: grabbing; }
   .drag-over { background: rgba(232,120,37,0.2) !important; outline: 2px dashed #E87825; }
@@ -69,7 +58,6 @@ tailwind.config = {
   .st-納品済み { color: #6B7280; }
   .st-経過 { color: #7C3AED; }
 
-  /* Toast */
   #toast { position: fixed; bottom: 60px; right: 20px; z-index: 100; }
   .toast-item { background: #1A1A1A; color: white; padding: 10px 16px; border-radius: 6px; margin-top: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.2s; }
   .toast-item.show { opacity: 1; transform: translateY(0); }
@@ -84,51 +72,45 @@ tailwind.config = {
     .print-page { page-break-after: always; }
   }
 
-  /* ===== Bubble element-type viewer (v3-copy / dashboard only) ===== */
-  #bbl-tip { position: fixed; z-index: 9999; pointer-events: none; display: none;
-    font-family: 'Noto Sans JP', sans-serif; font-size: 12px; line-height: 1.4;
-    background: #0c0e16; color: #fff; border-radius: 8px; padding: 8px 11px;
-    box-shadow: 0 14px 40px -12px rgba(0,0,0,.7); max-width: 280px; border: 1px solid rgba(255,255,255,.15); }
-  #bbl-tip .cat { font-size: 10px; font-weight: 700; letter-spacing: .05em; opacity: .9; }
-  #bbl-tip .typ { font-size: 15px; font-weight: 900; margin-top: 1px; }
-  #bbl-tip .tag { font-size: 10px; opacity: .6; margin-top: 2px; font-family: monospace; }
-  #bbl-tip .ctn { font-size: 10px; color: #AEB6C8; margin-top: 6px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 5px; }
-  #bbl-tip .chips { margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-  #bbl-tip .chip { font-size: 10px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
-  #bbl-tip .arr { color: #6E7689; font-size: 11px; }
-  #bbl-tip .sty { margin-top: 6px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 5px; }
-  #bbl-tip .styname { font-size: 12px; font-weight: 900; color: #FFD9B8; }
-  #bbl-tip .stymeta { font-size: 10px; color: #AEB6C8; margin-top: 2px; display: flex; align-items: center; gap: 5px; font-family: monospace; }
-  #bbl-tip .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; border: 1px solid rgba(255,255,255,.35); flex-shrink: 0; }
-  #bbl-tip .cond { font-size: 9.5px; color: #f6c177; margin-top: 3px; line-height: 1.4; }
-  #bbl-panel .cleg { font-size: 9.5px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
-  /* docked detail panel (left) */
-  #bbl-detail { position: fixed; left: 14px; top: 86px; width: 290px; z-index: 9997; pointer-events: none;
-    background: rgba(12,14,22,.96); color: #EDF0F7; border: 1px solid rgba(255,255,255,.14); border-radius: 14px;
-    padding: 12px 13px; font-size: 11px; box-shadow: 0 18px 50px -16px rgba(0,0,0,.7); backdrop-filter: blur(8px);
-    display: none; max-height: calc(100vh - 100px); overflow: auto; }
-  #bbl-detail.act { display: block; }
-  #bbl-detail h5 { font-size: 11px; font-weight: 900; color: #FFD9B8; margin: 9px 0 3px; padding-top: 7px;
-    border-top: 1px solid rgba(255,255,255,.1); }
-  #bbl-detail h5:first-child { border-top: none; padding-top: 0; margin-top: 0; }
-  #bbl-detail .r { display: flex; justify-content: space-between; gap: 8px; padding: 1px 0; }
-  #bbl-detail .r .k { color: #8b93a6; flex-shrink: 0; }
-  #bbl-detail .r .v { color: #EDF0F7; text-align: right; font-family: monospace; font-size: 10.5px; word-break: break-all; }
-  #bbl-detail .r .v.dim { color: #5f6779; }
-  #bbl-panel { position: fixed; top: 86px; right: 14px; z-index: 9998; width: 250px;
-    background: rgba(12,14,22,.96); color: #EDF0F7; border: 1px solid rgba(255,255,255,.14);
-    border-radius: 14px; padding: 13px 14px; font-size: 12px; box-shadow: 0 18px 50px -16px rgba(0,0,0,.7);
-    backdrop-filter: blur(8px); }
-  #bbl-panel h4 { font-size: 12.5px; font-weight: 900; margin-bottom: 2px; }
-  #bbl-panel .sub { font-size: 10.5px; color: #AEB6C8; margin-bottom: 9px; }
-  #bbl-panel .row { display: flex; align-items: center; gap: 7px; margin: 4px 0; }
-  #bbl-panel .row b { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
-  #bbl-panel .toggle { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; cursor: pointer;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 9px; padding: 7px 10px; font-weight: 700; }
-  #bbl-panel .toggle input { width: 15px; height: 15px; accent-color: #E87825; }
-  #bbl-panel .note { font-size: 10px; color: #6E7689; margin-top: 8px; line-height: 1.5; }
-  #bbl-panel .off { font-size: 10.5px; color: #f6c177; margin-top: 6px; display: none; }
-  body:not(.bbl-on-dash) #bbl-panel .off { display: block; }
+  /* ===== Bubble Element Inspector (v3-copy) — 右ドックの独立ウィンドウ ===== */
+  body.bbl-reserve { padding-right: 372px; }
+  #bbl-win { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; z-index: 9998; display: none; flex-direction: column;
+    background: linear-gradient(180deg,#0c0e16,#0a0b10); color: #EDF0F7; border-left: 1px solid rgba(255,255,255,.14);
+    box-shadow: -18px 0 50px -24px rgba(0,0,0,.7); font-family: 'Noto Sans JP', sans-serif; font-size: 11px; }
+  #bbl-win.act { display: flex; }
+  #bbl-win .winbar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
+  #bbl-win .winbar .ttl { font-weight: 900; font-size: 12.5px; }
+  #bbl-win .winbar .sp { margin-left: auto; }
+  #bbl-win .winbar .tg { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 10.5px; cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 4px 9px; }
+  #bbl-win .winbar .tg input { width: 13px; height: 13px; accent-color: #E87825; }
+  #bbl-win .body { padding: 12px 14px; overflow-y: auto; flex: 1; }
+  #bbl-win .legend { display: flex; flex-wrap: wrap; gap: 5px 9px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  #bbl-win .legend .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: #AEB6C8; }
+  #bbl-win .legend .lg b { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  #bbl-win .cleg { font-size: 9px; font-weight: 700; color: #0c0e16; border-radius: 4px; padding: 1px 5px; }
+  #bbl-win .empty { color: #6E7689; padding: 22px 6px; text-align: center; line-height: 1.7; }
+  #bbl-win .hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #bbl-win .hdr .cat { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #0c0e16; }
+  #bbl-win .hdr .typ { font-size: 17px; font-weight: 900; }
+  #bbl-win .tag { font-family: monospace; font-size: 10px; color: #6E7689; margin-bottom: 6px; }
+  #bbl-win h5 { font-size: 11px; font-weight: 900; color: #FFD9B8; margin: 11px 0 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.1); }
+  #bbl-win .sty { background: rgba(255,217,184,.07); border: 1px solid rgba(255,217,184,.2); border-radius: 9px; padding: 8px 10px; margin: 4px 0; }
+  #bbl-win .sty .nm { font-size: 13px; font-weight: 900; color: #FFD9B8; }
+  #bbl-win .sty .mt { font-family: monospace; font-size: 10px; color: #AEB6C8; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+  #bbl-win .sty .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,.35); }
+  #bbl-win .sty .cond { font-size: 9.5px; color: #f6c177; margin-top: 4px; line-height: 1.4; }
+  #bbl-win .chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  #bbl-win .chips .chip { font-size: 10px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
+  #bbl-win .chips .arr { color: #6E7689; }
+  #bbl-win .r { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dotted rgba(255,255,255,.06); }
+  #bbl-win .r .k { color: #8b93a6; flex-shrink: 0; }
+  #bbl-win .r .v { color: #EDF0F7; text-align: right; font-family: monospace; font-size: 10.5px; word-break: break-all; }
+  #bbl-win .r .v.dim { color: #5f6779; }
+  #bbl-win .note { font-size: 9.5px; color: #6E7689; margin-top: 12px; line-height: 1.6; }
+  #bbl-fab { position: fixed; top: 10px; right: 10px; z-index: 9999; display: none; cursor: pointer;
+    background: #0c0e16; color: #FFD9B8; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 7px 12px;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 900; box-shadow: 0 8px 24px -10px rgba(0,0,0,.6); }
+  #bbl-fab.act { display: block; }
 </style>
 </head>
 <body class="text-ink-900">
@@ -158,320 +140,250 @@ tailwind.config = {
   <!-- 動的に描画 -->
 </main>
 
-<!-- Toast container -->
 <div id="toast"></div>
-
-<!-- Modal container -->
 <div id="modal-root"></div>
 
-<!-- ===== Bubble element-type viewer UI ===== -->
-<div id="bbl-panel">
-  <h4>🫧 Bubbleエレメント型ビューア</h4>
-  <div class="sub">ダッシュボードの各要素にホバーすると、Bubbleでの要素タイプを表示します。</div>
-  <div class="row"><b style="background:#2563EB"></b>Visual element（表示系）</div>
-  <div class="row"><b style="background:#16A34A"></b>Input form（入力系）</div>
-  <div style="border-top:1px solid rgba(255,255,255,.12);margin:9px 0 7px"></div>
-  <div class="sub" style="margin-bottom:5px">所属コンテナ（外→内・<span style="border-bottom:1px dashed #94a3b8">点線</span>で表示）</div>
-  <div class="row" style="flex-wrap:wrap;gap:5px;margin:0">
-    <span class="cleg" style="background:#64748b">Group</span>
-    <span class="cleg" style="background:#E87825">Repeating Group</span>
-    <span class="cleg" style="background:#F59E0B">Table</span>
-    <span class="cleg" style="background:#A855F7">Popup</span>
-    <span class="cleg" style="background:#06B6D4">FloatingGroup</span>
-    <span class="cleg" style="background:#EC4899">GroupFocus</span>
+<!-- ===== Bubble Element Inspector（右ドックの独立ウィンドウ） ===== -->
+<div id="bbl-win">
+  <div class="winbar">
+    <span class="ttl">🫧 Bubble Element Inspector</span>
+    <span class="sp"></span>
+    <label class="tg"><input type="checkbox" id="bbl-toggle" checked> ON</label>
   </div>
-  <label class="toggle"><input type="checkbox" id="bbl-toggle" checked> 判定表示を有効化</label>
-  <div class="off">▶ ダッシュボード（#dashboard）に移動すると有効になります。</div>
-  <div class="note">対象＝画面本体(#main)の要素のみ。ヘッダー/ナビ等の共通枠は除外。判定はBubble再現用のガイドです。</div>
+  <div class="body">
+    <div class="legend">
+      <span class="lg"><b style="background:#2563EB"></b>Visual</span>
+      <span class="lg"><b style="background:#16A34A"></b>Input</span>
+      <span class="lg"><span class="cleg" style="background:#64748b">Group</span></span>
+      <span class="lg"><span class="cleg" style="background:#E87825">RG</span></span>
+      <span class="lg"><span class="cleg" style="background:#F59E0B">Table</span></span>
+      <span class="lg"><span class="cleg" style="background:#A855F7">Popup</span></span>
+      <span class="lg"><span class="cleg" style="background:#06B6D4">FloatGrp</span></span>
+      <span class="lg"><span class="cleg" style="background:#EC4899">GroupFocus</span></span>
+    </div>
+    <div id="bbl-content"><div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・位置/幅/高さ/Margin/<br>Responsive/Conditional をここに表示します。</div></div>
+    <div class="note">対象＝画面本体(#main)の要素のみ。ヘッダー/ナビ等は除外。実線=対象要素 / 点線=最も近いコンテナ。<br>右のこのウィンドウ分だけ画面を確保するため、アプリUIには重なりません。OFFで通常操作に戻ります。</div>
+    <div class="note" id="bbl-offnote" style="color:#f6c177;display:none">▶ #dashboard に移動すると判定が有効になります。</div>
+  </div>
 </div>
-<div id="bbl-tip"></div>
-<div id="bbl-detail"></div>
+
+<button id="bbl-fab">🫧 Inspector を表示</button>
 
 <script src="app.js"></script>
 <script>
-/* ===== Bubble element-type annotator (dashboard only) ===== */
+/* ===== Bubble Element Inspector (dashboard only / right docked window) ===== */
 (function(){
   var COL = { visual:'#2563EB', input:'#16A34A' };
   var CATJP = { visual:'Visual element', input:'Input form' };
-  var tip = document.getElementById('bbl-tip');
-  var detail = document.getElementById('bbl-detail');
-  var toggle = document.getElementById('bbl-toggle');
-  var mainEl = document.getElementById('main');
-  var enabled = true;
-  var cur = null, curOutline = '';
-  var curC = null, curCOutline = '';
-  var SKIP = '__skip__';
   var CCOL = { 'Group':'#64748b', 'Repeating Group':'#E87825', 'Table':'#F59E0B', 'Popup':'#A855F7', 'FloatingGroup':'#06B6D4', 'GroupFocus':'#EC4899' };
 
+  var win = document.getElementById('bbl-win');
+  var content = document.getElementById('bbl-content');
+  var offnote = document.getElementById('bbl-offnote');
+  var toggle = document.getElementById('bbl-toggle');
+  var fab = document.getElementById('bbl-fab');
+  var mainEl = document.getElementById('main');
+  var enabled = true;
+  var cur = null, curOutline = '', curC = null, curCOutline = '';
+  var SKIP = '__skip__';
+
   // ---- Text Style catalog（共通の見た目＝共通のStyle名）----
-  // full signature(size/weight/color[/mono]) → 共有スタイル名
   var STYLE_FULL = {
-    '14/400/#707070'      : 'Caption (muted SM)',
-    '12/700/#707070'      : 'Label (muted XS·Bold)',
-    '14/700/#1A1A1A'      : 'Bold SM',
-    '24/900/#1A1A1A'      : 'Heading XL',
-    '14/400/#1A1A1A'      : 'Body SM',
-    '12/400/#707070'      : 'Caption XS',
-    '16/700/#FFFFFF'      : 'Section Title (on dark)',
-    '12/400/#1A1A1A/mono' : 'Mono XS (No.)',
-    '12/400/#1A1A1A'      : 'Body XS'
+    '14/400/#707070':'Caption (muted SM)', '12/700/#707070':'Label (muted XS·Bold)',
+    '14/700/#1A1A1A':'Bold SM', '24/900/#1A1A1A':'Heading XL', '14/400/#1A1A1A':'Body SM',
+    '12/400/#707070':'Caption XS', '16/700/#FFFFFF':'Section Title (on dark)',
+    '12/400/#1A1A1A/mono':'Mono XS (No.)', '12/400/#1A1A1A':'Body XS'
   };
-  // core signature(size/weight[/mono]) → 色違いを束ねる共有スタイル名（色は条件付き扱い）
   var STYLE_CORE = { '24/900':'Heading XL' };
 
-  function rgbToHex(c){
-    var m = (c||'').match(/\d+/g); if (!m) return c;
-    return '#' + m.slice(0,3).map(function(n){ return (+n).toString(16).padStart(2,'0'); }).join('').toUpperCase();
-  }
+  function rgbToHex(c){ var m=(c||'').match(/\d+/g); if(!m) return c; return '#'+m.slice(0,3).map(function(n){return (+n).toString(16).padStart(2,'0');}).join('').toUpperCase(); }
   function textStyle(el){
-    var cs = getComputedStyle(el);
-    var size = Math.round(parseFloat(cs.fontSize));
-    var weight = cs.fontWeight;
-    var color = rgbToHex(cs.color);
-    var mono = /mono/i.test(cs.fontFamily);
-    var italic = cs.fontStyle === 'italic';
-    var underline = /underline/.test(cs.textDecorationLine || '');
-    var sig  = size + '/' + weight + '/' + color + (mono?'/mono':'') + (italic?'/i':'') + (underline?'/u':'');
-    var core = size + '/' + weight + (mono?'/mono':'');
-    var isStatus = !!(el.className && (' '+el.className+' ').indexOf(' st ') >= 0) ||
-                   (el.className && /\bst-/.test(el.className));
-    var name, cond = false;
-    if (isStatus){ name = 'Status badge'; cond = true; }
-    else if (STYLE_FULL[sig]) { name = STYLE_FULL[sig]; }
-    else if (STYLE_CORE[core]) { name = STYLE_CORE[core]; cond = true; }
-    else { name = 'Text ' + size + '·' + weight + (mono?' mono':'') + (italic?' italic':''); }
+    var cs=getComputedStyle(el);
+    var size=Math.round(parseFloat(cs.fontSize)), weight=cs.fontWeight, color=rgbToHex(cs.color);
+    var mono=/mono/i.test(cs.fontFamily), italic=cs.fontStyle==='italic', underline=/underline/.test(cs.textDecorationLine||'');
+    var sig=size+'/'+weight+'/'+color+(mono?'/mono':'')+(italic?'/i':'')+(underline?'/u':'');
+    var core=size+'/'+weight+(mono?'/mono':'');
+    var isStatus=!!(el.className && (' '+el.className+' ').indexOf(' st ')>=0) || (el.className && /\bst-/.test(el.className));
+    var name, cond=false;
+    if(isStatus){ name='Status badge'; cond=true; }
+    else if(STYLE_FULL[sig]){ name=STYLE_FULL[sig]; }
+    else if(STYLE_CORE[core]){ name=STYLE_CORE[core]; cond=true; }
+    else { name='Text '+size+'·'+weight+(mono?' mono':'')+(italic?' italic':''); }
     return { name:name, size:size, weight:weight, color:color, mono:mono, cond:cond };
   }
 
-  toggle.addEventListener('change', function(){ enabled = toggle.checked; if(!enabled) clearHL(); });
-
-  function onDashboard(){
-    var h = location.hash.slice(1) || 'dashboard';
-    return h === 'dashboard' || h.indexOf('dashboard') === 0;
-  }
-  function syncBodyFlag(){ document.body.classList.toggle('bbl-on-dash', onDashboard()); }
-  window.addEventListener('hashchange', function(){ syncBodyFlag(); clearHL(); });
-  syncBodyFlag();
-
   function V(t){ return {cat:'visual', type:t}; }
   function I(t){ return {cat:'input', type:t}; }
-  function hasText(el){ return (el.textContent||'').trim().length > 0; }
-  function hasDirectText(el){
-    for (var i=0;i<el.childNodes.length;i++){ var n=el.childNodes[i];
-      if (n.nodeType===3 && n.textContent.trim().length>0) return true; }
-    return false;
-  }
+  function hasText(el){ return (el.textContent||'').trim().length>0; }
+  function hasDirectText(el){ for(var i=0;i<el.childNodes.length;i++){ var n=el.childNodes[i]; if(n.nodeType===3 && n.textContent.trim().length>0) return true; } return false; }
 
   function classify(el){
-    if (!el || el.nodeType !== 1) return null;
-    if (el.closest('#bbl-panel') || el.id === 'bbl-tip') return null;
-    var tag = el.tagName;
-
-    // --- Input form ---
-    if (tag === 'TEXTAREA') return I('Multiline Input');
-    if (tag === 'SELECT')   return I('Dropdown');
-    if (tag === 'INPUT'){
-      var ty = (el.getAttribute('type') || 'text').toLowerCase();
-      if (ty === 'checkbox') return I('Checkbox');
-      if (ty === 'radio')    return I('RadioButtons');
-      if (ty === 'range')    return I('SliderInput');
-      if (['date','time','datetime-local','month','week'].indexOf(ty) >= 0) return I('Date/Time Picker');
-      if (ty === 'file'){ var ac = el.getAttribute('accept')||''; return I(/image/.test(ac) ? 'PictureUploader' : 'FileUploader'); }
-      if (ty === 'search') return I('SearchBox');
-      var hint = ((el.placeholder||'') + (el.id||'') + (el.name||'')).toLowerCase();
-      if (/検索|search/.test(hint)) return I('SearchBox');
+    if(!el || el.nodeType!==1) return null;
+    if(win.contains(el)) return null;
+    var tag=el.tagName;
+    if(tag==='TEXTAREA') return I('Multiline Input');
+    if(tag==='SELECT') return I('Dropdown');
+    if(tag==='INPUT'){
+      var ty=(el.getAttribute('type')||'text').toLowerCase();
+      if(ty==='checkbox') return I('Checkbox');
+      if(ty==='radio') return I('RadioButtons');
+      if(ty==='range') return I('SliderInput');
+      if(['date','time','datetime-local','month','week'].indexOf(ty)>=0) return I('Date/Time Picker');
+      if(ty==='file'){ var ac=el.getAttribute('accept')||''; return I(/image/.test(ac)?'PictureUploader':'FileUploader'); }
+      if(ty==='search') return I('SearchBox');
+      var hint=((el.placeholder||'')+(el.id||'')+(el.name||'')).toLowerCase();
+      if(/検索|search/.test(hint)) return I('SearchBox');
       return I('Input');
     }
-
-    // --- Visual element ---
-    if (tag === 'IMG')   return V('Image');
-    if (tag === 'SVG' || tag === 'svg') return V('Icon');
-    if (tag === 'VIDEO') return V('Video');
-    if (tag === 'IFRAME'){ var s = el.getAttribute('src')||''; return V(/maps\.|google\.[^/]+\/maps/.test(s) ? 'Map' : 'HTML'); }
-    if (tag === 'HR')    return V('Shape');
-    if (el.getAttribute('role') === 'alert' || /\b(alert|toast)\b/.test(el.className||'')) return V('Alert');
-    if (tag === 'BUTTON') return V('Button');
-    if (tag === 'A')      return V('Link');
-    if (tag === 'I' && /\b(icon|fa-|material)\b/.test(el.className||'')) return V('Icon');
-
-    // --- Text-bearing leaves ---
-    var textTags = ['SPAN','P','H1','H2','H3','H4','H5','H6','TD','TH','LI','LABEL','STRONG','B','SMALL','EM','CODE','TIME','DT','DD'];
-    if (textTags.indexOf(tag) >= 0 && hasText(el)) return V('Text');
-    if (tag === 'DIV' && hasDirectText(el))        return V('Text');
+    if(tag==='IMG') return V('Image');
+    if(tag==='SVG'||tag==='svg') return V('Icon');
+    if(tag==='VIDEO') return V('Video');
+    if(tag==='IFRAME'){ var s=el.getAttribute('src')||''; return V(/maps\.|google\.[^/]+\/maps/.test(s)?'Map':'HTML'); }
+    if(tag==='HR') return V('Shape');
+    if(el.getAttribute('role')==='alert' || /\b(alert|toast)\b/.test(el.className||'')) return V('Alert');
+    if(tag==='BUTTON') return V('Button');
+    if(tag==='A') return V('Link');
+    if(tag==='I' && /\b(icon|fa-|material)\b/.test(el.className||'')) return V('Icon');
+    var textTags=['SPAN','P','H1','H2','H3','H4','H5','H6','TD','TH','LI','LABEL','STRONG','B','SMALL','EM','CODE','TIME','DT','DD'];
+    if(textTags.indexOf(tag)>=0 && hasText(el)) return V('Text');
+    if(tag==='DIV' && hasDirectText(el)) return V('Text');
     return null;
   }
 
-  function isFixedSticky(el){ try { var p = getComputedStyle(el).position; return p === 'fixed' || p === 'sticky'; } catch(e){ return false; } }
+  function isFixedSticky(el){ try{ var p=getComputedStyle(el).position; return p==='fixed'||p==='sticky'; }catch(e){ return false; } }
   function containerType(el){
-    if (el === mainEl) return null;
-    var tag = el.tagName;
-    if (tag === 'TABLE') return 'Table';
-    if (['THEAD','TBODY','TFOOT','TR','TD','TH','COLGROUP','COL','CAPTION'].indexOf(tag) >= 0) return SKIP;
-    if (tag === 'UL' || tag === 'OL') return 'Repeating Group';
-    if (tag === 'LI') return SKIP;
-    if ((el.closest && el.closest('#modal-root')) || el.getAttribute('role') === 'dialog' || /\b(modal|popup)\b/.test(el.className||'')) return 'Popup';
-    if (el.id === 'toast') return 'FloatingGroup';
-    if (/\bgroup-?focus\b/.test(el.className||'')) return 'GroupFocus';
-    var groupTags = ['DIV','SECTION','FORM','ARTICLE','ASIDE','HEADER','FOOTER','NAV','A','BUTTON','LABEL'];
-    if (groupTags.indexOf(tag) >= 0 && el.childElementCount > 0){
-      if (isFixedSticky(el)) return 'FloatingGroup';
-      if (el.id) return 'Group';
-      if (/\b(bg-(white|ink|red|brand|ok|blue|gray|green|yellow|amber)|shadow|border-2|card)\b/.test(el.className||'')) return 'Group';
+    if(el===mainEl) return null;
+    var tag=el.tagName;
+    if(tag==='TABLE') return 'Table';
+    if(['THEAD','TBODY','TFOOT','TR','TD','TH','COLGROUP','COL','CAPTION'].indexOf(tag)>=0) return SKIP;
+    if(tag==='UL'||tag==='OL') return 'Repeating Group';
+    if(tag==='LI') return SKIP;
+    if((el.closest && el.closest('#modal-root')) || el.getAttribute('role')==='dialog' || /\b(modal|popup)\b/.test(el.className||'')) return 'Popup';
+    if(el.id==='toast') return 'FloatingGroup';
+    if(/\bgroup-?focus\b/.test(el.className||'')) return 'GroupFocus';
+    var groupTags=['DIV','SECTION','FORM','ARTICLE','ASIDE','HEADER','FOOTER','NAV','A','BUTTON','LABEL'];
+    if(groupTags.indexOf(tag)>=0 && el.childElementCount>0){
+      if(isFixedSticky(el)) return 'FloatingGroup';
+      if(el.id) return 'Group';
+      if(/\b(bg-(white|ink|red|brand|ok|blue|gray|green|yellow|amber)|shadow|border-2|card)\b/.test(el.className||'')) return 'Group';
     }
     return SKIP;
   }
   function containerInfo(el){
-    var types = [], inner = null, node = el.parentElement, guard = 0;
-    while (node && node !== mainEl && node !== document.body && guard++ < 50){
-      var ct = containerType(node);
-      if (ct && ct !== SKIP){ types.push({ t: ct, node: node }); if (!inner) inner = node; }
-      node = node.parentElement;
+    var types=[], inner=null, node=el.parentElement, guard=0;
+    while(node && node!==mainEl && node!==document.body && guard++<50){
+      var ct=containerType(node);
+      if(ct && ct!==SKIP){ types.push({t:ct,node:node}); if(!inner) inner=node; }
+      node=node.parentElement;
     }
-    return { types: types, inner: inner };
+    return { types:types, inner:inner };
   }
 
-  function pxr(n){ return Math.round(n) + 'px'; }
-  function drow(k, v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'?' dim':'')+'">'+v+'</span></div>'; }
+  function pxr(n){ return Math.round(n)+'px'; }
+  function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'?' dim':'')+'">'+v+'</span></div>'; }
 
   function elDetails(t, ci, isText, ts){
-    var r = t.getBoundingClientRect();
-    var cs = getComputedStyle(t);
-    var parent = t.parentElement, pcs = parent ? getComputedStyle(parent) : null;
-    var cont = ci.inner, cr = cont ? cont.getBoundingClientRect() : null, ctype = cont ? containerType(cont) : null;
-    var cls = (typeof t.className === 'string') ? t.className : '';
-    var rg = t.closest('ul,ol,table');
-    var rowEl = t.closest('tr,li');
-    var popup = t.closest('#modal-root,[role=dialog],.modal,.popup');
-
-    var relMap = { 'static':'In flow', 'relative':'In flow (relative)', 'absolute':'Absolute', 'fixed':'Fixed', 'sticky':'Sticky' };
-    var fluid = /\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls);
-    var widthQual = fluid ? 'fluid/100%' : ((t.style.width || /\bw-\[/.test(cls)) ? 'fixed' : 'auto/fit');
-    var hExplicit = !!t.style.height || /\bh-(\d|\[|full|screen)/.test(cls);
-    var minw = (cs.minWidth === '0px' || cs.minWidth === 'auto') ? '—' : cs.minWidth;
-    var maxw = (cs.maxWidth === 'none') ? '—' : cs.maxWidth;
-
-    var dir = '—', wrap = '—';
-    if (pcs){
-      if (pcs.display.indexOf('flex') >= 0){
-        dir = 'flex / ' + pcs.flexDirection + (/(sm|md|lg|xl):flex-(row|col)/.test(parent.className||'') ? ' (応答切替)' : '');
-        wrap = pcs.flexWrap;
-      } else if (pcs.display === 'grid'){ dir = 'grid'; wrap = 'grid'; }
-      else { dir = pcs.display; }
+    var r=t.getBoundingClientRect(), cs=getComputedStyle(t);
+    var parent=t.parentElement, pcs=parent?getComputedStyle(parent):null;
+    var cont=ci.inner, cr=cont?cont.getBoundingClientRect():null, ctype=cont?containerType(cont):null;
+    var cls=(typeof t.className==='string')?t.className:'';
+    var rg=t.closest('ul,ol,table'), rowEl=t.closest('tr,li'), popup=t.closest('#modal-root,[role=dialog],.modal,.popup');
+    var relMap={'static':'In flow','relative':'In flow (relative)','absolute':'Absolute','fixed':'Fixed','sticky':'Sticky'};
+    var fluid=/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls);
+    var widthQual=fluid?'fluid/100%':((t.style.width||/\bw-\[/.test(cls))?'fixed':'auto/fit');
+    var hExplicit=!!t.style.height || /\bh-(\d|\[|full|screen)/.test(cls);
+    var minw=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
+    var maxw=(cs.maxWidth==='none')?'—':cs.maxWidth;
+    var dir='—', wrap='—';
+    if(pcs){
+      if(pcs.display.indexOf('flex')>=0){ dir='flex / '+pcs.flexDirection+(/(sm|md|lg|xl):flex-(row|col)/.test(parent.className||'')?' (応答切替)':''); wrap=pcs.flexWrap; }
+      else if(pcs.display==='grid'){ dir='grid'; wrap='grid'; }
+      else { dir=pcs.display; }
     }
-    var orderCls = (cls.match(/(\w+:)?order-\w+/g) || []).join(' ');
-    var collapse = /(^|\s)(\w+:)?hidden(\s|$)/.test(cls) ? '応答クラスあり' : '—';
-    var opacity = (parseFloat(cs.opacity) < 1) ? ('opacity ' + cs.opacity) : '—';
-
+    var orderCls=(cls.match(/(\w+:)?order-\w+/g)||[]).join(' ');
+    var collapse=/(^|\s)(\w+:)?hidden(\s|$)/.test(cls)?'応答クラスあり':'—';
+    var opacity=(parseFloat(cs.opacity)<1)?('opacity '+cs.opacity):'—';
     return {
-      pos: { x: pxr(r.left + window.scrollX), y: pxr(r.top + window.scrollY),
-             inC: cont ? (pxr(r.left - cr.left) + ' , ' + pxr(r.top - cr.top) + ' (' + ctype + ')') : '画面直下',
-             rel: relMap[cs.position] || cs.position },
-      w: { fixed: pxr(r.width) + ' (' + widthQual + ')', max: maxw, min: minw, rg: rg ? pxr(rg.getBoundingClientRect().width) : '—' },
-      h: { dyn: hExplicit ? ('Fixed ' + pxr(r.height)) : ('Fit to content (' + pxr(r.height) + ')'),
-           rowH: rowEl ? pxr(rowEl.getBoundingClientRect().height) : '—',
-           popupH: popup ? pxr(popup.getBoundingClientRect().height) : '—',
-           screenH: t.closest('.min-h-screen,.h-screen') ? '100vh (#main)' : '—' },
-      m: { t: cs.marginTop, b: cs.marginBottom, l: cs.marginLeft, r: cs.marginRight },
-      resp: { collapse: collapse, order: orderCls || '—', dir: dir, wrap: wrap },
-      cond: { screen: (isText && ts && ts.cond) ? 'Yes（状態/アラートで色変更）' : '—',
-              popupHide: popup ? 'Popup内（閉時に非表示）' : '—',
-              opacity: opacity }
+      pos:{ x:pxr(r.left+window.scrollX), y:pxr(r.top+window.scrollY),
+            inC: cont?(pxr(r.left-cr.left)+' , '+pxr(r.top-cr.top)+' ('+ctype+')'):'画面直下',
+            rel: relMap[cs.position]||cs.position },
+      w:{ fixed:pxr(r.width)+' ('+widthQual+')', max:maxw, min:minw, rg:rg?pxr(rg.getBoundingClientRect().width):'—' },
+      h:{ dyn:hExplicit?('Fixed '+pxr(r.height)):('Fit to content ('+pxr(r.height)+')'),
+          rowH:rowEl?pxr(rowEl.getBoundingClientRect().height):'—',
+          popupH:popup?pxr(popup.getBoundingClientRect().height):'—',
+          screenH:t.closest('.min-h-screen,.h-screen')?'100vh (#main)':'—' },
+      m:{ t:cs.marginTop, b:cs.marginBottom, l:cs.marginLeft, r:cs.marginRight },
+      resp:{ collapse:collapse, order:orderCls||'—', dir:dir, wrap:wrap },
+      cond:{ screen:(isText&&ts&&ts.cond)?'Yes（状態/アラートで色変更）':'—',
+             popupHide:popup?'Popup内（閉時に非表示）':'—', opacity:opacity }
     };
   }
 
-  function renderDetail(t, ci, isText, ts){
-    var d;
-    try { d = elDetails(t, ci, isText, ts); } catch(e){ detail.classList.remove('act'); return; }
-    var html = '';
-    if (isText && ts){
-      html += '<h5>🎨 Style</h5>'
-            + '<div class="r"><span class="k">Name</span><span class="v" style="color:#FFD9B8">'+ts.name+'</span></div>'
-            + drow('Spec', ts.size + 'px / w' + ts.weight + ' / ' + ts.color + (ts.mono ? ' mono' : ''));
+  function renderContent(t, r, ci, ts){
+    var d; try{ d=elDetails(t,ci,!!ts,ts); }catch(e){ d=null; }
+    var chips = ci.types.length
+      ? ci.types.slice().reverse().map(function(c,i){ return (i?'<span class="arr">›</span>':'')+'<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>'; }).join('')
+      : '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
+    var html='';
+    html += '<div class="hdr"><span class="cat" style="background:'+COL[r.cat]+'">'+CATJP[r.cat]+'</span><span class="typ">'+r.type+'</span></div>';
+    html += '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>';
+    if(ts){
+      html += '<div class="sty"><div class="nm">▦ '+ts.name+'</div>'
+            + '<div class="mt"><span class="sw" style="background:'+ts.color+'"></span>'+ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' mono':'')+'</div>'
+            + (ts.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
+            + '</div>';
     }
-    html += '<h5>📐 位置系</h5>'
-          + drow('X座標', d.pos.x) + drow('Y座標', d.pos.y)
-          + drow('Container内配置位置', d.pos.inC) + drow('Relative Position', d.pos.rel)
-          + '<h5>↔ 幅系</h5>'
-          + drow('Width固定値', d.w.fixed) + drow('Max Width', d.w.max) + drow('Min Width', d.w.min) + drow('RG横幅', d.w.rg)
-          + '<h5>↕ 高さ系</h5>'
-          + drow('Dynamic Height', d.h.dyn) + drow('RG Row Height', d.h.rowH) + drow('Popup高さ', d.h.popupH) + drow('画面固有Height', d.h.screenH)
-          + '<h5>⊞ Margin系</h5>'
-          + drow('Margin Top', d.m.t) + drow('Margin Bottom', d.m.b) + drow('Margin Left', d.m.l) + drow('Margin Right', d.m.r)
-          + '<h5>📱 Responsive細部</h5>'
-          + drow('Collapse条件', d.resp.collapse) + drow('モバイル時並び順', d.resp.order)
-          + drow('Container direction切替', d.resp.dir) + drow('Wrap挙動', d.resp.wrap)
-          + '<h5>⚡ Conditional系</h5>'
-          + drow('この画面だけ赤', d.cond.screen) + drow('Popup時だけ非表示', d.cond.popupHide)
-          + drow('特定Group内だけOpacity変更', d.cond.opacity);
-    detail.innerHTML = html;
-    detail.classList.add('act');
+    html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
+    if(d){
+      html += '<h5>📐 位置系</h5>'+drow('X座標',d.pos.x)+drow('Y座標',d.pos.y)+drow('Container内配置位置',d.pos.inC)+drow('Relative Position',d.pos.rel)
+            + '<h5>↔ 幅系</h5>'+drow('Width固定値',d.w.fixed)+drow('Max Width',d.w.max)+drow('Min Width',d.w.min)+drow('RG横幅',d.w.rg)
+            + '<h5>↕ 高さ系</h5>'+drow('Dynamic Height',d.h.dyn)+drow('RG Row Height',d.h.rowH)+drow('Popup高さ',d.h.popupH)+drow('画面固有Height',d.h.screenH)
+            + '<h5>⊞ Margin系</h5>'+drow('Margin Top',d.m.t)+drow('Margin Bottom',d.m.b)+drow('Margin Left',d.m.l)+drow('Margin Right',d.m.r)
+            + '<h5>📱 Responsive細部</h5>'+drow('Collapse条件',d.resp.collapse)+drow('モバイル時並び順',d.resp.order)+drow('Container direction切替',d.resp.dir)+drow('Wrap挙動',d.resp.wrap)
+            + '<h5>⚡ Conditional系</h5>'+drow('この画面だけ赤',d.cond.screen)+drow('Popup時だけ非表示',d.cond.popupHide)+drow('特定Group内だけOpacity変更',d.cond.opacity);
+    }
+    content.innerHTML = html;
   }
+
+  function setEmpty(){ content.innerHTML='<div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・位置/幅/高さ/Margin/<br>Responsive/Conditional をここに表示します。</div>'; }
+
+  function onDashboard(){ var h=location.hash.slice(1)||'dashboard'; return h==='dashboard'||h.indexOf('dashboard')===0; }
 
   function clearHL(){
-    if (cur){ cur.style.outline = curOutline; cur = null; }
-    if (curC){ curC.style.outline = curCOutline; curC = null; }
-    tip.style.display = 'none';
-    if (detail) detail.classList.remove('act');
+    if(cur){ cur.style.outline=curOutline; cur=null; }
+    if(curC){ curC.style.outline=curCOutline; curC=null; }
   }
 
+  function setActive(){
+    win.classList.toggle('act', enabled);
+    fab.classList.toggle('act', !enabled);
+    document.body.classList.toggle('bbl-reserve', enabled);
+    var off = enabled && !onDashboard();
+    offnote.style.display = off ? 'block' : 'none';
+    if(!enabled || off){ clearHL(); setEmpty(); }
+  }
+
+  toggle.addEventListener('change', function(){ enabled=toggle.checked; setActive(); });
+  fab.addEventListener('click', function(){ enabled=true; toggle.checked=true; setActive(); });
+  window.addEventListener('hashchange', function(){ clearHL(); setActive(); });
+  window.addEventListener('resize', function(){ if(cur){ /* recompute on next move */ } });
+
   document.addEventListener('mousemove', function(e){
-    if (!enabled || !onDashboard()){ clearHL(); return; }
-    var t = e.target;
-    if (!t || !t.closest || !t.closest('#main')){ clearHL(); return; }
-    var r = classify(t);
-    if (!r){ clearHL(); return; }
-
-    var ci = containerInfo(t);
-    var changed = (t !== cur);
-
-    if (changed){
-      if (cur) cur.style.outline = curOutline;
-      cur = t; curOutline = t.style.outline;
-      t.style.outline = '2px solid ' + COL[r.cat];
-      t.style.outlineOffset = '1px';
-    }
-    if (ci.inner !== curC){
-      if (curC) curC.style.outline = curCOutline;
-      curC = ci.inner;
-      if (curC){ curCOutline = curC.style.outline; curC.style.outline = '2px dashed #94a3b8'; curC.style.outlineOffset = '2px'; }
-    }
-
-    var ts = (r.type === 'Text') ? textStyle(t) : null;
-
-    if (changed){
-      var chips;
-      if (ci.types.length){
-        chips = ci.types.slice().reverse().map(function(c, i){
-          return (i ? '<span class="arr">›</span>' : '') + '<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>';
-        }).join('');
-      } else {
-        chips = '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
-      }
-      var styleHtml = '';
-      if (ts){
-        styleHtml = '<div class="sty"><span class="styname">▦ Style: '+ts.name+'</span>'
-                  + '<div class="stymeta"><span class="sw" style="background:'+ts.color+'"></span>'+ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' / mono':'')+'</div>'
-                  + (ts.cond ? '<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>' : '')
-                  + '</div>';
-      }
-      tip.innerHTML = '<div class="cat" style="color:'+COL[r.cat]+'">'+CATJP[r.cat]+'</div>'
-                    + '<div class="typ">'+r.type+'</div>'
-                    + '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>'
-                    + styleHtml
-                    + '<div class="ctn">所属コンテナ（外→内・'+ci.types.length+'層）</div>'
-                    + '<div class="chips">'+chips+'</div>';
-      renderDetail(t, ci, !!ts, ts);
-    }
-    tip.style.display = 'block';
-    var tw = tip.offsetWidth, th = tip.offsetHeight;
-    var x = e.clientX + 16, y = e.clientY + 16;
-    if (x + tw > window.innerWidth - 8)  x = e.clientX - tw - 16;
-    if (y + th > window.innerHeight - 8) y = e.clientY - th - 16;
-    tip.style.left = x + 'px';
-    tip.style.top  = y + 'px';
+    if(!enabled || !onDashboard()) return;
+    var t=e.target;
+    if(!t || !t.closest || win.contains(t) || !t.closest('#main')) return;
+    var r=classify(t);
+    if(!r) return;
+    if(t===cur) return;
+    if(cur) cur.style.outline=curOutline;
+    cur=t; curOutline=t.style.outline; t.style.outline='2px solid '+COL[r.cat]; t.style.outlineOffset='1px';
+    var ci=containerInfo(t);
+    if(ci.inner!==curC){ if(curC) curC.style.outline=curCOutline; curC=ci.inner; if(curC){ curCOutline=curC.style.outline; curC.style.outline='2px dashed #94a3b8'; curC.style.outlineOffset='2px'; } }
+    var ts=(r.type==='Text')?textStyle(t):null;
+    renderContent(t, r, ci, ts);
   }, true);
 
-  document.addEventListener('mouseleave', clearHL);
+  setActive();
 })();
 </script>
 </body>
