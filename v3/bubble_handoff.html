@@ -34,7 +34,7 @@ tailwind.config = { theme: { extend: {
   <div class="px-6 py-3 flex items-center justify-between flex-wrap gap-2">
     <div>
       <div class="font-black">渡辺謄写堂 業務管理システム v3 — Bubble実装ハンドオフ仕様書</div>
-      <div class="text-xs text-ink-300">基準モック: <a class="underline" href="https://myudai-uns.github.io/watanabe-mockup/v3/">https://myudai-uns.github.io/watanabe-mockup/v3/</a> ／ 作成 2026-05-28</div>
+      <div class="text-xs text-ink-300">基準モック: <a class="underline" href="https://myudai-uns.github.io/watanabe-mockup/v3/">https://myudai-uns.github.io/watanabe-mockup/v3/</a> ／ 作成 2026-05-28 ／ 改訂 2026-05-29（v3.1 要件整合）</div>
     </div>
     <nav class="text-xs flex flex-wrap gap-1">
       <a href="#proc" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">構築手順</a>
@@ -55,13 +55,24 @@ tailwind.config = { theme: { extend: {
     Bubble では <b>別 Data Type ＋ 参照（リレーション）</b>に分解する前提で記載しています。
   </div>
 
+  <div class="note" style="border-left-color:#2A7A44;background:#EAF7EF">
+    <b>v3.1 差分（2026-05-29 ／ requirements_v3.0 との整合）</b> — Field / Option Set のみ最小修正。既存の Data Type 構成・ルートは変更なし。
+    <ol class="list-decimal pl-5 mt-1 space-y-0.5 text-sm">
+      <li><b>User.role</b>：text → <b>Option Set <code>UserRole</code></b>（代表/製版/工場/事務/経理）を新設（§3）。</li>
+      <li><b>User.is_active</b>：<code>yes/no</code> を追加（退職・停止の論理無効化, §2）。</li>
+      <li><b>Order の税額を3フィールドに分離</b>：<code>subtotal_ex_tax</code>・<code>tax_amount</code>・<code>total_amount</code>（§2 / §4）。</li>
+      <li><b>QuotePattern.discount_amount</b>：<b>税抜</b>である旨を明記（§2 / §4）。</li>
+      <li><b>税込入力はUI換算のみ</b>：DBは税抜（<code>OrderItem.subtotal</code>）だけを保持し、<b>税込入力専用フィールドは作らない</b>（§4）。</li>
+    </ol>
+  </div>
+
   <!-- ============ 構築手順 ============ -->
   <section id="proc" class="card p-6">
     <h2 class="text-2xl font-black mb-3">0. 推奨構築手順（この順が最小負担）</h2>
     <p class="text-sm mb-3 text-ink-700">原則：<b>「見た目」からではなく「データ→共通部品→表示→入力→複雑機能」</b>の順。</p>
     <ol class="list-decimal pl-6 space-y-1 text-sm">
-      <li><b>Option Set を作成</b>（本書 §3）— 色属性も設定。</li>
-      <li><b>Data Type ＆ フィールドを作成</b>（本書 §2）— リレーションを張る。</li>
+      <li><b>Option Set を作成</b>（本書 §3）— 色属性も設定。<b>UserRole（v3.1）</b>も併せて作成。</li>
+      <li><b>Data Type ＆ フィールドを作成</b>（本書 §2）— リレーションを張る。<b>User.role は UserRole 参照・User.is_active を追加</b>。</li>
       <li><b>シードCSVを一括アップロード</b>（別添 <code>watanabe_db_*.csv</code>）— 早期に実データで検証。</li>
       <li><b>Reusable Element を先に作成</b>：ヘッダー/ナビ、ステータスバッジ（Option Set color駆動）、「タイトル帯＋コンテンツ」カード。</li>
       <li><b>一覧・詳細の“表示のみ”を構築</b>：受注一覧／顧客一覧／工場カンバン／変更履歴は Repeating Group。</li>
@@ -107,7 +118,8 @@ tailwind.config = { theme: { extend: {
       <h3 class="font-black text-lg mb-2">User（担当者）</h3>
       <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
         <tr><td>name</td><td>text</td><td>氏名（渡辺 聡／渡辺 豊／吉村 栄子／菅野 香里／金井 奈々子／安斎 崇子）</td></tr>
-        <tr><td>role</td><td>text</td><td>役職（代表/製版/工場/事務/経理）。UI表示はかっこ書きせず氏名のみ</td></tr>
+        <tr><td>role</td><td>OptionSet UserRole <span class="req">★v3.1</span></td><td>役職（代表/製版/工場/事務/経理）。<b>text→Option Set化</b>（表記ゆれ防止・権限制御の安定化）。UI表示はかっこ書きせず氏名のみ</td></tr>
+        <tr><td>is_active</td><td>yes/no <span class="req">★v3.1</span></td><td>有効フラグ。<code>no</code>＝退職/停止の論理無効化（ログイン不可・担当候補から除外）。既定 <code>yes</code></td></tr>
         <tr><td>email</td><td>text</td><td>メール</td></tr>
       </tbody></table>
     </div>
@@ -127,7 +139,9 @@ tailwind.config = { theme: { extend: {
         <tr><td>first_proof_date / used_date</td><td>date</td><td>初校日／使用日</td></tr>
         <tr><td>status</td><td>OptionSet OrderStatus</td><td>見積もり段階/受注/印刷中/完成/納品済み</td></tr>
         <tr><td>memo</td><td>text</td><td>備考（フリーメモ）</td></tr>
-        <tr><td>total_amount</td><td>number</td><td><b>税込</b>合計（§4 calcOrder で算出）</td></tr>
+        <tr><td>subtotal_ex_tax</td><td>number <span class="req">★v3.1</span></td><td><b>税抜小計</b>＝値引き後の課税対象額 afterDiscount（§4）</td></tr>
+        <tr><td>tax_amount</td><td>number <span class="req">★v3.1</span></td><td><b>消費税</b>＝round(subtotal_ex_tax × 10%)（§4）</td></tr>
+        <tr><td>total_amount</td><td>number</td><td><b>税込合計</b>＝subtotal_ex_tax + tax_amount（§4 calcOrder で算出）</td></tr>
         <tr><td>data_status</td><td>OptionSet DataStatus</td><td>持込/ゼロから作成/未受領</td></tr>
         <tr><td>discount_amount</td><td>number</td><td>値引き額（税抜ベース）</td></tr>
         <tr><td>discount_reason</td><td>text</td><td>値引き理由（補足表示）</td></tr>
@@ -160,7 +174,7 @@ tailwind.config = { theme: { extend: {
         <tr><td>yacho_style</td><td>yes/no</td><td>野丁式（内部キーは yacho_style）</td></tr>
         <tr><td>lamination</td><td>OptionSet LaminationOption</td><td>ラミネート</td></tr>
         <tr><td>tax_rate</td><td>number</td><td>固定10</td></tr>
-        <tr><td>subtotal</td><td>number</td><td><b>税抜（外税）で保持</b>。自由入力。税込は表示換算（§4）</td></tr>
+        <tr><td>subtotal</td><td>number</td><td><b>税抜（外税）で保持</b>。自由入力。税込はUI換算のみで<b>税込入力専用フィールドは作らない</b>（§4）</td></tr>
         <tr><td>unit_price</td><td>number</td><td>= round(subtotal / quantity) 派生</td></tr>
         <tr><td>delivery_type / _start / _end</td><td>OptionSet / date</td><td>明細単位の納期</td></tr>
         <tr><td>first_proof_date / used_date</td><td>date</td><td>明細単位の初校日/使用日</td></tr>
@@ -193,7 +207,7 @@ tailwind.config = { theme: { extend: {
         <tr><td>amount</td><td>number</td><td>金額（税抜）</td></tr>
         <tr><td>accepted</td><td>yes/no</td><td>採用フラグ（1見積1採用）</td></tr>
         <tr><td>show_discount</td><td>yes/no</td><td>値引き表示</td></tr>
-        <tr><td>discount_amount</td><td>number</td><td>値引き額</td></tr>
+        <tr><td>discount_amount</td><td>number（税抜）</td><td>値引き額（<b>税抜</b>）。値引き後に消費税を計算（§4）</td></tr>
         <tr><td>discount_label_type</td><td>OptionSet DiscountLabelType</td><td>名目種別</td></tr>
         <tr><td>discount_label_text</td><td>text</td><td>自由記載時の名目（§4 値引き名目解決）</td></tr>
       </tbody></table>
@@ -283,6 +297,18 @@ tailwind.config = { theme: { extend: {
       </tbody></table>
     </div>
 
+    <div>
+      <h3 class="font-black mb-1">UserRole（ユーザーロール）<span class="text-xs font-normal text-ink-500">v3.1新設 ／ User.role を text から本Option Setへ</span></h3>
+      <p class="text-xs text-ink-500 mb-2">権限制御・条件表示の判定基準。表記ゆれを防ぐため text ではなく Option Set で管理（§5）。</p>
+      <table><thead><tr><th>value（＝Display）</th><th>主な操作範囲（要件 第5章準拠）</th></tr></thead><tbody>
+        <tr><td>代表</td><td>全操作可（管理者）。ユーザー管理・削除・設定まで</td></tr>
+        <tr><td>製版</td><td>担当案件の編集／印刷中まわりのステータス変更／カンバン操作</td></tr>
+        <tr><td>工場</td><td>カンバン操作／印刷中・完成のステータス変更</td></tr>
+        <tr><td>事務</td><td>起票・編集・見積作成・顧客登録（△で削除/権限一部）</td></tr>
+        <tr><td>経理</td><td>閲覧／設定・データ書出</td></tr>
+      </tbody></table>
+    </div>
+
     <div class="grid md:grid-cols-2 gap-5">
       <div>
         <h3 class="font-black mb-1">DeliveryType（納期区分）</h3>
@@ -354,11 +380,12 @@ tailwind.config = { theme: { extend: {
 
     <h3 class="font-black">金額計算（消費税は一律10%）</h3>
     <ul class="list-disc pl-6 text-sm space-y-1">
-      <li>明細小計 <code>subtotal</code> は<b>税抜（外税）で保持・自由入力</b>。<code>unit_price = round(subtotal / quantity)</code>。</li>
-      <li>受注小計 = Σ(明細subtotal)。値引き後 <code>afterDiscount = max(0, 小計 − discount_amount)</code>。</li>
+      <li>明細小計 <code>OrderItem.subtotal</code> は<b>税抜（外税）で保持・自由入力</b>。<code>unit_price = round(subtotal / quantity)</code>。</li>
+      <li>受注小計 = Σ(明細subtotal)。値引き <code>QuotePattern.discount_amount</code>（<b>税抜</b>）を引き <code>afterDiscount = max(0, 小計 − 値引き)</code>。</li>
       <li>値引きは小計に按分：<code>ratio = afterDiscount / 小計</code> を各明細に乗じてから税計算。</li>
-      <li>消費税 = <code>round(afterDiscount × 10%)</code>。<b>受注合計 total_amount（税込）= afterDiscount + 消費税</b>。</li>
-      <li>税抜⇄税込の相互換算：<b>税込 = round(税抜 × 1.1)</b>／<b>税抜 = round(税込 × 100 / 110)</b>。小計は税抜・税込それぞれ入力欄を持つが、保持は常に税抜（入力された方を税抜へ正規化）。</li>
+      <li><b>受注は税額を3フィールドに分離保持（v3.1）</b>：<code>subtotal_ex_tax = afterDiscount</code>（税抜小計・課税対象）／<code>tax_amount = round(subtotal_ex_tax × 10%)</code>（消費税）／<code>total_amount = subtotal_ex_tax + tax_amount</code>（税込合計）。顧客一覧/詳細の「税抜小計・消費税・税込」はこの3値を集計するため、列の整合が常に成立する。</li>
+      <li>税抜⇄税込の相互換算：<b>税込 = round(税抜 × 1.1)</b>／<b>税抜 = round(税込 × 100 / 110)</b>。</li>
+      <li><b>税込入力はUI上の換算のみ</b>。DBは税抜（<code>OrderItem.subtotal</code>）だけを保持し、<b>税込入力専用フィールドは作成しない</b>。税込欄に入力された値は入力時に税抜へ正規化して保存する。</li>
     </ul>
 
     <h3 class="font-black">採番</h3>
@@ -420,7 +447,19 @@ tailwind.config = { theme: { extend: {
     </ul>
 
     <h3 class="font-black">権限（ロール）</h3>
-    <p class="text-sm">User.role：代表 / 製版 / 工場 / 事務 / 経理。モックは表示のみのため、Bubble側で「誰が何を編集可」を privacy rules・条件表示で定義する（要件確定後）。</p>
+    <p class="text-sm"><code>User.role</code> は <b>Option Set <code>UserRole</code></b>（代表/製版/工場/事務/経理）で判定（v3.1：text廃止）。<code>User.is_active = no</code> はログイン不可・担当ドロップダウンの候補から除外。要件定義 第5章の権限表に従い、Bubble側で <b>privacy rules ＋ 条件表示</b>（要素の visible / workflow の only when）で制御する。</p>
+    <table><thead><tr><th>操作</th><th>代表</th><th>製版</th><th>工場</th><th>事務</th><th>経理</th></tr></thead><tbody>
+      <tr><td>受注 起票/編集</td><td>○</td><td>△(担当)</td><td>△(担当)</td><td>○</td><td>×</td></tr>
+      <tr><td>受注ステータス変更</td><td>○</td><td>△(印刷中)</td><td>△(印刷中/完成)</td><td>△</td><td>×</td></tr>
+      <tr><td>受注削除（＝キャンセル）</td><td>○</td><td>×</td><td>×</td><td>△</td><td>×</td></tr>
+      <tr><td>見積 作成/編集</td><td>○</td><td>×</td><td>×</td><td>○</td><td>×</td></tr>
+      <tr><td>工場カンバン操作</td><td>○</td><td>○</td><td>○</td><td>△</td><td>×</td></tr>
+      <tr><td>顧客 登録/編集</td><td>○</td><td>×</td><td>×</td><td>○</td><td>×</td></tr>
+      <tr><td>用紙マスタ管理</td><td>○</td><td>×</td><td>×</td><td>△</td><td>×</td></tr>
+      <tr><td>ユーザー招待/管理</td><td>○</td><td>×</td><td>×</td><td>×</td><td>×</td></tr>
+      <tr><td>設定・データ書出</td><td>○</td><td>×</td><td>×</td><td>×</td><td>○</td></tr>
+    </tbody></table>
+    <p class="text-xs text-ink-500 mt-1">○=可／△=条件付き可／×=不可。本表は要件 第5章準拠（運用で確定）。判定キーは必ず <code>UserRole</code> の値で行う（text比較を禁止）。</p>
 
     <div class="note text-xs">
       <b>Bubbleで手間がかかる箇所（後工程・プラグイン要）</b>：①工場カンバンのドラッグ&ドロップ（Draggable Elements）②顧客メモの未保存警告（custom state＋離脱時確認）③見積書PDF出力（PDFプラグイン）④明細の動的追加/削除＋税抜税込即時換算（各入力のworkflow）。レイアウト（タイトル＋コンテンツ）自体はGroup構成で容易。
