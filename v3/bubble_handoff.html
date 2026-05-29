@@ -211,6 +211,44 @@ tailwind.config = { theme: { extend: {
       <tr><td>Page</td><td>Page – Base</td><td>bg <code>#F3F4F6</code>・Noto Sans JP・デスクトップ前提</td></tr>
     </tbody></table>
     <div class="note text-xs">「—」＝現行モックに該当要素が無く Style は<b>定義不要</b>。Field 系（Input/Multiline/Dropdown/Search/Date）は<b>1つの "Field – Base" を共用</b>するのが最小構成。<br><b>v3.1追記（受注一覧の精査で発見）：</b><code>Mono SM</code>（14px等幅＝金額/数量）・<code>Field Label</code>（12·700 黒＝フィルタ項目名。灰の Label に統一も可）・<code>Tag chip</code>（白文字12·700＋<code>Tag.color</code>背景）・<code>Overdue label</code>（12·700 紫＝N日経過）。これで受注一覧ページは定義済みStyleのみで構築可能。<br><b>v3.1追記（受注新規起票の精査）：</b><code>Required mark</code>（必須*）・<code>Item-No badge</code>（明細#N）・<code>Total amount</code>（18·900 brand＝合計金額）・<code>Subheading</code>（18·700＝合計等の小見出し）・<code>Page-item label</code>＋<code>Button Page(紫 #7E22CE)</code>（ページ物）。<br><b>整理（Style総数を抑制）：</b>①金額monoは <code>Mono SM</code> 1つに統一し<b>太さ・色は条件付き</b>（400/700・黒/#707070）②パネル見出しは <code>Section Title</code> に統合し<b>色のみ条件付き</b>（白=濃色帯／黒=明色パネル, 16–18px）③紫は用途別に固定（ページ物=<code>#7E22CE</code>／納期超過=<code>#9333EA</code>）④モックの色揺れ <code>#6D6D6D→Caption XS(#707070)</code>・<code>#3A3A3A→Field Label(#1A1A1A)</code> に寄せて新規化しない。<br>この追記＋整理で<b>受注新規起票も定義済みStyleのみで構築可能</b>。<br><b>v3.1追記（残り全画面の精査：受注確認/編集・見積書・工場カンバン・顧客一覧/詳細・印刷ビュー）：</b>純粋な新規は <code>Kind badge</code>（14·700＋種別色＝顧客種別）と <code>Column title</code>（16·900＋状態色＝カンバン列見出し）の2つのみ。<br><b>その他は既存に統合：</b>受注/見積番号の大見出し=<code>Heading XL</code> の mono変種／カンバン番号・電話/FAX=<code>Mono XS</code> の #707070変種／カンバンのタグ=<code>Tag chip</code> を12–14pxに／顧客詳細KPIの¥金額・日付・累計売上=<code>Total amount</code> を18–24px・色(brand/黒/灰)・等幅条件に拡張／印刷の納期強調(赤)=<code>Subheading</code> 色条件／印刷の「製作明細」帯(白)=<code>Section Title</code> を14–18pxに／空状態文(16·400灰)=<code>Caption</code>。<br><b>★PDFプレビュー（見積書 #quote-pdf-page）の内部文字（社名/印影/登録番号/合計税込 等）は PDFプラグインのテンプレート出力</b>のため Bubble の要素Style対象外（テンプレート側で定義）。<br><b>結論：上記2 Style追加＋統合で、全12画面が定義済みStyle（＋PDFはプラグインテンプレート）で構築可能。</b></div>
+
+    <!-- 1-4 Text Style 詳細プロパティ -->
+    <h3 class="font-black text-lg">1-4. Text Style 詳細プロパティ（Bubble Style 設定値）</h3>
+    <p class="text-sm text-ink-700">各 Text Style の設定値一覧。<b>「–」＝なし/既定</b>、<b>B/I/U＝Bold/Italic/Underline</b>、Align＝text-align。Padding/BG/Radius は通常0/透明で、<b>chip/badge系のみ背景・角丸・余白</b>を持つ。色が「条件」のものは <code>OptionSet.color</code> 等を条件付きで適用（§1-3）。</p>
+    <style>
+      #txtprops { font-size:11px; }
+      #txtprops th, #txtprops td { padding:4px 7px; white-space:nowrap; }
+      #txtprops td:first-child, #txtprops th:first-child { font-weight:700; position:sticky; left:0; background:#fff; }
+      #txtprops thead th:first-child { background:#1A1A1A; }
+    </style>
+    <div style="overflow-x:auto; border:1px solid #D1D5DB; border-radius:6px;">
+    <table id="txtprops"><thead><tr>
+      <th>Style</th><th>Padding</th><th>Font</th><th>Weight</th><th>Size</th><th>Align</th><th>B</th><th>I</th><th>U</th><th>Font color</th><th>Opacity</th><th>Radius</th><th>B-style</th><th>B-width</th><th>B-color</th><th>BG color</th>
+    </tr></thead><tbody>
+      <tr><td>Heading XL</td><td>0</td><td>Noto Sans JP</td><td>900</td><td>24</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#1A1A1A</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Subheading</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>18</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#1A1A1A（条件:赤#DC2626）</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Bold SM</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#1A1A1A</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Body SM</td><td>0</td><td>Noto Sans JP</td><td>400</td><td>14</td><td>left</td><td>–</td><td>–</td><td>–</td><td>#1A1A1A</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Body XS</td><td>0</td><td>Noto Sans JP</td><td>400</td><td>12</td><td>left</td><td>–</td><td>–</td><td>–</td><td>#1A1A1A</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Mono XS</td><td>0</td><td>monospace</td><td>400</td><td>12</td><td>left</td><td>–</td><td>–</td><td>–</td><td>#1A1A1A（補助#707070）</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Mono SM</td><td>0</td><td>monospace</td><td>400（強調700）</td><td>14</td><td>right</td><td>△</td><td>–</td><td>–</td><td>#1A1A1A（補助#707070）</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Label</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>12</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#707070</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Field Label</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>12</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#1A1A1A</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Caption</td><td>0</td><td>Noto Sans JP</td><td>400</td><td>14（16可）</td><td>left</td><td>–</td><td>–</td><td>–</td><td>#707070</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Caption XS</td><td>0</td><td>Noto Sans JP</td><td>400</td><td>12</td><td>left</td><td>–</td><td>–</td><td>–</td><td>#707070</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Section Title</td><td>0（帯Groupが px-4 py-2）</td><td>Noto Sans JP</td><td>700</td><td>16（14–18）</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF（明色面=#1A1A1A）</td><td>100%</td><td>0（帯=rounded-t 6）</td><td>none</td><td>0</td><td>–</td><td>transparent（帯Group=濃色/状態色）</td></tr>
+      <tr><td>Status badge</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>OrderStatus.color（条件）</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Tag chip</td><td>2 / 8（py-0.5 px-2）</td><td>Noto Sans JP</td><td>700</td><td>12（14可）</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF</td><td>100%</td><td>4（rounded）</td><td>none</td><td>0</td><td>–</td><td>Tag.color</td></tr>
+      <tr><td>Overdue label</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>12</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#9333EA</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Required mark</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>12</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#DC2626</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Item-No badge</td><td>2 / 8</td><td>Noto Sans JP</td><td>900</td><td>12</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>#FFFFFF</td><td>100%</td><td>4</td><td>none</td><td>0</td><td>–</td><td>濃色（例 #1A1A1A）</td></tr>
+      <tr><td>Total amount</td><td>0</td><td>Noto Sans JP（数値は等幅可）</td><td>900</td><td>18（24可）</td><td>right</td><td>✓</td><td>–</td><td>–</td><td>#E87825（条件 #1A1A1A/#707070）</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Page-item label</td><td>0</td><td>Noto Sans JP</td><td>700</td><td>12</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>#7E22CE</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+      <tr><td>Kind badge</td><td>0（pill化時 2/8）</td><td>Noto Sans JP</td><td>700</td><td>14</td><td>center</td><td>✓</td><td>–</td><td>–</td><td>CustomerKind.color（条件）</td><td>100%</td><td>0（pill時4）</td><td>none</td><td>0</td><td>–</td><td>transparent（pill時 薄色）</td></tr>
+      <tr><td>Column title</td><td>0</td><td>Noto Sans JP</td><td>900</td><td>16</td><td>left</td><td>✓</td><td>–</td><td>–</td><td>OrderStatus.color（条件）</td><td>100%</td><td>0</td><td>none</td><td>0</td><td>–</td><td>transparent</td></tr>
+    </tbody></table>
+    </div>
+    <div class="note text-xs">Italic / Underline は全 Style で未使用（–）。Opacity は基準 100%（view-mode の読取専用時のみ 50% を<b>条件</b>で適用）。Border は Text 系では未使用（0 / none）。背景・角丸・余白を持つのは <b>Tag chip / Item-No badge</b> と、Section Title の<b>帯Group</b>のみ。色「条件」は §1-3 の条件付き色ルールに従う。</div>
   </section>
 
   <!-- ============ データモデル ============ -->
