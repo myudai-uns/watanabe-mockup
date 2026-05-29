@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 v3 ｜ 要件 → 仕様書 影響マップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0C0F15; --bg2:#11151E; --panel:#161B26; --panel2:#1C2230; --line:#283042;
+    --txt:#E8ECF3; --txt2:#9AA4B5; --txt3:#6B7governance; --muted:#5C6678;
+    --r1:#3B82F6; --r2:#F59E0B; --r3:#14B8A6; --r4:#EF4444; --r5:#A855F7; --r6:#22C55E;
+    --gold:#E8A54B;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Noto Sans JP',sans-serif; background:radial-gradient(1200px 600px at 70% -10%, #1a2233 0%, var(--bg) 55%); color:var(--txt); min-height:100vh; -webkit-font-smoothing:antialiased; }
+  .mono{ font-family:'Roboto Mono',monospace; }
+  .wrap{ max-width:1240px; margin:0 auto; padding:26px 22px 60px; }
+
+  header.top{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; border-bottom:1px solid var(--line); padding-bottom:18px; }
+  .eyebrow{ font-size:11px; letter-spacing:.22em; color:var(--gold); font-weight:700; }
+  h1{ font-size:27px; font-weight:900; line-height:1.2; margin-top:5px; letter-spacing:.01em; }
+  h1 .accent{ background:linear-gradient(90deg,var(--gold),#F2C879); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .lead{ font-size:12.5px; color:var(--txt2); margin-top:8px; max-width:560px; line-height:1.6; }
+  .counters{ text-align:right; }
+  .counters .big{ font-size:13px; color:var(--txt2); font-weight:700; }
+  .counters .num{ font-family:'Roboto Mono',monospace; font-size:34px; font-weight:700; color:#fff; line-height:1; }
+  .counters .num b{ color:var(--gold); }
+  .counters .sub{ font-size:11px; color:var(--muted); margin-top:4px; }
+
+  /* controls */
+  .controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:18px 0 6px; }
+  .controls .lbl{ font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.05em; }
+  .pbtn{ font:inherit; font-size:12px; font-weight:700; color:var(--txt); background:var(--panel2); border:1px solid var(--line); padding:7px 13px; border-radius:22px; cursor:pointer; transition:.15s; }
+  .pbtn:hover{ border-color:var(--gold); color:#fff; }
+  .pbtn.play{ background:linear-gradient(90deg,var(--gold),#cf8a2e); color:#15110a; border:none; }
+  .pbtn.ghost{ background:transparent; }
+
+  /* board */
+  .board{ position:relative; display:grid; grid-template-columns:300px 1fr; gap:0; margin-top:14px; min-height:560px; }
+  svg.links{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; overflow:visible; }
+  .col{ position:relative; z-index:2; display:flex; flex-direction:column; gap:10px; }
+  .col.reqs{ padding-right:46px; }
+  .col.specs{ padding-left:46px; gap:16px; }
+  .colcap{ font-size:11px; font-weight:900; letter-spacing:.12em; color:var(--txt2); text-transform:uppercase; margin-bottom:2px; }
+
+  /* requirement cards */
+  .req{ position:relative; background:linear-gradient(180deg,var(--panel),#12161f); border:1px solid var(--line); border-radius:13px; padding:12px 13px 12px 14px; cursor:pointer; transition:transform .14s, box-shadow .2s, border-color .2s; overflow:hidden; }
+  .req:before{ content:''; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--rc); opacity:.85; }
+  .req:hover{ transform:translateY(-2px); border-color:var(--rc); }
+  .req .rnum{ font-family:'Roboto Mono',monospace; font-size:11px; font-weight:700; color:var(--rc); }
+  .req .rt{ font-size:14px; font-weight:900; margin-top:1px; }
+  .req .rd{ font-size:11px; color:var(--txt2); margin-top:4px; line-height:1.5; max-height:0; opacity:0; overflow:hidden; transition:max-height .25s, opacity .2s, margin .2s; }
+  .req .rcount{ position:absolute; right:11px; top:11px; font-size:10px; font-weight:700; color:var(--txt2); background:#0e131d; border:1px solid var(--line); border-radius:20px; padding:2px 8px; }
+  .req.on{ border-color:var(--rc); box-shadow:0 0 0 1px var(--rc), 0 8px 26px -10px var(--rc); background:linear-gradient(180deg,color-mix(in srgb,var(--rc) 16%, #12161f), #12161f); }
+  .req.on .rd, .req:hover .rd{ max-height:80px; opacity:1; margin-top:6px; }
+  .req.dim{ opacity:.5; }
+  .req .check{ position:absolute; right:11px; top:11px; width:18px; height:18px; border-radius:50%; border:2px solid var(--rc); display:none; align-items:center; justify-content:center; font-size:11px; color:#0c0f15; font-weight:900; }
+  .req.on .rcount{ display:none; } .req.on .check{ display:flex; background:var(--rc); }
+
+  /* spec groups + nodes */
+  .group{ background:rgba(20,25,35,.55); border:1px solid var(--line); border-radius:13px; padding:11px 11px 12px; backdrop-filter:blur(2px); }
+  .group .gh{ display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+  .group .gh .gi{ font-size:10px; font-weight:900; letter-spacing:.08em; color:#0c0f15; background:var(--gc); padding:2px 8px; border-radius:6px; }
+  .group .gh .gn{ font-size:12px; font-weight:900; color:var(--txt); }
+  .group .gh a{ margin-left:auto; font-size:10px; color:var(--txt2); text-decoration:none; border:1px solid var(--line); padding:2px 7px; border-radius:20px; }
+  .group .gh a:hover{ color:#fff; border-color:var(--gold); }
+  .nodes{ display:flex; flex-direction:column; gap:7px; }
+  .node{ position:relative; display:flex; align-items:center; gap:8px; background:#0e131d; border:1px solid var(--line); border-radius:9px; padding:8px 10px; font-size:12px; font-weight:700; color:var(--txt2); transition:.18s; cursor:default; }
+  .node .dots{ margin-left:auto; display:flex; gap:3px; }
+  .node .dots i{ width:7px; height:7px; border-radius:50%; background:var(--dc); display:none; box-shadow:0 0 6px var(--dc); }
+  .node.hot{ color:#fff; border-color:var(--gold); background:linear-gradient(180deg,#1d2433,#141a26); box-shadow:0 0 0 1px rgba(232,165,75,.4), 0 8px 22px -12px rgba(232,165,75,.6); }
+  .node.hot .dots i.show{ display:block; }
+  .node.cold{ opacity:.4; }
+  .node .ncount{ position:absolute; right:9px; top:-8px; font-family:'Roboto Mono',monospace; font-size:9px; font-weight:700; color:#0c0f15; background:var(--gold); border-radius:10px; padding:1px 6px; display:none; }
+  .node.hot .ncount{ display:block; }
+
+  /* legend + detail */
+  .footgrid{ display:grid; grid-template-columns:1fr 320px; gap:16px; margin-top:22px; }
+  .detail{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:15px 16px; min-height:96px; font-size:13px; line-height:1.6; }
+  .detail .dt-h{ font-size:11px; font-weight:900; letter-spacing:.1em; color:var(--gold); margin-bottom:6px; }
+  .detail.idle{ color:var(--muted); }
+  .detail .chip{ display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; margin:3px 4px 0 0; background:#0e131d; border:1px solid var(--line); color:var(--txt2); }
+  .legend{ background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:14px 16px; }
+  .legend .dt-h{ font-size:11px; font-weight:900; letter-spacing:.1em; color:var(--txt2); margin-bottom:9px; }
+  .lg{ display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; padding:3px 0; color:var(--txt2); }
+  .lg i{ width:13px; height:5px; border-radius:3px; background:var(--lc); box-shadow:0 0 8px var(--lc); }
+  .hint{ font-size:11px; color:var(--muted); margin-top:12px; text-align:center; }
+  @media(max-width:860px){
+    .board{ grid-template-columns:1fr; } svg.links{ display:none; }
+    .col.reqs{ padding-right:0; } .col.specs{ padding-left:0; }
+    .footgrid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow">渡辺謄写堂 業務管理システム v3</div>
+      <h1>要件 <span class="accent">→</span> 仕様書 影響マップ</h1>
+      <div class="lead">「まだ何も作っていない」状態を起点に、要件を選ぶ（重ねる）と、<b>どの仕様書の領域に影響するか</b>が線でつながります。左の要件カードをクリック、または下のプリセットでお試しください。</div>
+    </div>
+    <div class="counters">
+      <div class="big">影響する仕様領域</div>
+      <div class="num"><b id="cArea">0</b> <span style="font-size:18px;color:var(--txt2)">/ 15</span></div>
+      <div class="sub">選択中の要件：<span class="mono" id="cReq">0</span> / 6 件</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <span class="lbl">プリセット</span>
+    <button class="pbtn" data-preset="1">要件①のみ</button>
+    <button class="pbtn" data-preset="3,6">③＋⑥</button>
+    <button class="pbtn" data-preset="4,5">ステータス系 ④＋⑤</button>
+    <button class="pbtn" data-preset="1,2,3,4,5,6">全要件</button>
+    <button class="pbtn ghost" data-preset="">クリア</button>
+    <button class="pbtn play" id="playBtn">▶ 順に重ねる</button>
+  </div>
+
+  <div class="board" id="board">
+    <svg class="links" id="links"></svg>
+
+    <div class="col reqs">
+      <div class="colcap">要件（REQUIREMENTS）</div>
+      <div id="reqList"></div>
+    </div>
+
+    <div class="col specs">
+      <div class="colcap">仕様書の領域（bubble_handoff.html）</div>
+      <div id="specList"></div>
+    </div>
+  </div>
+
+  <div class="footgrid">
+    <div class="detail idle" id="detail">
+      <div class="dt-h">▶ 詳細</div>
+      要件カードや仕様領域にカーソルを合わせると、ここに「内容」と「影響する相手」が表示されます。クリックで選択を重ねられます。
+    </div>
+    <div class="legend">
+      <div class="dt-h">凡例（要件カラー）</div>
+      <div id="legendList"></div>
+    </div>
+  </div>
+
+  <div class="hint">線の色 = 要件の色。仕様領域の右肩の数字 = その領域に影響している要件の数。各グループの「↗」で実際の仕様書（handoff）の該当章へ。</div>
+</div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s);};
+  var REQ_COLORS={1:'#3B82F6',2:'#F59E0B',3:'#14B8A6',4:'#EF4444',5:'#A855F7',6:'#22C55E'};
+  var REQS=[
+    {id:1,t:'案件タグ「新規」',d:'案件タグに「新規」を追加する。',areas:['os-tag','scr-form']},
+    {id:2,t:'金額入力 税抜/税込',d:'明細小計を「税抜」「税込」それぞれの入力欄に。どちらを入力しても自動換算（内部は税抜で保持）。',areas:['dt-item','calc-tax','scr-form']},
+    {id:3,t:'顧客メモ 未保存警告',d:'顧客メモを保存せず別ページへ移動しようとした場合に警告を表示。',areas:['dt-customer','scr-customer']},
+    {id:4,t:'ステータス5項目に統一',d:'工場看板側に統一し、見積もり段階/受注/印刷中/完成/納品済みの5項目に整理。',areas:['os-status','dt-order','dt-factory','calc-statuslink','scr-kanban','scr-badge','scr-form']},
+    {id:5,t:'不要ステータス廃止',d:'「待機」「キャンセル」を廃止。キャンセル案件は削除で対応。',areas:['os-status','scr-kanban','calc-statuslink','perm-role']},
+    {id:6,t:'担当者名 正確表記',d:'担当者6名を正式表記で登録。役職のかっこ書き表示は廃止。',areas:['dt-user','scr-login','perm-role']}
+  ];
+  var GROUPS=[
+    {g:'os',  gi:'OS',  gn:'Option Set 仕様',     a:'option', c:'#3B82F6', items:['os-tag','os-status']},
+    {g:'dt',  gi:'DATA',gn:'データモデル 仕様',   a:'model',  c:'#14B8A6', items:['dt-order','dt-item','dt-user','dt-factory','dt-customer']},
+    {g:'calc',gi:'LOGIC',gn:'計算・条件ロジック 仕様',a:'logic', c:'#F59E0B', items:['calc-tax','calc-statuslink']},
+    {g:'scr', gi:'UI',  gn:'画面・権限 仕様',     a:'screen', c:'#A855F7', items:['scr-form','scr-kanban','scr-customer','scr-badge','scr-login','perm-role']}
+  ];
+  var AREA={
+    'os-tag':'タグ（新規を追加）','os-status':'受注ステータス（5項目）',
+    'dt-order':'Order（状態・値引き）','dt-item':'OrderItem（小計・税）','dt-user':'User（担当者6名）','dt-factory':'FactoryRecord（工場進捗）','dt-customer':'Customer（メモ）',
+    'calc-tax':'税抜⇄税込 換算','calc-statuslink':'ステータス連動（時刻・納品日）',
+    'scr-form':'受注フォーム・明細','scr-kanban':'工場カンバン','scr-customer':'顧客詳細（メモUI）','scr-badge':'ステータスバッジ・共通部品','scr-login':'ログイン（担当者表示）','perm-role':'権限・ロール'
+  };
+  var HANDOFF='https://myudai-uns.github.io/watanabe-mockup/v3/bubble_handoff.html';
+  // 逆引き：areaId -> [reqId...]
+  var REV={}; Object.keys(AREA).forEach(function(a){REV[a]=[];});
+  REQS.forEach(function(r){ r.areas.forEach(function(a){ if(REV[a]) REV[a].push(r.id); }); });
+
+  var selected=new Set();
+  var hoverReq=null, hoverArea=null;
+
+  // ---- build requirement cards
+  var reqList=$('#reqList');
+  REQS.forEach(function(r){
+    var el=document.createElement('div'); el.className='req'; el.setAttribute('data-reqid',r.id);
+    el.style.setProperty('--rc',REQ_COLORS[r.id]);
+    el.innerHTML='<div class="rnum">REQ '+(r.id<10?'0':'')+r.id+'</div><div class="rt">'+r.t+'</div>'
+      +'<div class="rcount">影響 '+r.areas.length+'領域</div><div class="check">✓</div>'
+      +'<div class="rd">'+r.d+'</div>';
+    el.addEventListener('click',function(){ if(selected.has(r.id))selected.delete(r.id); else selected.add(r.id); render(); });
+    el.addEventListener('mouseenter',function(){ hoverReq=r.id; showReqDetail(r); render(); });
+    el.addEventListener('mouseleave',function(){ hoverReq=null; render(); });
+    reqList.appendChild(el);
+  });
+
+  // ---- build spec groups
+  var specList=$('#specList');
+  GROUPS.forEach(function(G){
+    var g=document.createElement('div'); g.className='group'; g.style.setProperty('--gc',G.c);
+    var head='<div class="gh"><span class="gi">'+G.gi+'</span><span class="gn">'+G.gn+'</span><a href="'+HANDOFF+'#'+G.a+'" target="_blank" rel="noopener">↗ 仕様書</a></div>';
+    var nodes='<div class="nodes">';
+    G.items.forEach(function(a){
+      var dots='<span class="dots">'+[1,2,3,4,5,6].map(function(i){return '<i data-r="'+i+'" style="--dc:'+REQ_COLORS[i]+'"></i>';}).join('')+'</span>';
+      nodes+='<div class="node" data-areaid="'+a+'"><span class="nlabel">'+AREA[a]+'</span>'+dots+'<span class="ncount">0</span></div>';
+    });
+    nodes+='</div>';
+    g.innerHTML=head+nodes;
+    specList.appendChild(g);
+  });
+  // node hover
+  document.querySelectorAll('.node').forEach(function(n){
+    var a=n.getAttribute('data-areaid');
+    n.addEventListener('mouseenter',function(){ hoverArea=a; showAreaDetail(a); render(); });
+    n.addEventListener('mouseleave',function(){ hoverArea=null; render(); });
+  });
+
+  // ---- legend
+  var lg=$('#legendList');
+  REQS.forEach(function(r){ var d=document.createElement('div'); d.className='lg'; d.style.setProperty('--lc',REQ_COLORS[r.id]);
+    d.innerHTML='<i></i> <span style="color:#fff">REQ'+r.id+'</span>&nbsp;'+r.t; lg.appendChild(d); });
+
+  // ---- detail panel
+  function showReqDetail(r){
+    var d=$('#detail'); d.classList.remove('idle');
+    var chips=r.areas.map(function(a){return '<span class="chip">'+AREA[a]+'</span>';}).join('');
+    d.innerHTML='<div class="dt-h" style="color:'+REQ_COLORS[r.id]+'">REQ '+r.id+'：'+r.t+'</div>'+r.d+'<div style="margin-top:8px">影響する仕様領域（'+r.areas.length+'）：'+chips+'</div>';
+  }
+  function showAreaDetail(a){
+    var d=$('#detail'); d.classList.remove('idle');
+    var rs=REV[a]; var chips=rs.map(function(i){return '<span class="chip" style="border-color:'+REQ_COLORS[i]+';color:#fff">REQ'+i+'</span>';}).join('') || '<span class="chip">（この領域に影響する要件はありません）</span>';
+    d.innerHTML='<div class="dt-h">仕様領域：'+AREA[a]+'</div>この領域に影響する要件（'+rs.length+'）：<div style="margin-top:6px">'+chips+'</div>';
+  }
+
+  // ---- SVG link drawing
+  var board=$('#board'), svg=$('#links');
+  function pt(el,side){ var b=el.getBoundingClientRect(), c=board.getBoundingClientRect();
+    return { x:(side==='r'? b.right-c.left : b.left-c.left), y:b.top-c.top+b.height/2 }; }
+  function edge(s,e,color,opacity,width,dash){
+    var dx=Math.max(50,(e.x-s.x)*0.42);
+    var p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M'+s.x+','+s.y+' C'+(s.x+dx)+','+s.y+' '+(e.x-dx)+','+e.y+' '+e.x+','+e.y);
+    p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width',width);
+    p.setAttribute('stroke-linecap','round'); p.style.opacity=0;
+    if(dash) p.setAttribute('stroke-dasharray','5 5');
+    p.style.filter='drop-shadow(0 0 4px '+color+'88)';
+    svg.appendChild(p);
+    requestAnimationFrame(function(){ p.style.transition='opacity .45s ease'; p.style.opacity=opacity; });
+  }
+  function drawLinks(){
+    svg.innerHTML='';
+    if(board.getBoundingClientRect().width<700) return; // モバイルは線なし
+    // selected edges
+    selected.forEach(function(rid){
+      var rc=document.querySelector('.req[data-reqid="'+rid+'"]'); if(!rc)return;
+      var s=pt(rc,'r');
+      REQS[rid-1].areas.forEach(function(a){
+        var nn=document.querySelector('.node[data-areaid="'+a+'"]'); if(!nn)return;
+        var emph = (hoverArea===a)||(hoverReq===rid);
+        edge(s, pt(nn,'l'), REQ_COLORS[rid], emph?0.95:0.62, emph?3:2, false);
+      });
+    });
+    // hover preview for non-selected requirement
+    if(hoverReq && !selected.has(hoverReq)){
+      var rc2=document.querySelector('.req[data-reqid="'+hoverReq+'"]'); if(rc2){ var s2=pt(rc2,'r');
+        REQS[hoverReq-1].areas.forEach(function(a){ var nn=document.querySelector('.node[data-areaid="'+a+'"]'); if(nn) edge(s2,pt(nn,'l'),REQ_COLORS[hoverReq],0.8,2,true); });
+      }
+    }
+  }
+
+  // ---- render state
+  function render(){
+    // union of areas
+    var union={}; selected.forEach(function(rid){ REQS[rid-1].areas.forEach(function(a){ union[a]=(union[a]||0)+1; }); });
+    // requirement cards
+    document.querySelectorAll('.req').forEach(function(el){ var id=+el.getAttribute('data-reqid');
+      el.classList.toggle('on', selected.has(id));
+      el.classList.toggle('dim', selected.size>0 && !selected.has(id) && hoverReq!==id);
+    });
+    // nodes
+    document.querySelectorAll('.node').forEach(function(n){ var a=n.getAttribute('data-areaid');
+      var cnt=union[a]||0; var hot=cnt>0;
+      // hover area: also light its source reqs' edges already handled; mark node hot on hover even if not selected
+      n.classList.toggle('hot', hot || hoverArea===a);
+      n.classList.toggle('cold', selected.size>0 && !hot && hoverArea!==a);
+      var nc=n.querySelector('.ncount'); nc.textContent=cnt;
+      n.querySelectorAll('.dots i').forEach(function(d){ var r=+d.getAttribute('data-r'); d.classList.toggle('show', selected.has(r) && REQS[r-1].areas.indexOf(a)>=0); });
+    });
+    // counters
+    $('#cArea').textContent=Object.keys(union).length;
+    $('#cReq').textContent=selected.size;
+    drawLinks();
+  }
+
+  // ---- presets
+  document.querySelectorAll('[data-preset]').forEach(function(b){ b.addEventListener('click',function(){
+    stopPlay(); selected=new Set(); var v=b.getAttribute('data-preset'); if(v) v.split(',').forEach(function(x){selected.add(+x);}); render();
+  });});
+
+  // ---- play (順に重ねる)
+  var timer=null;
+  function stopPlay(){ if(timer){clearInterval(timer);timer=null; $('#playBtn').textContent='▶ 順に重ねる';} }
+  $('#playBtn').addEventListener('click',function(){
+    if(timer){ stopPlay(); return; }
+    selected=new Set(); render(); var i=0; $('#playBtn').textContent='■ 停止';
+    timer=setInterval(function(){ i++; if(i>6){ stopPlay(); return; } selected.add(i); render(); },900);
+  });
+
+  // initial + resize
+  render();
+  var rt; window.addEventListener('resize',function(){ clearTimeout(rt); rt=setTimeout(drawLinks,120); });
+  window.addEventListener('load',function(){ setTimeout(drawLinks,200); });
+})();
+</script>
+</body>
+</html>
