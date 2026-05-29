@@ -131,7 +131,7 @@ tailwind.config = { theme: { extend: {
         <table><thead><tr><th>項目</th><th>標準値</th></tr></thead><tbody>
           <tr><td>角丸（全要素共通）</td><td><code>rounded</code> = <b>4px</b>（カード/ボタン/入力/バッジ/トースト）</td></tr>
           <tr><td>例外</td><td>大カード上辺 <code>rounded-t</code> ／ 丸要素 <code>rounded-full</code>（rounded-lg=8pxは限定）</td></tr>
-          <tr><td>入力枠</td><td><code>border border-ink-300</code>（#B5B5B5）、focus=brand</td></tr>
+          <tr><td>入力枠</td><td><code>border border-[#E5E7EB]</code>（<b>#E5E7EB</b>＝Tailwind既定 border・実測一致）、focus=brand</td></tr>
           <tr><td>影</td><td>カード <code>shadow-sm</code> ／ モーダル <code>shadow-lg</code></td></tr>
         </tbody></table>
       </div>
@@ -159,7 +159,7 @@ tailwind.config = { theme: { extend: {
     <table><thead><tr><th>部品</th><th>標準クラス（Tailwind相当）</th></tr></thead><tbody>
       <tr><td>主ボタン</td><td><code>bg-brand text-white rounded px-4 py-2 font-bold</code></td></tr>
       <tr><td>副ボタン</td><td><code>border border-[#E5E7EB] text-ink-900 rounded px-3 py-1.5</code>（枠色 <b>#E5E7EB</b>＝Tailwind既定 border。クリア/前/次）</td></tr>
-      <tr><td>入力 / select</td><td><code>border border-ink-300 rounded px-2 py-1.5 text-sm</code></td></tr>
+      <tr><td>入力 / select</td><td><code>border border-[#E5E7EB] rounded px-2 py-1.5 text-sm</code>（bg白・focus=brand）</td></tr>
       <tr><td>カード / セクション</td><td><code>bg-white rounded shadow-sm p-4</code></td></tr>
       <tr><td>ステータスバッジ</td><td><code>.st</code>＝<b>背景なし・文字色のみ・font-bold・サイズは親継承</b>。色は <code>OrderStatus.color</code> と一致（見積=#1E3A8A / 受注=#DC2626 / 印刷中=#B45309 / 完成=#2A7A44 / 納品済み=#6B7280）</td></tr>
       <tr><td>タグchip（v3.1）</td><td><code>Tag.color</code> 背景＋<b>白文字 12·700・rounded・px-2</b>（案件タグ：新規/急ぎ/リピート等）。※一覧で灰に統一する設計も可（§3 Tag 備考）</td></tr>
@@ -188,7 +188,7 @@ tailwind.config = { theme: { extend: {
     <table><thead><tr><th style="width:130px">Bubble 要素</th><th>定義する Style</th><th>仕様（Tailwind相当 / 備考）</th></tr></thead><tbody>
       <tr><td>Text</td><td>Heading XL / Subheading / Bold SM / Body SM / Body XS / Mono XS / Mono SM / Label / Field Label / Caption / Caption XS / Section Title / Status badge / Tag chip / Overdue label / Required mark / Item-No badge / Total amount / Page-item label / <b>Kind badge</b> / <b>Column title</b> <span class="text-ink-500">（末尾2つ=顧客/カンバンで追加）</span></td><td>24·900 黒（受注/見積番号は <b>mono変種</b>） ／ 16–18·700（色条件:黒/<b>赤=印刷の納期強調</b>） ／ 14·700 黒 ／ 14·400 黒 ／ 12·400 黒 ／ 12·400 mono（<b>補助は#707070</b>） ／ 14 mono（色/太さ条件付き） ／ 12·700 #707070 ／ 12·700 黒 ／ 14·400 #707070 ／ 12·400 #707070 ／ 14–18·700（色条件:白=濃色帯/黒=明色パネル） ／ 14·700 ＋状態色 ／ <b>12–14</b>·700 白＋Tag色背景 ／ 12·700 #9333EA(紫) ／ 12·700 #DC2626（必須*） ／ 12·900 白＋色背景（明細#N） ／ <b>18–24·900</b> ＋色(brand/黒/#707070)・¥は等幅（<b>合計/KPI数値</b>） ／ 12·700 #7E22CE（ページ物） ／ <b>14·700 ＋種別色</b>（地域=#1D4ED8/企業=#92400E） ／ <b>16·900 ＋状態色</b>（カンバン列見出し）</td></tr>
       <tr><td>Button</td><td>Primary / Secondary / Danger / Page (紫) / Add (normal) / Ghost brand / <b>Dark</b></td><td><code>bg-brand text-white rounded px-4 py-2 font-bold</code> ／ <code>border border-[#E5E7EB] rounded px-3 py-1.5</code> ／ <code>border-red-500 text-red-500</code>（＋枠なしtext変種=#EF4444のみ） ／ <code>bg-[#7E22CE] text-white</code>（ページ物） ／ <code>白文字＋白枠・透明</code>（濃色面の＋通常を追加） ／ <code>text-brand・枠は任意(#E5E7EB or 枠なし)・透明</code>（＋新規/この仕様でコピー） ／ <b><code>bg-[#1A1A1A] text-white</code></b>（PDF出力/印刷）</td></tr>
-      <tr><td>Input</td><td>Field – Base</td><td><code>border border-ink-300 rounded px-2 py-1.5 text-sm</code>（focus=brand）</td></tr>
+      <tr><td>Input</td><td>Field – Base</td><td><code>border border-[#E5E7EB] rounded px-2 py-1.5 text-sm</code>（bg白・focus=brand）</td></tr>
       <tr><td>Multiline Input</td><td>Field – Base（共用）</td><td>同上（textarea：備考・メモ）</td></tr>
       <tr><td>Dropdown</td><td>Field – Base（共用）</td><td>同上（顧客・担当者・用紙・インク等）</td></tr>
       <tr><td>Search Box</td><td>Field – Base（共用）</td><td>同上（顧客名検索）</td></tr>
@@ -199,7 +199,7 @@ tailwind.config = { theme: { extend: {
       <tr><td>Picture Uploader</td><td>—</td><td>未使用（添付は File Uploader で対応）</td></tr>
       <tr><td>Slider Input</td><td>—</td><td>未使用</td></tr>
       <tr><td>Group</td><td>Card / Title Bar / Section</td><td><code>bg-white rounded shadow-sm p-4</code> ／ タイトル帯 <code>bg-ink-900(or色) text-white rounded-t</code> ／ レイアウト用は無地</td></tr>
-      <tr><td>Repeating Group</td><td>RG – List / RG – Row</td><td>行 <code>border-t hover:bg-brand/5</code>・50件/頁（受注一覧・履歴・カンバン・顧客一覧）</td></tr>
+      <tr><td>Repeating Group</td><td>RG – List / RG – Row</td><td>行 <code>border-t #E5E7EB hover:bg-brand/5</code>・50件/頁（受注一覧・履歴・カンバン・顧客一覧）。ページネーション帯も <code>border-t #E5E7EB</code></td></tr>
       <tr><td>Popup</td><td>Popup – Modal</td><td><code>bg-white rounded shadow-lg</code>（新規/編集 顧客モーダル）</td></tr>
       <tr><td>Floating Group</td><td>FloatingGroup – Card</td><td>右サイド見積サマリー等 ／ トースト容器</td></tr>
       <tr><td>Group Focus</td><td>—</td><td>未使用（将来のポップオーバー/メニュー用）</td></tr>
