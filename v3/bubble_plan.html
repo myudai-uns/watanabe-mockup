@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>渡辺謄写堂 × Bubble 構築プラン（インフォグラフィック）</title>
+<title>渡辺謄写堂 × Bubble 構築プラン（インタラクティブ）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -22,7 +22,11 @@
   .delivery .date{ font-size:40px; font-weight:900; color:#fff; line-height:1; }
   .delivery .date b{ color:var(--orange); }
   .delivery .sub{ font-size:12px; color:var(--green); font-weight:700; margin-top:4px; }
-  section{ margin-top:30px; }
+  .hint{ background:var(--ink2); color:#cfd2d8; font-size:11.5px; font-weight:700; text-align:center; padding:7px; }
+  .hint b{ color:var(--orange); }
+
+  section{ margin-top:30px; opacity:0; transform:translateY(18px); transition:opacity .55s ease, transform .55s ease; }
+  section.in{ opacity:1; transform:none; }
   .sechead{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .sechead .no{ background:var(--ink); color:#fff; font-weight:900; font-size:13px; width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; }
   .sechead h2{ font-size:19px; font-weight:900; }
@@ -35,7 +39,9 @@
 
   /* flow */
   .flow{ display:flex; flex-wrap:wrap; gap:8px; }
-  .step{ position:relative; background:var(--ink); color:#fff; border-radius:10px; padding:10px 12px; flex:1 1 calc(20% - 8px); min-width:150px; }
+  .step{ position:relative; background:var(--ink); color:#fff; border-radius:10px; padding:10px 12px; flex:1 1 calc(20% - 8px); min-width:150px; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, outline-color .15s; outline:2px solid transparent; }
+  .step:hover{ transform:translateY(-3px); box-shadow:0 6px 16px rgba(0,0,0,.18); }
+  .step.hl{ outline-color:var(--green); }
   .step .n{ font-size:11px; font-weight:900; color:var(--orange); }
   .step .t{ font-size:13px; font-weight:700; margin-top:2px; line-height:1.25; }
   .step .p{ position:absolute; top:8px; right:10px; font-size:12px; font-weight:900; color:var(--green); }
@@ -43,35 +49,47 @@
   .step.warn{ background:#7a3b12; }
 
   /* bars */
+  .toggle{ display:flex; gap:6px; margin-bottom:12px; align-items:center; flex-wrap:wrap; }
+  .toggle .lab{ font-size:11px; font-weight:700; color:var(--muted); margin-right:2px; }
+  .toggle button{ font:inherit; font-size:12px; font-weight:900; padding:6px 13px; border:none; border-radius:20px; cursor:pointer; background:#fff; color:#16181D; box-shadow:0 1px 2px rgba(0,0,0,.1); transition:.15s; }
+  .toggle button.on{ background:var(--orange); color:#fff; }
   .bars{ background:#fff; border-radius:12px; padding:18px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
-  .bar{ display:flex; align-items:center; gap:10px; margin:7px 0; }
-  .bar .lab{ width:200px; font-size:12.5px; font-weight:700; text-align:right; flex-shrink:0; }
-  .bar .track{ flex:1; background:var(--gray); border-radius:6px; height:20px; overflow:hidden; }
-  .bar .fill{ height:100%; border-radius:6px; background:var(--orange); display:flex; align-items:center; }
-  .bar .pct{ width:40px; font-size:13px; font-weight:900; text-align:right; }
+  .bar{ display:flex; align-items:center; gap:10px; margin:7px 0; cursor:default; }
+  .bar .lab{ width:210px; font-size:12.5px; font-weight:700; text-align:right; flex-shrink:0; transition:color .15s; }
+  .bar .track{ flex:1; background:var(--gray); border-radius:6px; height:20px; overflow:hidden; transition:box-shadow .15s; }
+  .bar .fill{ height:100%; border-radius:6px; background:var(--orange); width:0; transition:width .9s cubic-bezier(.22,.61,.36,1); }
+  .bar .pct{ width:42px; font-size:13px; font-weight:900; text-align:right; }
   .bar.peak .fill{ background:var(--orange); } .bar.mid .fill{ background:var(--orange-d); } .bar.low .fill{ background:#C9A07B; }
+  .bar.hl .lab{ color:var(--orange-d); } .bar.hl .track{ box-shadow:0 0 0 2px var(--orange); }
   .insight{ margin-top:12px; background:#FFF1E6; border-left:5px solid var(--orange); border-radius:8px; padding:10px 14px; font-size:13px; font-weight:700; }
 
   /* gantt */
   .gantt{ background:#fff; border-radius:12px; padding:18px 16px 14px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
-  .grow{ display:flex; align-items:center; gap:8px; margin:6px 0; }
-  .grow .gl{ width:118px; font-size:11.5px; font-weight:700; text-align:right; flex-shrink:0; color:#3a3a3a; }
-  .gbar{ flex:1; display:flex; height:22px; border-radius:5px; overflow:hidden; background:var(--gray); }
-  .seg{ height:100%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff; white-space:nowrap; }
+  .grow{ display:flex; align-items:center; gap:8px; margin:6px 0; cursor:pointer; }
+  .grow .gl{ width:118px; font-size:11.5px; font-weight:700; text-align:right; flex-shrink:0; color:#3a3a3a; transition:color .15s; }
+  .gbar{ flex:1; display:flex; height:22px; border-radius:5px; overflow:hidden; background:var(--gray); transition:box-shadow .15s; }
+  .seg{ height:100%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900; color:#fff; white-space:nowrap; transition:filter .15s; width:0; }
+  .gantt.in .seg{ width:100%; transition:width .8s cubic-bezier(.22,.61,.36,1); }
+  .grow:hover .seg{ filter:brightness(1.1); }
+  .grow.hl .gbar{ box-shadow:0 0 0 2px var(--orange); } .grow.hl .gl{ color:var(--orange-d); }
   .axis{ display:flex; margin-left:126px; margin-top:6px; font-size:10px; color:var(--muted); font-weight:700; }
   .axis span{ flex:1; text-align:left; }
   .mile{ display:flex; margin-left:126px; margin-top:8px; position:relative; height:46px; }
-  .mpin{ position:absolute; transform:translateX(-50%); text-align:center; }
-  .mpin .dot{ width:12px; height:12px; border-radius:50%; background:var(--green); margin:0 auto; border:2px solid #fff; box-shadow:0 0 0 1px var(--green); }
+  .mpin{ position:absolute; transform:translateX(-50%); text-align:center; cursor:default; }
+  .mpin .dot{ width:12px; height:12px; border-radius:50%; background:var(--green); margin:0 auto; border:2px solid #fff; box-shadow:0 0 0 1px var(--green); transition:transform .15s; }
+  .mpin:hover .dot{ transform:scale(1.5); }
   .mpin .mt{ font-size:9.5px; font-weight:900; margin-top:3px; color:var(--green-d); line-height:1.15; }
   .mpin.fin .dot{ background:var(--red); box-shadow:0 0 0 1px var(--red); } .mpin.fin .mt{ color:var(--red); }
+  .gdetail{ margin-top:14px; font-size:12.5px; background:#F3F4F6; border-left:4px solid var(--orange); border-radius:6px; padding:10px 14px; line-height:1.5; }
+  .gdetail b{ color:var(--orange-d); }
 
   /* skill */
   .two{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .panel{ background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
   .panel h3{ font-size:14px; font-weight:900; margin-bottom:8px; }
   .gauge{ height:12px; background:var(--gray); border-radius:6px; overflow:hidden; margin:6px 0 4px; }
-  .gauge i{ display:block; height:100%; width:58%; background:linear-gradient(90deg,var(--green),var(--orange)); }
+  .gauge i{ display:block; height:100%; width:0; background:linear-gradient(90deg,var(--green),var(--orange)); transition:width 1s ease .2s; }
+  section.in .gauge i{ width:58%; }
   .lvl{ font-size:12px; font-weight:900; }
   ul.chk{ list-style:none; font-size:12.5px; }
   ul.chk li{ padding:3px 0 3px 20px; position:relative; }
@@ -102,6 +120,7 @@
     </div>
   </div>
 </div>
+<div class="hint">▶ <b>インタラクティブ資料</b>：工程カードやガントに<b>カーソルを合わせると連動ハイライト</b>。工数バーは<b>シナリオ切替</b>、ガントは<b>クリックで詳細</b>。</div>
 
 <div class="wrap">
 
@@ -116,48 +135,53 @@
 
   <!-- 構築フロー -->
   <section>
-    <div class="sechead"><span class="no">1</span><h2>構築フロー</h2><span class="tag">データ → 部品 → 表示 → 入力 → 複雑機能</span></div>
+    <div class="sechead"><span class="no">1</span><h2>構築フロー</h2><span class="tag">ホバーで連動 ▸ データ → 部品 → 表示 → 入力 → 複雑機能</span></div>
     <div class="flow">
-      <div class="step"><div class="n">STEP 01</div><div class="t">Option Set</div><div class="p">3%</div></div>
-      <div class="step"><div class="n">STEP 02</div><div class="t">Data Type</div><div class="p">5%</div></div>
-      <div class="step"><div class="n">STEP 03</div><div class="t">シードCSV投入</div><div class="p">2%</div></div>
-      <div class="step"><div class="n">STEP 04</div><div class="t">Reusable部品</div><div class="p">7%</div></div>
-      <div class="step"><div class="n">STEP 05</div><div class="t">表示画面（RG）</div><div class="p">15%</div></div>
-      <div class="step hot"><div class="n">STEP 06</div><div class="t">入力フォーム＋WF</div><div class="p">32%</div></div>
-      <div class="step warn"><div class="n">STEP 07</div><div class="t">複雑機能 D&amp;D/PDF</div><div class="p">21%</div></div>
-      <div class="step"><div class="n">STEP 08</div><div class="t">権限・レスポンシブ</div><div class="p">9%</div></div>
-      <div class="step"><div class="n">STEP 09</div><div class="t">QA・検証</div><div class="p">6%</div></div>
+      <div class="step" data-step="1"><div class="n">STEP 01</div><div class="t">Option Set</div><div class="p">3%</div></div>
+      <div class="step" data-step="2"><div class="n">STEP 02</div><div class="t">Data Type</div><div class="p">5%</div></div>
+      <div class="step" data-step="3"><div class="n">STEP 03</div><div class="t">シードCSV投入</div><div class="p">2%</div></div>
+      <div class="step" data-step="4"><div class="n">STEP 04</div><div class="t">Reusable部品</div><div class="p">7%</div></div>
+      <div class="step" data-step="5"><div class="n">STEP 05</div><div class="t">表示画面（RG）</div><div class="p">15%</div></div>
+      <div class="step hot" data-step="6"><div class="n">STEP 06</div><div class="t">入力フォーム＋WF</div><div class="p">32%</div></div>
+      <div class="step warn" data-step="7"><div class="n">STEP 07</div><div class="t">複雑機能 D&amp;D/PDF</div><div class="p">21%</div></div>
+      <div class="step" data-step="8"><div class="n">STEP 08</div><div class="t">権限・レスポンシブ</div><div class="p">9%</div></div>
+      <div class="step" data-step="9"><div class="n">STEP 09</div><div class="t">QA・検証</div><div class="p">6%</div></div>
     </div>
   </section>
 
   <!-- 工数比率 -->
   <section>
-    <div class="sechead"><span class="no">2</span><h2>工数比率（学生1名・学習込み）</h2><span class="tag">合計100</span></div>
+    <div class="sechead"><span class="no">2</span><h2>工数比率</h2><span class="tag">合計100</span></div>
+    <div class="toggle">
+      <span class="lab">シナリオ：</span>
+      <button data-sc="intern" class="on">学生1名（学習込み）</button>
+      <button data-sc="base">経験者基準</button>
+    </div>
     <div class="bars">
-      <div class="bar peak"><div class="lab">⑥ 入力フォーム＋workflow</div><div class="track"><div class="fill" style="width:32%"></div></div><div class="pct">32</div></div>
-      <div class="bar peak"><div class="lab">⑦ 複雑機能 (D&amp;D/PDF/未保存)</div><div class="track"><div class="fill" style="width:21%"></div></div><div class="pct">21</div></div>
-      <div class="bar mid"><div class="lab">⑤ 表示画面（一覧・詳細）</div><div class="track"><div class="fill" style="width:15%"></div></div><div class="pct">15</div></div>
-      <div class="bar mid"><div class="lab">⑧ 権限・レスポンシブ</div><div class="track"><div class="fill" style="width:9%"></div></div><div class="pct">9</div></div>
-      <div class="bar low"><div class="lab">④ Reusable部品</div><div class="track"><div class="fill" style="width:7%"></div></div><div class="pct">7</div></div>
-      <div class="bar low"><div class="lab">⑨ QA・検証</div><div class="track"><div class="fill" style="width:6%"></div></div><div class="pct">6</div></div>
-      <div class="bar low"><div class="lab">② Data Type</div><div class="track"><div class="fill" style="width:5%"></div></div><div class="pct">5</div></div>
-      <div class="bar low"><div class="lab">① Option Set</div><div class="track"><div class="fill" style="width:3%"></div></div><div class="pct">3</div></div>
-      <div class="bar low"><div class="lab">③ シードCSV投入</div><div class="track"><div class="fill" style="width:2%"></div></div><div class="pct">2</div></div>
-      <div class="insight">⑥＋⑦＝<b>全体の53%</b>。入力/workflow と プラグイン機能が工数を決める。レイアウト（タイトル＋コンテンツ）自体は軽い。</div>
+      <div class="bar peak" data-step="6" data-intern="32" data-base="30"><div class="lab">⑥ 入力フォーム＋workflow</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar peak" data-step="7" data-intern="21" data-base="16"><div class="lab">⑦ 複雑機能 (D&amp;D/PDF/未保存)</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar mid" data-step="5" data-intern="15" data-base="18"><div class="lab">⑤ 表示画面（一覧・詳細）</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar mid" data-step="8" data-intern="9" data-base="8"><div class="lab">⑧ 権限・レスポンシブ</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="4" data-intern="7" data-base="8"><div class="lab">④ Reusable部品</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="9" data-intern="6" data-base="7"><div class="lab">⑨ QA・検証</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="2" data-intern="5" data-base="7"><div class="lab">② Data Type</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="1" data-intern="3" data-base="4"><div class="lab">① Option Set</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="bar low" data-step="3" data-intern="2" data-base="2"><div class="lab">③ シードCSV投入</div><div class="track"><div class="fill"></div></div><div class="pct">0</div></div>
+      <div class="insight" id="insight"></div>
     </div>
   </section>
 
   <!-- スケジュール（ガント） -->
   <section>
-    <div class="sechead"><span class="no">3</span><h2>スケジュール</h2><span class="tag">5/28 〜 6/18（22日）</span></div>
-    <div class="gantt">
-      <div class="grow"><div class="gl">0 準備</div><div class="gbar"><div class="seg" style="width:100%;background:#5a6068">5/28</div></div></div>
-      <div class="grow"><div class="gl">1 基盤</div><div class="gbar"><div class="seg" style="width:100%;background:var(--blue)">Option/Data/CSV/Reusable</div></div></div>
-      <div class="grow"><div class="gl">2 表示</div><div class="gbar"><div class="seg" style="width:100%;background:#3b7fd1">一覧・詳細・カンバン表示</div></div></div>
-      <div class="grow"><div class="gl">3 入力/WF</div><div class="gbar"><div class="seg" style="width:100%;background:var(--orange)">フォーム・明細・税計算・採番・保存</div></div></div>
-      <div class="grow"><div class="gl">4 複雑+権限</div><div class="gbar"><div class="seg" style="width:100%;background:var(--orange-d)">D&amp;D・PDF・Privacy・レスポンシブ</div></div></div>
-      <div class="grow"><div class="gl">5 QA・修正</div><div class="gbar"><div class="seg" style="width:100%;background:var(--green)">突合・修正・最終レビュー</div></div></div>
-      <div class="grow"><div class="gl">予備/納品</div><div class="gbar"><div class="seg" style="width:50%;background:#9aa0a8">バッファ</div><div class="seg" style="width:50%;background:var(--red)">納品</div></div></div>
+    <div class="sechead"><span class="no">3</span><h2>スケジュール</h2><span class="tag">クリックで詳細 ▸ 5/28 〜 6/18（22日）</span></div>
+    <div class="gantt" id="gantt">
+      <div class="grow" data-steps="" data-ph="0"><div class="gl">0 準備</div><div class="gbar"><div class="seg" style="background:#5a6068">5/28</div></div></div>
+      <div class="grow" data-steps="1,2,3,4" data-ph="1"><div class="gl">1 基盤</div><div class="gbar"><div class="seg" style="background:var(--blue)">Option/Data/CSV/Reusable</div></div></div>
+      <div class="grow" data-steps="5" data-ph="2"><div class="gl">2 表示</div><div class="gbar"><div class="seg" style="background:#3b7fd1">一覧・詳細・カンバン表示</div></div></div>
+      <div class="grow" data-steps="6" data-ph="3"><div class="gl">3 入力/WF</div><div class="gbar"><div class="seg" style="background:var(--orange)">フォーム・明細・税計算・採番・保存</div></div></div>
+      <div class="grow" data-steps="7,8" data-ph="4"><div class="gl">4 複雑+権限</div><div class="gbar"><div class="seg" style="background:var(--orange-d)">D&amp;D・PDF・Privacy・レスポンシブ</div></div></div>
+      <div class="grow" data-steps="9" data-ph="5"><div class="gl">5 QA・修正</div><div class="gbar"><div class="seg" style="background:var(--green)">突合・修正・最終レビュー</div></div></div>
+      <div class="grow" data-steps="" data-ph="6"><div class="gl">予備/納品</div><div class="gbar"><div class="seg" style="width:50%;background:#9aa0a8">バッファ</div><div class="seg" style="width:50%;background:var(--red)">納品</div></div></div>
       <div class="axis"><span>5/28</span><span>6/1</span><span>6/4</span><span>6/8</span><span>6/11</span><span>6/14</span><span>6/18</span></div>
       <div class="mile">
         <div class="mpin" style="left:18%"><div class="dot"></div><div class="mt">M1 基盤<br>5/31</div></div>
@@ -167,6 +191,7 @@
         <div class="mpin" style="left:91%"><div class="dot"></div><div class="mt">M5 QA<br>6/16</div></div>
         <div class="mpin fin" style="left:100%"><div class="dot"></div><div class="mt">納品<br>6/18</div></div>
       </div>
+      <div class="gdetail" id="gdetail">▶ 各フェーズの帯をクリックすると、作業内容とマイルストーンを表示します。</div>
     </div>
   </section>
 
@@ -208,7 +233,66 @@
     </div>
   </section>
 
-  <footer>渡辺謄写堂 業務管理システム v3 ／ Bubble構築プラン インフォグラフィック ｜ 詳細仕様は <b>bubble_handoff.html</b> 参照</footer>
+  <footer>渡辺謄写堂 業務管理システム v3 ／ Bubble構築プラン（インタラクティブ）｜ 詳細仕様は <b>bubble_handoff.html</b> 参照</footer>
 </div>
+
+<script>
+(function(){
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+  // 1) スクロールで各セクションを表示
+  const io=new IntersectionObserver((es)=>es.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); if(e.target.classList.contains('bars-host')) applyBars(); io.unobserve(e.target); }
+  }),{threshold:.15});
+  $$('section').forEach(s=>io.observe(s));
+  const gantt=$('#gantt'); if(gantt) new IntersectionObserver((es,o)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');o.unobserve(e.target);}}),{threshold:.2}).observe(gantt);
+
+  // 2) 工数バー：シナリオ切替＋カウントアップ
+  let sc='intern';
+  function countUp(el,to){ const from=parseInt(el.textContent)||0,t0=performance.now(),d=600;
+    (function tick(t){ const k=Math.min(1,(t-t0)/d); el.textContent=Math.round(from+(to-from)*k); if(k<1)requestAnimationFrame(tick); })(performance.now()); }
+  function applyBars(){
+    let sum=0, c67=0;
+    $$('.bar').forEach(b=>{ const v=+b.dataset[sc]; b.querySelector('.fill').style.width=v+'%'; countUp(b.querySelector('.pct'),v); sum+=v; if(b.dataset.step==='6'||b.dataset.step==='7')c67+=v; });
+    $('#insight').innerHTML = sc==='intern'
+      ? '⑥＋⑦＝<b>全体の53%</b>。学習込みでプラグイン機能(⑦)の比重が増す。レイアウト自体は軽い。'
+      : '経験者なら ⑥＋⑦＝<b>46%</b>。学生だと⑦が16→21%に膨らむのが差分（プラグイン未経験のため）。';
+  }
+  // barsを内包するsectionにフラグ
+  const barsSection = $('.bars') && $('.bars').closest('section'); if(barsSection) barsSection.classList.add('bars-host');
+  // 既に表示済みなら即適用
+  if(barsSection && barsSection.classList.contains('in')) applyBars();
+  $$('.toggle button').forEach(btn=>btn.addEventListener('click',()=>{
+    $$('.toggle button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); sc=btn.dataset.sc; applyBars();
+  }));
+
+  // 3) 工程 ⇄ バー ⇄ ガント の連動ハイライト
+  function hl(steps,on){
+    steps.forEach(n=>{ $$('.step[data-step="'+n+'"]').forEach(e=>e.classList.toggle('hl',on)); $$('.bar[data-step="'+n+'"]').forEach(e=>e.classList.toggle('hl',on)); });
+    $$('.grow').forEach(g=>{ const gs=(g.dataset.steps||'').split(',').filter(Boolean); g.classList.toggle('hl', on && steps.some(n=>gs.includes(String(n)))); });
+  }
+  $$('.step').forEach(s=>{ const n=s.dataset.step;
+    s.addEventListener('mouseenter',()=>hl([n],true)); s.addEventListener('mouseleave',()=>hl([n],false)); });
+  $$('.bar').forEach(b=>{ const n=b.dataset.step;
+    b.addEventListener('mouseenter',()=>hl([n],true)); b.addEventListener('mouseleave',()=>hl([n],false)); });
+
+  // 4) ガント：ホバー連動＋クリックで詳細
+  const PH={
+    '0':'<b>0 準備（5/28）</b>：仕様書読込・Bubbleアプリ作成・プラグイン選定。<b>メンターにD&D/PDFのPOC（お手本）を依頼</b>。',
+    '1':'<b>1 基盤（5/29–5/31）</b>：Option Set → Data Type/リレーション → シードCSV投入 → Reusable（ヘッダー/ステータスバッジ=color/カード）。 ▸ <b>M1 基盤完了 5/31</b>',
+    '2':'<b>2 表示（6/1–6/3）</b>：受注一覧・ダッシュボード → 顧客一覧/詳細・受注確認(読取) → 見積書(表示)・カンバンの列/カード表示。 ▸ <b>M2 6/3 レビュー①</b>',
+    '3':'<b>3 入力/WF（6/4–6/9・最重）</b>：フォーム・明細の動的追加削除 → 税抜⇄税込相互計算・合計/消費税/値引按分 → 採番・保存WF・ステータス連動 → 見積編集(値引名目) → 顧客メモ未保存警告。 ▸ <b>M3 6/9 レビュー②</b>',
+    '4':'<b>4 複雑機能＋権限（6/10–6/13）</b>：工場カンバンD&D → 見積PDF出力 → Privacy Rules/権限別表示 → レスポンシブ。 ▸ <b>M4 6/13 レビュー③</b>',
+    '5':'<b>5 QA・修正（6/14–6/16）</b>：シードデータでモックと1:1突合(計算/遷移/条件/採番) → 修正 → 最終レビュー。 ▸ <b>M5 6/16</b>',
+    '6':'<b>予備/納品</b>：6/17 予備バッファ（理想は無作業）／ <b>6/18 最終納品</b>（共有URL・簡易説明）。'
+  };
+  $$('.grow').forEach(g=>{
+    const steps=(g.dataset.steps||'').split(',').filter(Boolean);
+    g.addEventListener('mouseenter',()=>{ g.classList.add('hl'); if(steps.length)hl(steps,true); });
+    g.addEventListener('mouseleave',()=>{ g.classList.remove('hl'); if(steps.length)hl(steps,false); });
+    g.addEventListener('click',()=>{ $('#gdetail').innerHTML=PH[g.dataset.ph]||''; });
+  });
+})();
+</script>
 </body>
 </html>
