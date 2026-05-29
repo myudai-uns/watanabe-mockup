@@ -42,6 +42,7 @@ tailwind.config = { theme: { extend: {
       <a href="#option" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">Option Set</a>
       <a href="#logic" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">計算・採番・条件</a>
       <a href="#screen" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">画面・権限</a>
+      <a href="#schedule" class="bg-brand px-2 py-1 rounded hover:bg-brand-dark">スケジュール</a>
     </nav>
   </div>
 </header>
@@ -423,6 +424,42 @@ tailwind.config = { theme: { extend: {
 
     <div class="note text-xs">
       <b>Bubbleで手間がかかる箇所（後工程・プラグイン要）</b>：①工場カンバンのドラッグ&ドロップ（Draggable Elements）②顧客メモの未保存警告（custom state＋離脱時確認）③見積書PDF出力（PDFプラグイン）④明細の動的追加/削除＋税抜税込即時換算（各入力のworkflow）。レイアウト（タイトル＋コンテンツ）自体はGroup構成で容易。
+    </div>
+  </section>
+
+  <!-- ============ スケジュール ============ -->
+  <section id="schedule" class="card p-6 space-y-4">
+    <h2 class="text-2xl font-black">6. 構築スケジュール（最終納品 2026-06-18）</h2>
+    <p class="text-sm text-ink-700">前提：<b>担当1名（Bubble歴約4か月の研修生想定）</b>・本日5/28起点・最終納品 <b>6/18(木)</b>。フルスコープ維持。ビルド順は「データ→共通部品→表示→入力/WF→複雑機能→権限→QA」。最大の山は<b>入力フォーム＋workflow（全体の約1/3）</b>のため6日確保し、末尾に予備バッファと最終QAを残す。</p>
+
+    <table>
+      <thead><tr><th>期間</th><th>フェーズ</th><th>主な作業</th><th>節目</th></tr></thead>
+      <tbody>
+        <tr><td>5/28(木)</td><td>0. 準備</td><td>仕様書読込・Bubbleアプリ作成・プラグイン選定（D&amp;D/PDF）。<b>メンターにD&amp;D/PDFのPOC（お手本）を依頼</b></td><td></td></tr>
+        <tr><td>5/29(金)〜5/31(日)</td><td>1. 基盤</td><td>Option Set全種 → Data Type/リレーション → シードCSV投入 → Reusable（ヘッダー/ステータスバッジ=color/カード）</td><td><span class="pill" style="background:#2A7A44">M1 基盤完了 5/31</span></td></tr>
+        <tr><td>6/1(月)〜6/3(水)</td><td>2. 表示</td><td>受注一覧・ダッシュボード → 顧客一覧/詳細・受注確認(読取) → 見積書(表示)・カンバンの列/カード表示</td><td><span class="pill" style="background:#2A7A44">M2 表示完了→ﾚﾋﾞｭｰ① 6/3</span></td></tr>
+        <tr><td>6/4(木)〜6/9(火)</td><td>3. 入力/WF（最重）</td><td>受注新規/編集フォーム・明細の動的追加削除 → 税抜⇄税込相互計算・合計/消費税/値引按分 → 採番・保存WF・ステータス連動 → 見積編集(値引名目の自由記載/JA出し分け) → 顧客メモ未保存警告</td><td><span class="pill" style="background:#2A7A44">M3 登録/計算/保存完了→ﾚﾋﾞｭｰ② 6/9</span></td></tr>
+        <tr><td>6/10(水)〜6/13(土)</td><td>4. 複雑機能＋権限</td><td>工場カンバンD&amp;D(プラグイン) → 見積PDF出力(プラグイン) → Privacy Rules/権限別表示 → レスポンシブ調整</td><td><span class="pill" style="background:#2A7A44">M4 全機能完了→ﾚﾋﾞｭｰ③ 6/13</span></td></tr>
+        <tr><td>6/14(日)〜6/16(火)</td><td>5. QA・修正</td><td>シードデータでモックと1:1突合(計算/遷移/条件/採番) → 不具合修正 → 最終QA＋メンター最終レビュー</td><td><span class="pill" style="background:#2A7A44">M5 QA完了 6/16</span></td></tr>
+        <tr><td>6/17(水)</td><td>予備バッファ</td><td>積み残し・微修正のための無作業日（理想は触らない）</td><td></td></tr>
+        <tr><td><b>6/18(木)</b></td><td><b>最終納品</b></td><td>共有URL/アプリ受け渡し・簡易説明</td><td><span class="pill" style="background:#DC2626">納品</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="font-black">運用ルール</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li><b>毎日Slackで進捗1行</b>、詰まったら即 <code>@メンター</code> で質問。</li>
+      <li>各フェーズ末の<b>3回のレビュー（6/3・6/9・6/13）</b>で軌道修正。Privacy Rules（弱点）はレビュー②③でメンター確認を必須に。</li>
+    </ul>
+
+    <h3 class="font-black">成否を分ける2条件</h3>
+    <ol class="list-decimal pl-6 text-sm space-y-1">
+      <li><b>6/4までにメンターがD&amp;D・PDFのPOC（お手本）を用意</b>。この2つは研修未経験で最大のスケジュール変動要因。</li>
+      <li><b>M1(5/31)とM3(6/9)を死守</b>。基盤と入力/WFが遅れると後段が将棋倒しになる。</li>
+    </ol>
+
+    <div class="note text-xs">
+      <b>前提とリスク</b>：本線表は<b>ほぼ毎日（週末含む）稼働</b>前提。週末オフなら収まらないため着手前倒しかメンター分担が必要。6/9時点で入力/WF未完なら黄信号 → 要件は固定のため、descopeではなく<b>メンターがPlugin部を巻き取る／ペア作業</b>で吸収する。
     </div>
   </section>
 
