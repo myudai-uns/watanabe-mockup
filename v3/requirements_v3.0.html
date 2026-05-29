@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 業務管理システム v2.0 要件定義書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand: #E87825;
+    --brand-dark: #B85D16;
+    --brand-light: #FFF4EC;
+    --ok: #3F9D5E;
+    --ink-900: #1A1A1A;
+    --ink-700: #3A3A3A;
+    --ink-500: #707070;
+    --ink-300: #B5B5B5;
+    --bg: #F3F4F6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--ink-900); line-height: 1.7; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  h1 { font-size: 28px; font-weight: 900; border-bottom: 4px solid var(--brand); padding-bottom: 12px; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--ink-500); margin-bottom: 32px; }
+  h2 { font-size: 22px; font-weight: 900; color: white; background: var(--ink-900); padding: 10px 16px; border-radius: 6px 6px 0 0; margin-top: 40px; margin-bottom: 0; }
+  h3 { font-size: 17px; font-weight: 700; color: var(--ink-900); border-left: 4px solid var(--brand); padding-left: 12px; margin-top: 28px; margin-bottom: 12px; }
+  h4 { font-size: 14px; font-weight: 700; color: var(--ink-700); margin-top: 20px; margin-bottom: 8px; }
+  .card { background: white; border-radius: 0 0 6px 6px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 24px; }
+  .card-inner { background: white; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  th { background: var(--ink-900); color: white; text-align: left; padding: 8px 12px; font-weight: 700; font-size: 12px; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:hover { background: rgba(232,120,37,0.03); }
+  .badge { display: inline-block; background: var(--brand); color: white; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .badge-ok { background: var(--ok); }
+  .badge-gray { background: var(--ink-500); }
+  .badge-blue { background: #3B82F6; }
+  .badge-purple { background: #7C3AED; }
+  .badge-red { background: #EF4444; }
+  .required { color: #EF4444; font-weight: 700; font-size: 11px; }
+  .optional { color: var(--ink-500); font-size: 11px; }
+  .flow { background: var(--brand-light); border: 1px solid #f0d0b0; border-radius: 6px; padding: 12px 16px; font-size: 13px; margin: 12px 0; }
+  .flow-step { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .flow-num { background: var(--brand); color: white; font-weight: 900; font-size: 11px; min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+  .toc { background: white; border-radius: 6px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 32px; }
+  .toc a { color: var(--brand-dark); text-decoration: none; font-weight: 500; }
+  .toc a:hover { text-decoration: underline; }
+  .toc ul { list-style: none; padding-left: 0; }
+  .toc li { padding: 4px 0; font-size: 14px; }
+  .toc li::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--brand); border-radius: 2px; margin-right: 8px; }
+  .meta-table td:first-child { font-weight: 700; width: 160px; background: #f9fafb; }
+  .note { background: #eff6ff; border-left: 4px solid #3B82F6; padding: 10px 14px; font-size: 13px; margin: 12px 0; border-radius: 0 4px 4px 0; }
+  .warn { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; font-size: 13px; margin: 12px 0; border-radius: 0 4px 4px 0; }
+  /* ===== スマホ対応: テーブルをカード型縦並びに ===== */
+  @media (max-width: 768px) {
+    .container { padding: 16px 12px; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 17px; padding: 8px 12px; }
+    h3 { font-size: 15px; }
+    .subtitle { font-size: 12px; }
+
+    /* テーブルをブロック表示に変換 */
+    table, thead, tbody, tr, th, td {
+      display: block;
+      width: 100%;
+    }
+    thead { display: none; }
+    tr {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    td {
+      padding: 4px 0;
+      border-bottom: none;
+      font-size: 13px;
+      position: relative;
+      padding-left: 0;
+    }
+    /* data-label で疑似ラベルを表示 */
+    td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-500);
+      margin-bottom: 2px;
+    }
+    /* meta-table はラベル+値の横並びを維持 */
+    .meta-table tr {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+    }
+    .meta-table td:first-child {
+      width: 100%;
+      background: #f9fafb;
+      padding: 6px 8px;
+      border-radius: 4px 4px 0 0;
+      font-size: 11px;
+    }
+    .meta-table td:last-child {
+      width: 100%;
+      padding: 6px 8px 10px;
+    }
+    /* カード内のパディング調整 */
+    .card { padding: 12px; }
+    .card-inner { padding: 10px; }
+    .flow { padding: 10px 12px; font-size: 12px; }
+    .note, .warn { padding: 8px 10px; font-size: 12px; }
+    .toc li { font-size: 13px; }
+  }
+
+  @media print {
+    body { background: white; }
+    .container { max-width: 100%; padding: 12mm; }
+    h2 { page-break-before: auto; }
+    .card, .toc { box-shadow: none; border: 1px solid #e5e7eb; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ===== ヘッダー ===== -->
+<h1>渡辺謄写堂 業務管理システム v3.0<br>機能要件定義書</h1>
+<div class="subtitle">
+  作成日: 2026年5月29日 ｜ 作成: Unsee ｜ バージョン: v3.0<br>
+  本書は渡辺謄写堂様との合意形成を目的とした機能要件定義書です。モックアップ v3.0 の全画面・全機能を網羅的に記載しています。
+</div>
+
+<!-- ===== ドキュメント情報 ===== -->
+<div class="card-inner">
+<table class="meta-table">
+  <tr><td>プロジェクト名</td><td>渡辺謄写堂 業務管理システム（Phase 1）</td></tr>
+  <tr><td>クライアント</td><td>有限会社 渡辺謄写堂</td></tr>
+  <tr><td>実装基盤</td><td>Bubble.io（Growth プラン以上）</td></tr>
+  <tr><td>想定ユーザー数</td><td>6名（代表 / 製版 / 工場 / 事務×2 / 経理）</td></tr>
+  <tr><td>想定データ量</td><td>顧客 500〜1,000件 / 受注 5,000件（5年） / 用紙マスタ 100件</td></tr>
+  <tr><td>本番稼働予定</td><td>2026年9月1日</td></tr>
+  <tr><td>モックアップURL</td><td>GitHub Pages にて公開中（v3.0）</td></tr>
+</table>
+</div>
+
+<!-- ===== v3 変更点サマリー ===== -->
+<div class="warn">
+  <strong>v3.0 での主な変更点（v2.0 からの差分）</strong><br>
+  ① <strong>ステータスを工場看板側に統一</strong>し「見積もり段階 / 受注 / 印刷中 / 完成 / 納品済み」の<strong>5項目</strong>に整理（受注ステータスと工場ステータスの二重管理を廃止）。<br>
+  ② 不要ステータス「待機」「製版中」「校正中」「キャンセル」を<strong>廃止</strong>。<strong>キャンセル案件は削除で対応</strong>。<br>
+  ③ 工場カンバンを<strong>5列</strong>（見積もり段階を含む）に変更。各カードの状態バッジ・データ未受領表示は<strong>非表示</strong>に。<br>
+  ④ 案件タグに「<strong>新規</strong>」を追加。<br>
+  ⑤ 金額入力を<strong>「小計（税抜）」「小計（税込）」の個別入力欄</strong>に変更（どちらを入力しても自動換算。内部は税抜で保持）。<br>
+  ⑥ 顧客メモを<strong>保存せず別ページへ移動しようとした場合に未保存警告</strong>を表示。<br>
+  ⑦ 担当者を<strong>正式表記6名</strong>（渡辺 聡 / 渡辺 豊 / 吉村 栄子 / 菅野 香里 / 金井 奈々子 / 安斎 崇子）で登録。役職のかっこ書き表示は廃止。<br>
+  ⑧ ステータスバッジ「受注」を<strong>赤色ベース</strong>に変更。<br>
+  ⑨ 見積書の値引き名目を、選んだ名目どおり（<strong>自由記載＝入力テキスト</strong> / JA全農… / 値引き）に表示。
+</div>
+
+<!-- ===== 目次 ===== -->
+<div class="toc">
+  <h3 style="border:none; padding:0; margin:0 0 12px 0;">目次</h3>
+  <ul>
+    <li><a href="#sec1">第1章 画面一覧</a></li>
+    <li><a href="#sec2">第2章 各画面の機能一覧</a></li>
+    <li><a href="#sec3">第3章 機能別ワークフロー詳細</a></li>
+    <li><a href="#sec4">第4章 データモデル概要</a></li>
+    <li><a href="#sec5">第5章 ユーザーロールと権限</a></li>
+    <li><a href="#sec6">第6章 非機能要件</a></li>
+  </ul>
+</div>
+
+<!-- ================================================================== -->
+<!-- 第1章 画面一覧 -->
+<!-- ================================================================== -->
+<h2 id="sec1">第1章 画面一覧</h2>
+<div class="card">
+<p style="font-size:13px; color:var(--ink-500); margin-bottom:16px;">本システムは以下の12画面で構成されます。全画面に共通のグローバルヘッダー（上部バー）とナビゲーションバーを配置します。</p>
+
+<table>
+  <thead><tr>
+    <th style="width:30px">#</th>
+    <th style="width:160px">画面名</th>
+    <th style="width:120px">URL（Bubble）</th>
+    <th>目的・概要</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>ログイン</strong></td>
+      <td>/login</td>
+      <td>システムへのログイン認証画面。メールアドレスとパスワードで認証し、ユーザーロールに応じた操作権限を付与する。</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>パスワードリセット</strong></td>
+      <td>/password_reset</td>
+      <td>パスワードを忘れた場合に、登録メールアドレスへリセット用リンクを送信する画面。</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>ダッシュボード</strong></td>
+      <td>/（ホーム）</td>
+      <td>業務全体の状況を俯瞰する起点画面。本日納品予定・進行中案件数・納期超過・今月売上見込みなどのKPIカードを表示し、カードクリックで受注一覧の該当フィルタに直接遷移できる。最近の変更履歴も確認可能。</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>受注一覧</strong></td>
+      <td>/orders</td>
+      <td>全受注案件を一覧表示する画面。顧客名検索・ステータスフィルタ・日付範囲・タグによる絞り込みが可能。ダッシュボードからのクイック絞り込み（本日納品予定・進行中・納期3日以内・納期超過）にも対応する。</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>受注新規起票</strong></td>
+      <td>/order_new</td>
+      <td>新しい受注を起票するための入力画面。顧客選択、製作明細（通常印刷物・ページ物の2種類）の追加、納期・加工オプション・タグ・添付ファイルの設定を行い、受注を登録する。</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>受注確認（閲覧モード）</strong></td>
+      <td>/order?id=X</td>
+      <td>登録済み受注の詳細を読み取り専用で表示する画面。基本情報・製作明細・工場進捗を確認し、ステータス変更・見積書作成・印刷ビュー・編集への遷移操作を行う。</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>受注編集</strong></td>
+      <td>/order?id=X（編集モード）</td>
+      <td>登録済みの受注内容を編集する画面。新規起票画面と同じフォームで、既存データを読み込んで修正・保存する。保存後は確認画面に戻る。</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>見積書</strong></td>
+      <td>/quote?id=X</td>
+      <td>受注に紐づく見積書を作成・編集する画面。宛先・見積日・有効期限・送付方法・備考を入力し、PDFプレビューを見ながら金額や値引きを調整する。PDF出力（印刷）・送信済み管理も行う。</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>工場カンバン</strong></td>
+      <td>/factory</td>
+      <td>工場内の作業進捗をカンバンボード形式（見積もり段階→受注→印刷中→完成→納品済み の<strong>5列</strong>）で管理する画面。受注ステータスと統一されており、カードをドラッグ＆ドロップするとステータスが直接変更される。</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>顧客一覧</strong></td>
+      <td>/customers</td>
+      <td>全顧客を一覧表示する画面。顧客名検索・種別フィルタで絞り込み、累計売上（税抜・消費税・税込）や最終納品日を確認する。新規顧客の追加も可能。</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><strong>顧客詳細</strong></td>
+      <td>/customer?id=X</td>
+      <td>個別顧客の詳細情報・累計KPI・過去発注履歴・メモを表示する画面。「この顧客で新規受注」「この仕様でコピー」により効率的な再発注が可能。</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td><strong>受注票印刷ビュー</strong></td>
+      <td>/print_order?id=X</td>
+      <td>受注票をA4横レイアウトで印刷するための専用画面。クリアファイル回覧用に最適化されたフォーマットで、全明細・加工オプション・確認欄を含む。</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>共通要素:</strong> 全画面（ログイン・パスワードリセットを除く）に以下の共通UIを配置します。<br>
+  ・<strong>グローバルヘッダー</strong>: システム名、ログインユーザー名表示、リセットボタン<br>
+  ・<strong>ナビゲーションバー</strong>: ダッシュボード / 受注一覧 / 新規受注 / 顧客一覧 / 工場カンバン の5つのリンク<br>
+  ・<strong>トースト通知</strong>: 操作完了・エラーを画面右下にポップアップ表示（3秒で自動消去）
+</div>
+</div>
+
+<!-- ================================================================== -->
+<!-- 第2章 各画面の機能一覧 -->
+<!-- ================================================================== -->
+<h2 id="sec2">第2章 各画面の機能一覧</h2>
+<div class="card">
+
+<!-- 2-1 ログイン -->
+<h3>2-1. ログイン画面</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>ユーザー認証</td><td>メールアドレスとパスワードによるログイン認証を行う</td></tr>
+    <tr><td>2</td><td>ログイン状態保持</td><td>チェックボックスにより30日間のセッション保持を選択可能</td></tr>
+    <tr><td>3</td><td>パスワードリセット遷移</td><td>「パスワードをお忘れの方」リンクからリセット画面へ遷移</td></tr>
+    <tr><td>4</td><td>ログイン後リダイレクト</td><td>認証成功後、ダッシュボードへ自動遷移</td></tr>
+    <tr><td>5</td><td>未ログイン時リダイレクト</td><td>保護ページへの直接アクセス時、ログイン画面へリダイレクト</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-2 パスワードリセット -->
+<h3>2-2. パスワードリセット画面</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>リセットメール送信</td><td>登録済みメールアドレスを入力し、パスワードリセット用リンクを送信する</td></tr>
+    <tr><td>2</td><td>ログインへ戻る</td><td>ログイン画面へのリンク</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-3 ダッシュボード -->
+<h3>2-3. ダッシュボード</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>KPIカード表示（5種）</td><td>「本日納品予定」「進行中」「納期3日以内」「納期超過」「今月売上見込み」の5つのKPIカードを表示</td></tr>
+    <tr><td>2</td><td>KPIカードクリック絞込</td><td>各KPIカード（売上見込みを除く）をクリックすると、受注一覧画面に該当条件で絞り込み遷移</td></tr>
+    <tr><td>3</td><td>本日納品予定テーブル</td><td>本日が納期の受注をテーブル形式で表示（受注番号・顧客・品目・数量・状態）</td></tr>
+    <tr><td>4</td><td>最近の変更履歴</td><td>直近8件の変更履歴を時系列で表示（操作者・日時・内容）</td></tr>
+    <tr><td>5</td><td>受注詳細への遷移</td><td>テーブル行クリックで該当受注の詳細画面へ遷移</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-4 受注一覧 -->
+<h3>2-4. 受注一覧</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>受注テーブル表示</td><td>全受注を受付日降順でテーブル表示（受注番号・受付日・顧客・品名/タグ・数量・納品日・金額・状態）</td></tr>
+    <tr><td>2</td><td>顧客名検索</td><td>テキスト入力による部分一致検索（リアルタイムフィルタリング）</td></tr>
+    <tr><td>3</td><td>ステータスフィルタ</td><td>ドロップダウンで5種のステータス（見積もり段階 / 受注 / 印刷中 / 完成 / 納品済み）から絞り込み</td></tr>
+    <tr><td>4</td><td>日付範囲フィルタ</td><td>受付日のFrom/Toで期間指定</td></tr>
+    <tr><td>5</td><td>タグフィルタ</td><td>タグ名を選択して該当案件のみ表示</td></tr>
+    <tr><td>6</td><td>クイック絞り込み</td><td>ダッシュボードから遷移した際の条件（本日納品予定/進行中/納期3日以内/納期超過/見積もり段階）で自動絞り込み</td></tr>
+    <tr><td>7</td><td>フィルタクリア</td><td>全フィルタ条件を一括クリア</td></tr>
+    <tr><td>8</td><td>ページネーション</td><td>50件/ページでの分割表示、前/次ページ遷移</td></tr>
+    <tr><td>9</td><td>納期超過表示</td><td>納期を過ぎた案件に「N日経過」を紫字で表示</td></tr>
+    <tr><td>10</td><td>新規受注起票ボタン</td><td>新規受注起票画面への遷移ボタン</td></tr>
+    <tr><td>11</td><td>受注詳細への遷移</td><td>テーブル行クリックで該当受注の確認画面へ遷移</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-5 受注新規起票 -->
+<h3>2-5. 受注新規起票</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>受付情報入力</td><td>顧客選択、受付日、担当者、受付方法を入力</td></tr>
+    <tr><td>2</td><td>新規顧客登録（モーダル）</td><td>顧客選択欄の横から新規顧客をモーダルで即時登録し、受注に紐付け</td></tr>
+    <tr><td>3</td><td>通常明細の追加</td><td>印刷物の製作明細を追加（用紙・数量・インク・<strong>小計（税抜）／小計（税込）の個別入力欄</strong>・加工オプション・納期・初校日・使用日）</td></tr>
+    <tr><td>4</td><td>ページ物明細の追加</td><td>冊子・ページ物の製作明細を追加（サイズ・数量・ページ数・表紙・本文・<strong>小計（税抜）／小計（税込）の個別入力欄</strong>・納期・初校日・使用日）</td></tr>
+    <tr><td>5</td><td>明細の削除</td><td>追加済みの明細行を個別に削除</td></tr>
+    <tr><td>6</td><td>加工オプション設定</td><td>ミシン(1/2本)・折(2つ折/3つ折)・穴(天2穴/左2穴)・のり(天のり/左のり)・ナンバリング(from/to)・野丁式・ラミネート(PP艶あり/艶なし/パウチ) の各オプションをチェック＋選択式で設定</td></tr>
+    <tr><td>7</td><td>納期設定（明細ごと）</td><td>納期区分（予定/必ず/範囲指定/仮）と納期日を明細ごとに設定</td></tr>
+    <tr><td>8</td><td>案件属性設定</td><td>入稿データ状態（持込/ゼロから作成/未受領）、案件タグ（<strong>新規</strong>/急ぎ/リピート/ご祝儀/特殊紙/重要顧客）、添付ファイルを設定</td></tr>
+    <tr><td>9</td><td>ステータス選択</td><td>起票時のステータスを「見積もり段階」または「受注」から選択（v3: 工場ステータスは廃止し受注ステータスに統一）</td></tr>
+    <tr><td>10</td><td>見積サマリー表示</td><td>右サイドに各明細の小計・合計・消費税（10%固定）・総額をリアルタイム表示</td></tr>
+    <tr><td>11</td><td>過去発注コピー</td><td>選択中の顧客の過去5件の発注を表示し、「この内容でコピー」で明細をプリセット</td></tr>
+    <tr><td>12</td><td>保存と起票</td><td>バリデーション（顧客必須・明細1件以上・品名必須・納期日必須）を実行し、受注を登録。起票後は確認画面に遷移</td></tr>
+    <tr><td>13</td><td>備考（フリーメモ）</td><td>顧客指示・参考情報などの自由記述欄</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-6 受注確認 -->
+<h3>2-6. 受注確認（閲覧モード）</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>基本情報表示</td><td>品名・顧客・種別/地域・担当者・受付日・納期・初校日・使用日・受付方法・入稿データ状態・値引き情報をカード形式で表示</td></tr>
+    <tr><td>2</td><td>製作明細テーブル</td><td>全明細を一覧表示（用紙/仕様・数量・インク/サイズ・加工/ページ・単価・小計）。通常明細とページ物明細を区別表示</td></tr>
+    <tr><td>3</td><td>工場進捗表示</td><td>現在ステータス・開始日時・完了日時・実出来高・担当者・工場メモを表示（v3: 工場ステータスは受注ステータスに統一。時刻はステータス連動で自動記録）</td></tr>
+    <tr><td>4</td><td>ステータス変更</td><td>右サイドのボタンで<strong>5項目のステータス</strong>を変更（見積もり段階→受注→印刷中→完成→納品済み）。納品済み選択時は納品日を自動記録。<strong>キャンセルは削除で対応</strong></td></tr>
+    <tr><td>5</td><td>見積書の作成/参照</td><td>見積書が未作成の場合は新規作成、作成済みの場合は見積書画面へ遷移</td></tr>
+    <tr><td>6</td><td>印刷ビューへの遷移</td><td>受注票印刷ビュー画面への遷移リンク</td></tr>
+    <tr><td>7</td><td>この仕様でコピー</td><td>現在の受注内容（顧客・明細・メモ等）をコピーして新規受注画面を開く（納期はリセット）</td></tr>
+    <tr><td>8</td><td>編集モードへの遷移</td><td>「編集に進む」ボタンで編集モードへ切り替え</td></tr>
+    <tr><td>9</td><td>受注の削除</td><td>確認ダイアログ後に受注を削除（関連する工場記録・見積書も削除）。<strong>キャンセル案件はこの削除で対応</strong></td></tr>
+    <tr><td>10</td><td>変更履歴表示</td><td>この受注に関する全変更履歴を時系列で表示</td></tr>
+    <tr><td>11</td><td>添付ファイル表示</td><td>添付済みファイルの一覧表示とダウンロード</td></tr>
+    <tr><td>12</td><td>工場メモの編集</td><td>工場メモを直接編集・保存可能</td></tr>
+    <tr><td>13</td><td>納期超過表示</td><td>納期超過の場合は「N日経過」を表示</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-7 受注編集 -->
+<h3>2-7. 受注編集</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>既存データの読み込み</td><td>登録済み受注の全フィールドをフォームに展開</td></tr>
+    <tr><td>2</td><td>全フィールドの編集</td><td>新規起票と同一のフォームで全項目を編集可能（顧客・受付情報・明細・加工オプション・タグ・添付ファイル・メモ）</td></tr>
+    <tr><td>3</td><td>ステータス変更</td><td>全5種のステータス（見積もり段階 / 受注 / 印刷中 / 完成 / 納品済み）から変更可能（新規起票時は2種に限定されるが、編集時は全ステータス選択可）</td></tr>
+    <tr><td>4</td><td>変更の保存</td><td>バリデーション後に更新を保存。変更履歴に自動記録。保存後は確認画面に遷移</td></tr>
+    <tr><td>5</td><td>変更の破棄</td><td>編集内容を破棄して確認画面に戻る</td></tr>
+    <tr><td>6</td><td>受注の削除</td><td>編集モードからも受注削除が可能</td></tr>
+    <tr><td>7</td><td>確認画面へ戻る</td><td>「確認に戻る」リンクで閲覧モードに切り替え</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-8 見積書 -->
+<h3>2-8. 見積書</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>見積書基本情報入力</td><td>宛先（受注の顧客から自動取得）・見積日・有効期限・送付方法・状態・備考を入力</td></tr>
+    <tr><td>2</td><td>明細ごとの金額設定</td><td>受注の各明細に対応したパターン（1明細=1パターン）の金額を自由入力</td></tr>
+    <tr><td>3</td><td>採用パターンの選択</td><td>複数明細がある場合、ラジオボタンで採用する明細を選択。採用明細がPDFプレビューに反映</td></tr>
+    <tr><td>4</td><td>値引き設定</td><td>パターンごとに値引き表示ON/OFF、値引き名目（値引き/JA全農くみあい飼料㈱広告代負担金/自由記載）、金額を設定。<strong>見積書には選んだ名目どおりに表示</strong>（自由記載＝入力テキスト、JA＝その名称）。自由記載の入力欄は「自由記載」選択時のみ表示</td></tr>
+    <tr><td>5</td><td>PDFプレビュー表示</td><td>右側に見積書のPDFイメージをリアルタイム表示（見積書ヘッダー・宛先・合計金額・会社情報印・明細テーブル・備考・振込先）</td></tr>
+    <tr><td>6</td><td>PDF出力（印刷）</td><td>ブラウザの印刷機能でPDFプレビュー領域のみをA4用紙に出力</td></tr>
+    <tr><td>7</td><td>送信済み管理</td><td>「送信済にする」ボタンで見積書ステータスを「発行済」に更新</td></tr>
+    <tr><td>8</td><td>自動保存</td><td>各入力フィールドの変更時に即時保存</td></tr>
+    <tr><td>9</td><td>受注との金額同期</td><td>採用パターンの金額変更が受注の合計金額に自動反映</td></tr>
+    <tr><td>10</td><td>受注に戻る</td><td>受注確認画面へのリンク</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-9 工場カンバン -->
+<h3>2-9. 工場カンバン</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>5列カンバン表示</td><td>「見積もり段階」「受注」「印刷中」「完成」「納品済み」の<strong>5列</strong>にカードを分類表示。各列にカード件数を表示（v3: 受注ステータスと統一）</td></tr>
+    <tr><td>2</td><td>カンバンカード表示</td><td>カードに受注番号・品名・顧客名・用紙/数量・タグ・納期を表示（v3: カード左下の状態バッジ・データ未受領表示は<strong>非表示</strong>。状態は列で表す）</td></tr>
+    <tr><td>3</td><td>ドラッグ＆ドロップ</td><td>カードを列間でドラッグ移動して<strong>ステータスを直接変更</strong>。納品済み移動時は納品日を自動記録、印刷中で開始日時・完成/納品済みで完了日時を自動記録</td></tr>
+    <tr><td>4</td><td>納期アラート表示</td><td>本日/明日納期は赤字、納期超過は「N日経過」を紫字で表示</td></tr>
+    <tr><td>5</td><td>受注詳細への遷移</td><td>カードクリックで該当受注の確認画面へ遷移</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-10 顧客一覧 -->
+<h3>2-10. 顧客一覧</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>顧客テーブル表示</td><td>全顧客をテーブル形式で表示（顧客名・種別・地域・電話・FAX・税抜小計・消費税・累計売上(税込)・最終納品日）</td></tr>
+    <tr><td>2</td><td>顧客名検索</td><td>テキスト入力による部分一致検索（リアルタイムフィルタリング）</td></tr>
+    <tr><td>3</td><td>種別フィルタ</td><td>「地域・団体」「企業・個人」で絞り込み</td></tr>
+    <tr><td>4</td><td>ページネーション</td><td>50件/ページでの分割表示</td></tr>
+    <tr><td>5</td><td>新規顧客追加（モーダル）</td><td>モーダルで新規顧客を登録</td></tr>
+    <tr><td>6</td><td>顧客詳細への遷移</td><td>テーブル行クリックで顧客詳細画面へ遷移</td></tr>
+    <tr><td>7</td><td>累計売上の自動集計</td><td>受注データから税抜小計・消費税・税込合計を自動計算して表示</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-11 顧客詳細 -->
+<h3>2-11. 顧客詳細</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>顧客基本情報表示</td><td>会社名/個人名・種別・地域・電話・FAX・住所・メモを表示</td></tr>
+    <tr><td>2</td><td>KPIパネル表示</td><td>累計受注数・税抜小計・消費税・累計売上(税込)・最終納品日の5タイルを表示</td></tr>
+    <tr><td>3</td><td>過去発注履歴テーブル</td><td>この顧客の全受注を受付日降順で表示（受注番号・受付日・品名/タグ・数量・納品日・金額・状態）</td></tr>
+    <tr><td>4</td><td>この仕様でコピー</td><td>過去発注の各行から明細をコピーして新規受注画面を開く</td></tr>
+    <tr><td>5</td><td>この顧客で新規受注</td><td>顧客がプリセットされた状態で新規受注起票画面を開く</td></tr>
+    <tr><td>6</td><td>顧客編集（モーダル）</td><td>顧客の基本情報をモーダルで編集・保存</td></tr>
+    <tr><td>7</td><td>メモの編集・保存</td><td>顧客に関するフリーメモを直接編集・保存。<strong>保存せずに別ページへ移動しようとした場合は未保存警告ダイアログを表示</strong>（v3）</td></tr>
+  </tbody>
+</table>
+
+<!-- 2-12 受注票印刷ビュー -->
+<h3>2-12. 受注票印刷ビュー</h3>
+<table>
+  <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>A4横レイアウト表示</td><td>受注票をA4横（297mm幅）のレイアウトでプレビュー表示</td></tr>
+    <tr><td>2</td><td>受注ヘッダー表示</td><td>受注番号・受付日・担当者・受付方法を表示</td></tr>
+    <tr><td>3</td><td>件名・顧客・納期表示</td><td>件名、顧客名（御中/様の敬称付き）、納期（本日必着表示・超過日数表示を含む）</td></tr>
+    <tr><td>4</td><td>全明細の表示</td><td>通常明細（用紙・数量・インク・加工オプションのチェック形式表示）とページ物明細（サイズ・数量・ページ数・表紙・本文）を表示</td></tr>
+    <tr><td>5</td><td>金額表示</td><td>合計金額（税込）を太字で表示</td></tr>
+    <tr><td>6</td><td>印刷実行</td><td>「印刷」ボタンでブラウザの印刷ダイアログを起動</td></tr>
+    <tr><td>7</td><td>受注に戻る</td><td>受注確認画面へのリンク</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- ================================================================== -->
+<!-- 第3章 ワークフロー詳細 -->
+<!-- ================================================================== -->
+<h2 id="sec3">第3章 機能別ワークフロー詳細</h2>
+<div class="card">
+
+<!-- 3-1 ログインフロー -->
+<h3>3-1. ログインフロー</h3>
+<div class="card-inner">
+<h4>ページ遷移</h4>
+<div class="flow">
+  <div class="flow-step"><div class="flow-num">1</div><div>/login 画面を表示</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div>ユーザーがメールアドレスとパスワードを入力</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div>「ログイン」ボタンをクリック</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div>認証成功 → ダッシュボード（/）へリダイレクト</div></div>
+  <div class="flow-step"><div class="flow-num">×</div><div>認証失敗 → エラートースト表示「メールアドレスまたはパスワードが正しくありません」</div></div>
+</div>
+<h4>入力項目</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>備考</th></tr></thead>
+  <tbody>
+    <tr><td>メールアドレス</td><td>email</td><td class="required">必須</td><td>登録済みアドレスのみ</td></tr>
+    <tr><td>パスワード</td><td>password</td><td class="required">必須</td><td>最低8文字</td></tr>
+    <tr><td>ログイン状態を保持</td><td>checkbox</td><td class="optional">任意</td><td>チェック時: 30日間セッション保持</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 3-2 受注新規起票フロー -->
+<h3>3-2. 受注新規起票フロー</h3>
+<div class="card-inner">
+<h4>ページ遷移</h4>
+<div class="flow">
+  <div class="flow-step"><div class="flow-num">1</div><div>ナビバーの「新規受注」またはダッシュボード/受注一覧の「+ 新規受注起票」ボタンをクリック → /order_new を表示</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div>受付情報（顧客・受付日・担当者・受付方法）を入力</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div>「+ 通常を追加」or「+ ページ物を追加」で製作明細を1件以上追加</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div>各明細の品名・用紙・数量・インク・小計（税抜/税込の個別入力欄）・加工オプション・納期を入力</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div>案件属性（入稿データ・タグ〔新規/急ぎ等〕・添付ファイル）を設定</div></div>
+  <div class="flow-step"><div class="flow-num">6</div><div>起票時のステータス（見積もり段階 / 受注）を選択（v3: 工場ステータスは廃止し統一）</div></div>
+  <div class="flow-step"><div class="flow-num">7</div><div>「保存して起票」ボタンをクリック → バリデーション実行</div></div>
+  <div class="flow-step"><div class="flow-num">8</div><div>成功 → 受注番号自動採番（YYMMDD-NNN）→ 受注確認画面へ遷移</div></div>
+</div>
+
+<h4>受付情報の入力項目</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>初期値</th><th>選択肢・備考</th></tr></thead>
+  <tbody>
+    <tr><td>顧客</td><td>ドロップダウン</td><td class="required">必須</td><td>未選択</td><td>登録済み顧客から選択。横の「+ 新規」ボタンでモーダル登録も可</td></tr>
+    <tr><td>受付日</td><td>日付</td><td class="required">必須</td><td>当日</td><td>—</td></tr>
+    <tr><td>担当者</td><td>ドロップダウン</td><td class="required">必須</td><td>ログインユーザー</td><td>登録ユーザーから選択</td></tr>
+    <tr><td>受付方法</td><td>ドロップダウン</td><td class="required">必須</td><td>電話</td><td>電話 / 来客 / FAX / メール / LINE / その他</td></tr>
+  </tbody>
+</table>
+
+<h4>通常明細の入力項目（1明細あたり）</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>初期値</th><th>選択肢・備考</th></tr></thead>
+  <tbody>
+    <tr><td>品名</td><td>テキスト</td><td class="required">必須</td><td>空</td><td>例: 名刺リピート 500枚</td></tr>
+    <tr><td>用紙</td><td>ドロップダウン</td><td class="required">必須</td><td>先頭の用紙</td><td>「よく使う紙」「その他」のグループ分け。「その他（自由入力）」選択時はテキスト入力欄表示</td></tr>
+    <tr><td>数量</td><td>数値</td><td class="required">必須</td><td>100</td><td>1以上の整数</td></tr>
+    <tr><td>インク</td><td>ドロップダウン</td><td class="required">必須</td><td>カラー両面（4C×4C）</td><td>カラー両面/カラー片面/モノクロ両面/モノクロ片面/特色1色両面/特色1色片面/片面カラー×片面モノクロ/片面カラー×片面特色/片面モノクロ×片面特色 の9種</td></tr>
+    <tr><td>小計（外税）</td><td>数値</td><td class="required">必須</td><td>0</td><td>自由入力（100円単位）</td></tr>
+    <tr><td>ミシン</td><td>チェック+選択</td><td class="optional">任意</td><td>OFF</td><td>ON時: 1本 / 2本</td></tr>
+    <tr><td>折</td><td>チェック+選択</td><td class="optional">任意</td><td>OFF</td><td>ON時: 2つ折 / 3つ折</td></tr>
+    <tr><td>穴</td><td>チェック+選択</td><td class="optional">任意</td><td>OFF</td><td>ON時: 天2穴 / 左2穴</td></tr>
+    <tr><td>のり</td><td>チェック+選択</td><td class="optional">任意</td><td>OFF</td><td>ON時: 天のり / 左のり</td></tr>
+    <tr><td>ナンバリング</td><td>チェック+数値×2</td><td class="optional">任意</td><td>OFF</td><td>ON時: from〜to を数値入力</td></tr>
+    <tr><td>野丁式</td><td>チェック</td><td class="optional">任意</td><td>OFF</td><td>—</td></tr>
+    <tr><td>ラミネート</td><td>チェック+選択</td><td class="optional">任意</td><td>OFF</td><td>ON時: PP貼り 艶あり / PP貼り 艶なし / パウチ</td></tr>
+    <tr><td>納期区分</td><td>ラジオ</td><td class="required">必須</td><td>予定</td><td>予定 / 必ず / 範囲指定 / 仮</td></tr>
+    <tr><td>納期日</td><td>日付</td><td class="required">必須※</td><td>空</td><td>※「仮」以外は必須</td></tr>
+    <tr><td>〜終了日</td><td>日付</td><td class="optional">任意</td><td>空</td><td>「範囲指定」の場合のみ入力可</td></tr>
+    <tr><td>初校日</td><td>日付</td><td class="optional">任意</td><td>空</td><td>—</td></tr>
+    <tr><td>使用日</td><td>日付</td><td class="optional">任意</td><td>空</td><td>—</td></tr>
+    <tr><td>明細メモ</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>この明細固有のメモ</td></tr>
+  </tbody>
+</table>
+
+<h4>ページ物明細の入力項目（1明細あたり）</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>初期値</th><th>選択肢・備考</th></tr></thead>
+  <tbody>
+    <tr><td>品名</td><td>テキスト</td><td class="required">必須</td><td>空</td><td>例: 40周年記念誌 / 第○回総会資料</td></tr>
+    <tr><td>サイズ</td><td>ドロップダウン</td><td class="required">必須</td><td>A4</td><td>A4 / B5 / A5 / 自由（自由の場合はテキスト入力）</td></tr>
+    <tr><td>数量（部）</td><td>数値</td><td class="required">必須</td><td>100</td><td>1以上の整数</td></tr>
+    <tr><td>ページ数</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>例: 本文64P + 表紙</td></tr>
+    <tr><td>表紙</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>例: コート135kg 4色 + PP艶あり</td></tr>
+    <tr><td>本文</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>例: 上質90kg 1C × 64P</td></tr>
+    <tr><td>小計（外税）</td><td>数値</td><td class="required">必須</td><td>0</td><td>自由入力（100円単位）</td></tr>
+    <tr><td>納期区分〜使用日</td><td>—</td><td>—</td><td>—</td><td>通常明細と同じ納期・初校日・使用日の入力項目</td></tr>
+    <tr><td>明細メモ</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h4>案件属性の入力項目</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>初期値</th><th>選択肢・備考</th></tr></thead>
+  <tbody>
+    <tr><td>入稿データ</td><td>ドロップダウン</td><td class="required">必須</td><td>持込</td><td>持込 / ゼロから作成 / 未受領</td></tr>
+    <tr><td>案件タグ</td><td>複数選択（チェック）</td><td class="optional">任意</td><td>未選択</td><td>急ぎ / リピート / ご祝儀 / 特殊紙 / 重要顧客（複数選択可、管理者がマスタ管理）</td></tr>
+    <tr><td>添付ファイル</td><td>ファイル（複数可）</td><td class="optional">任意</td><td>なし</td><td>入稿データ・参考資料の添付。個別削除可</td></tr>
+  </tbody>
+</table>
+
+<h4>バリデーションルール</h4>
+<table>
+  <thead><tr><th>チェック対象</th><th>条件</th><th>エラーメッセージ</th></tr></thead>
+  <tbody>
+    <tr><td>顧客</td><td>未選択</td><td>「顧客を選択してください」</td></tr>
+    <tr><td>明細</td><td>0件</td><td>「明細を1件以上追加してください」</td></tr>
+    <tr><td>各明細の品名</td><td>空欄</td><td>「明細 #N の品名を入力してください」</td></tr>
+    <tr><td>各明細の納期日</td><td>空欄（仮以外）</td><td>「明細 #N の納期日を指定してください」</td></tr>
+  </tbody>
+</table>
+
+<h4>登録時の処理</h4>
+<table>
+  <thead><tr><th>処理</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>受注番号採番</td><td>「YYMMDD-NNN」形式で自動採番（同日内の連番）</td></tr>
+    <tr><td>受注タイトル導出</td><td>各明細の品名を「 / 」で連結して受注タイトルとする</td></tr>
+    <tr><td>代表納期の同期</td><td>先頭明細の納期区分・納期日を受注全体の代表納期として同期</td></tr>
+    <tr><td>合計金額の計算</td><td>各明細の小計を合算 → 消費税10%を加算 → 税込合計を算出</td></tr>
+    <tr><td>工場記録の作成</td><td>受注に対応する工場記録（FactoryRecord）を1件作成</td></tr>
+    <tr><td>変更履歴の記録</td><td>「新規起票 (受注番号)」として変更履歴に記録</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 3-3 受注ステータス遷移 -->
+<h3>3-3. 受注ステータス遷移フロー</h3>
+<div class="card-inner">
+<h4>ステータスの種類と遷移（v3: 工場看板側に統一・5項目）</h4>
+<table>
+  <thead><tr><th>ステータス</th><th>意味</th><th>遷移先</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-blue">見積もり段階</span></td><td>見積もり依頼のみで正式発注前の案件</td><td>受注（不成立は削除）</td></tr>
+    <tr><td><span class="badge badge-red">受注</span></td><td>正式に受注し、作業待ちの案件（v3: バッジは赤色ベース）</td><td>印刷中</td></tr>
+    <tr><td><span class="badge">印刷中</span></td><td>製版〜印刷の作業中の案件</td><td>完成</td></tr>
+    <tr><td><span class="badge badge-ok">完成</span></td><td>印刷完了・出荷/引渡し待ちの案件</td><td>納品済み</td></tr>
+    <tr><td><span class="badge badge-gray">納品済み</span></td><td>顧客へ納品完了の案件</td><td>—（終了状態）</td></tr>
+  </tbody>
+</table>
+<div class="warn">
+  <strong>v3で廃止:</strong> 「待機」「作業中」「製版中」「校正中」「出荷待ち」「キャンセル」は廃止しました。受注ステータスと工場ステータスは<strong>単一のステータスに統一</strong>され、工場カンバンも同じ5項目で表示します。<strong>キャンセル案件は「削除」で対応</strong>します。
+</div>
+
+<div class="note">
+  <strong>自動記録:</strong> ステータス変更時には以下が自動処理されます。<br>
+  ・変更履歴に「ステータス変更: 旧→新」を記録<br>
+  ・「印刷中」に変更した初回: 工場進捗の開始日時を記録<br>
+  ・「完成」「納品済み」: 完了日時と完了担当者を記録<br>
+  ・「納品済み」: 納品日（delivered_date）を自動セット
+</div>
+</div>
+
+<!-- 3-4 見積書作成フロー -->
+<h3>3-4. 見積書作成フロー</h3>
+<div class="card-inner">
+<h4>ページ遷移</h4>
+<div class="flow">
+  <div class="flow-step"><div class="flow-num">1</div><div>受注確認画面の「見積書」ボタンをクリック</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div>見積書が未作成の場合: 見積番号（Q-YYMMDD-NNN）を自動採番し新規作成</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div>見積書が作成済みの場合: 既存の見積書を開く。受注明細との1:1パターン同期を実行</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div>/quote?id=X へ遷移</div></div>
+</div>
+
+<h4>見積書の入力項目</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>初期値</th><th>備考</th></tr></thead>
+  <tbody>
+    <tr><td>宛先</td><td>自動取得</td><td>—</td><td>受注の顧客名</td><td>編集不可</td></tr>
+    <tr><td>見積日</td><td>日付</td><td class="required">必須</td><td>作成日</td><td>—</td></tr>
+    <tr><td>有効期限</td><td>日付</td><td class="required">必須</td><td>翌月同日</td><td>—</td></tr>
+    <tr><td>送付方法</td><td>ドロップダウン</td><td class="required">必須</td><td>メール</td><td>郵送 / メール / LINE / 直接手渡し</td></tr>
+    <tr><td>状態</td><td>ドロップダウン</td><td class="required">必須</td><td>作成中</td><td>作成中 / 発行済 / 受諾 / 失注</td></tr>
+    <tr><td>備考</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>振込先情報等</td></tr>
+    <tr><td>各明細の金額（外税）</td><td>数値</td><td class="required">必須</td><td>受注明細の小計</td><td>100円単位で自由入力</td></tr>
+    <tr><td>値引き表示</td><td>チェック（明細ごと）</td><td class="optional">任意</td><td>OFF</td><td>ON時: 名目・金額・備考を入力</td></tr>
+    <tr><td>値引き名目</td><td>ドロップダウン</td><td class="optional">任意</td><td>値引き</td><td>値引き / JA全農くみあい飼料㈱広告代負担金 / 自由記載</td></tr>
+    <tr><td>値引き金額</td><td>数値</td><td class="optional">任意</td><td>0</td><td>—</td></tr>
+    <tr><td>値引き備考</td><td>テキスト</td><td class="optional">任意</td><td>空</td><td>自由記載時の名目テキスト</td></tr>
+  </tbody>
+</table>
+
+<h4>PDFプレビューに表示される情報</h4>
+<table>
+  <thead><tr><th>セクション</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>ヘッダー</td><td>「御見積書」タイトル、見積番号、見積日</td></tr>
+    <tr><td>宛先</td><td>顧客名 + 「御中」、件名（品名）</td></tr>
+    <tr><td>合計金額</td><td>採用パターンの税込合計金額（大文字表示）、有効期限</td></tr>
+    <tr><td>会社情報</td><td>有限会社 渡辺謄写堂の社名・住所・電話・FAX・インボイス登録番号・印影</td></tr>
+    <tr><td>明細テーブル</td><td>品名・仕様・数量・金額（外税）・値引き（適用時）・小計・消費税・合計</td></tr>
+    <tr><td>備考</td><td>自由記述の備考欄</td></tr>
+    <tr><td>振込先</td><td>東邦銀行二本松支店の口座情報（普通/当座）、振込名義</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 3-5 新規顧客登録フロー -->
+<h3>3-5. 新規顧客登録フロー</h3>
+<div class="card-inner">
+<h4>登録経路</h4>
+<p style="font-size:13px;">新規顧客の登録は以下の2箇所から実行可能です:</p>
+<ul style="font-size:13px; padding-left:20px; margin:8px 0;">
+  <li>受注新規起票画面の「+ 新規」ボタン → 登録後、受注の顧客欄に自動セット</li>
+  <li>顧客一覧画面の「+ 新規顧客追加」ボタン → 登録後、顧客一覧を更新</li>
+</ul>
+
+<h4>入力項目</h4>
+<table>
+  <thead><tr><th>項目名</th><th>型</th><th>必須</th><th>選択肢・備考</th></tr></thead>
+  <tbody>
+    <tr><td>会社名</td><td>テキスト</td><td class="required">※</td><td>※ 会社名か個人名のどちらか必須</td></tr>
+    <tr><td>個人名</td><td>テキスト</td><td class="required">※</td><td>※ 個人の場合に入力</td></tr>
+    <tr><td>種別</td><td>ドロップダウン</td><td class="required">必須</td><td>地域・団体 / 企業・個人</td></tr>
+    <tr><td>地域</td><td>ドロップダウン</td><td class="required">必須</td><td>亀谷 / 元町 / 東和 / 岩代 / 市街 / その他</td></tr>
+    <tr><td>電話</td><td>テキスト</td><td class="optional">任意</td><td>—</td></tr>
+    <tr><td>FAX</td><td>テキスト</td><td class="optional">任意</td><td>—</td></tr>
+    <tr><td>住所</td><td>テキスト</td><td class="optional">任意</td><td>—</td></tr>
+    <tr><td>メモ</td><td>テキストエリア</td><td class="optional">任意</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h4>バリデーションルール</h4>
+<table>
+  <thead><tr><th>チェック対象</th><th>条件</th><th>エラーメッセージ</th></tr></thead>
+  <tbody>
+    <tr><td>会社名 + 個人名</td><td>両方とも空欄</td><td>「会社名または個人名を入力してください」</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 3-6 工場カンバン操作フロー -->
+<h3>3-6. 工場カンバン操作フロー</h3>
+<div class="card-inner">
+<h4>ドラッグ＆ドロップ操作</h4>
+<div class="flow">
+  <div class="flow-step"><div class="flow-num">1</div><div>カンバンカードをドラッグ開始（カードが半透明化）</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div>移動先のカラムにドロップ（カラムがハイライト表示）</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div>受注のステータスを移動先の列の値（見積もり段階/受注/印刷中/完成/納品済み）に直接更新（v3: 工場ステータスは廃止し統一）</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div>「印刷中」で開始日時、「完成」「納品済み」で完了日時・完了担当者、「納品済み」で納品日を自動記録</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div>変更履歴に「カンバン操作: 旧→新」を記録</div></div>
+  <div class="flow-step"><div class="flow-num">6</div><div>トースト通知「ステータス: 〇〇」を表示</div></div>
+</div>
+
+<h4>表示対象</h4>
+<table>
+  <thead><tr><th>条件</th><th>表示</th></tr></thead>
+  <tbody>
+    <tr><td>全受注</td><td>5列（見積もり段階 / 受注 / 印刷中 / 完成 / 納品済み）のうち、現在ステータスの列に表示（v3: 見積もり段階も列として表示）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 3-7 受注編集フロー -->
+<h3>3-7. 受注編集フロー</h3>
+<div class="card-inner">
+<h4>ページ遷移</h4>
+<div class="flow">
+  <div class="flow-step"><div class="flow-num">1</div><div>受注確認画面の「編集に進む」ボタンをクリック</div></div>
+  <div class="flow-step"><div class="flow-num">2</div><div>既存の受注データをフォームに展開（新規起票と同一レイアウト）</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div>必要な項目を修正</div></div>
+  <div class="flow-step"><div class="flow-num">4</div><div>「変更を保存」ボタンで保存 → バリデーション実行（新規起票と同一）</div></div>
+  <div class="flow-step"><div class="flow-num">5</div><div>成功 → 変更履歴に記録 → 受注確認画面に遷移</div></div>
+</div>
+
+<h4>編集時の追加処理</h4>
+<table>
+  <thead><tr><th>処理</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>ステータス変更時の記録</td><td>ステータスが変更された場合「編集（ステータス: 旧→新）」として変更履歴に記録</td></tr>
+    <tr><td>納品済み選択時の納品日</td><td>ステータス「納品済み」を選択し、納品日が未設定の場合は当日を自動セット</td></tr>
+    <tr><td>工場進捗の時刻更新</td><td>ステータスが「印刷中」で開始日時、「完成」「納品済み」で完了日時・完了担当者を自動更新（v3: ステータスに連動）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- 3-8 顧客詳細からの仕様コピー -->
+<h3>3-8. 仕様コピーフロー</h3>
+<div class="card-inner">
+<h4>コピー元と経路</h4>
+<table>
+  <thead><tr><th>コピー元</th><th>経路</th><th>動作</th></tr></thead>
+  <tbody>
+    <tr><td>受注確認画面</td><td>「この仕様でコピー」ボタン</td><td>顧客・明細・メモ・タグをコピーし、新規受注画面を開く（納期系はリセット、添付ファイルはコピーしない）</td></tr>
+    <tr><td>受注新規起票画面</td><td>「過去発注」リスト内の「この内容でコピー」ボタン</td><td>過去発注の全明細をコピーして現在のフォームにセット</td></tr>
+    <tr><td>顧客詳細画面</td><td>過去発注テーブル内の「この仕様でコピー」ボタン</td><td>顧客がプリセットされた状態で、過去発注の明細をコピーして新規受注画面を開く</td></tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+<!-- ================================================================== -->
+<!-- 第4章 データモデル概要 -->
+<!-- ================================================================== -->
+<h2 id="sec4">第4章 データモデル概要</h2>
+<div class="card">
+<p style="font-size:13px; color:var(--ink-500); margin-bottom:16px;">本システムで管理するデータモデルの概要です。詳細なフィールド定義はBubble.io実装指示書を参照ください。</p>
+
+<table>
+  <thead><tr><th>データ型</th><th>概要</th><th>主要フィールド</th><th>件数想定（5年）</th></tr></thead>
+  <tbody>
+    <tr><td><strong>User</strong></td><td>システム利用者</td><td>name, email, role, is_active</td><td>10名</td></tr>
+    <tr><td><strong>Customer</strong></td><td>顧客</td><td>company_name, individual_name, kind, area, phone, fax, address, notes</td><td>500〜1,000件</td></tr>
+    <tr><td><strong>Paper</strong></td><td>用紙マスタ</td><td>paper_name, quality, color, thickness_kg, paper_size, unit_price, is_major</td><td>100件</td></tr>
+    <tr><td><strong>Order</strong></td><td>受注（案件）</td><td>order_number, title, customer, status, delivery_type/date, total_amount, items, tags, memo</td><td>5,000件</td></tr>
+    <tr><td><strong>OrderItem</strong></td><td>受注明細</td><td>type(normal/page), title, paper, quantity, ink_pattern, 加工オプション群, subtotal, 納期群</td><td>10,000件</td></tr>
+    <tr><td><strong>Quote</strong></td><td>見積書</td><td>quote_number, order, patterns(明細1:1), issued_date, valid_until, status, memo</td><td>3,000件</td></tr>
+    <tr><td><strong>FactoryRecord</strong></td><td>工場進捗の時刻メタ（v3: ステータスは Order に統一。本記録は時刻等のメタのみ保持）</td><td>order(1:1), started_at, completed_at, actual_quantity, completed_by, factory_memo</td><td>5,000件</td></tr>
+    <tr><td><strong>ChangeLog</strong></td><td>変更履歴</td><td>target_type, target_id, changed_by, changed_at, change_summary</td><td>50,000件</td></tr>
+  </tbody>
+</table>
+
+<h3>ステータス一覧（v3: 5項目に統一）</h3>
+<table>
+  <thead><tr><th>値</th><th>表示</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td>見積もり段階</td><td><span class="badge badge-blue">見積もり段階</span></td><td>見積もりのみ、正式発注前</td></tr>
+    <tr><td>受注</td><td><span class="badge badge-red">受注</span></td><td>正式受注済、作業待ち（v3: バッジは赤色ベース）</td></tr>
+    <tr><td>印刷中</td><td><span class="badge">印刷中</span></td><td>製版〜印刷の作業中</td></tr>
+    <tr><td>完成</td><td><span class="badge badge-ok">完成</span></td><td>印刷完了、出荷/引渡し待ち</td></tr>
+    <tr><td>納品済み</td><td><span class="badge badge-gray">納品済み</span></td><td>顧客へ納品完了</td></tr>
+  </tbody>
+</table>
+<div class="note">
+  <strong>工場ステータスは廃止し、上記の受注ステータスに統一しました。</strong>工場カンバンも同じ5項目を列として表示します（見積もり段階を含む5列）。旧「待機/作業中/製版中/校正中/出荷待ち/キャンセル」は使用しません。
+</div>
+
+<h3>マスタデータ（選択肢一覧）</h3>
+<table>
+  <thead><tr><th>区分</th><th>選択肢</th></tr></thead>
+  <tbody>
+    <tr><td>ユーザーロール</td><td>代表 / 製版 / 工場 / 事務 / 経理（担当者6名：渡辺 聡・渡辺 豊・吉村 栄子・菅野 香里・金井 奈々子・安斎 崇子）</td></tr>
+    <tr><td>顧客種別</td><td>地域・団体 / 企業・個人</td></tr>
+    <tr><td>地域</td><td>亀谷 / 元町 / 東和 / 岩代 / 市街 / その他</td></tr>
+    <tr><td>受付方法</td><td>電話 / 来客 / FAX / メール / LINE / その他</td></tr>
+    <tr><td>納期区分</td><td>予定 / 必ず / 範囲指定 / 仮</td></tr>
+    <tr><td>インクパターン</td><td>カラー両面(4C×4C) / カラー片面(4C×0) / モノクロ両面(1C×1C) / モノクロ片面(1C×0) / 特色1色両面 / 特色1色片面 / 片面カラー×モノクロ(4C×1C) / 片面カラー×特色(4C×特1C) / 片面モノクロ×特色(1C×特1C)</td></tr>
+    <tr><td>折り</td><td>なし / 2つ折 / 3つ折</td></tr>
+    <tr><td>穴位置</td><td>なし / 天2穴 / 左2穴</td></tr>
+    <tr><td>のり位置</td><td>なし / 天のり / 左のり</td></tr>
+    <tr><td>ラミネート</td><td>なし / PP貼り 艶あり / PP貼り 艶なし / パウチ</td></tr>
+    <tr><td>入稿データ状態</td><td>持込 / ゼロから作成 / 未受領</td></tr>
+    <tr><td>タグプリセット</td><td><strong>新規(青)</strong> / 急ぎ(赤) / リピート(緑) / ご祝儀(黄) / 特殊紙(紫) / 重要顧客(橙)</td></tr>
+    <tr><td>送付方法</td><td>郵送 / メール / LINE / 直接手渡し</td></tr>
+    <tr><td>見積書状態</td><td>作成中 / 発行済 / 受諾 / 失注</td></tr>
+    <tr><td>値引き名目</td><td>値引き / JA全農くみあい飼料㈱広告代負担金 / 自由記載</td></tr>
+    <tr><td>ページ物サイズ</td><td>A4 / B5 / A5 / 自由</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ================================================================== -->
+<!-- 第5章 ユーザーロールと権限 -->
+<!-- ================================================================== -->
+<h2 id="sec5">第5章 ユーザーロールと権限</h2>
+<div class="card">
+<table>
+  <thead><tr>
+    <th>操作</th>
+    <th>代表</th>
+    <th>製版</th>
+    <th>工場</th>
+    <th>事務</th>
+    <th>経理</th>
+  </tr></thead>
+  <tbody>
+    <tr><td>全画面の閲覧</td><td>○</td><td>○</td><td>○</td><td>○</td><td>○</td></tr>
+    <tr><td>受注の新規起票</td><td>○</td><td>×</td><td>×</td><td>○</td><td>×</td></tr>
+    <tr><td>受注の編集</td><td>○</td><td>△（担当案件）</td><td>△（担当案件）</td><td>○</td><td>×</td></tr>
+    <tr><td>受注ステータス変更</td><td>○</td><td>△（印刷中まわり）</td><td>△（印刷中・完成）</td><td>△</td><td>×</td></tr>
+    <tr><td>受注の削除（＝キャンセル対応）</td><td>○</td><td>×</td><td>×</td><td>△</td><td>×</td></tr>
+    <tr><td>見積書の作成・編集</td><td>○</td><td>×</td><td>×</td><td>○</td><td>×</td></tr>
+    <tr><td>工場カンバンの操作</td><td>○</td><td>○</td><td>○</td><td>△</td><td>×</td></tr>
+    <tr><td>顧客の登録・編集</td><td>○</td><td>×</td><td>×</td><td>○</td><td>×</td></tr>
+    <tr><td>用紙マスタの管理</td><td>○</td><td>×</td><td>×</td><td>△</td><td>×</td></tr>
+    <tr><td>ユーザーの招待・管理</td><td>○</td><td>×</td><td>×</td><td>×</td><td>×</td></tr>
+    <tr><td>設定・データ書出</td><td>○</td><td>×</td><td>×</td><td>×</td><td>○</td></tr>
+  </tbody>
+</table>
+<div class="note">
+  ○ = 可 / △ = 条件付き可 / × = 不可。担当者は6名（代表＝渡辺 聡、製版＝渡辺 豊、工場＝吉村 栄子、事務＝菅野 香里・金井 奈々子、経理＝安斎 崇子）。<strong>本権限表は想定であり、運用に合わせて確定します。</strong>
+</div>
+</div>
+
+<!-- ================================================================== -->
+<!-- 第6章 非機能要件 -->
+<!-- ================================================================== -->
+<h2 id="sec6">第6章 非機能要件</h2>
+<div class="card">
+
+<h3>6-1. パフォーマンス</h3>
+<table>
+  <thead><tr><th>項目</th><th>要件</th></tr></thead>
+  <tbody>
+    <tr><td>受注一覧の表示速度</td><td>1,000件で3秒以内</td></tr>
+    <tr><td>検索応答速度</td><td>2秒以内</td></tr>
+    <tr><td>PDF生成速度</td><td>5秒以内</td></tr>
+  </tbody>
+</table>
+
+<h3>6-2. セキュリティ</h3>
+<table>
+  <thead><tr><th>項目</th><th>要件</th></tr></thead>
+  <tbody>
+    <tr><td>通信暗号化</td><td>SSL/HTTPS強制</td></tr>
+    <tr><td>パスワード</td><td>最低8文字、大小英字+数字の混合</td></tr>
+    <tr><td>ブルートフォース防止</td><td>ログイン試行回数制限</td></tr>
+    <tr><td>セッション保持</td><td>30日間（チェックボックス選択時）</td></tr>
+    <tr><td>XSS/Injection対策</td><td>Bubble.ioの標準エスケープ処理に準拠</td></tr>
+  </tbody>
+</table>
+
+<h3>6-3. バックアップ</h3>
+<table>
+  <thead><tr><th>項目</th><th>要件</th></tr></thead>
+  <tbody>
+    <tr><td>日次バックアップ</td><td>Bubble.io標準のデータベーススナップショット</td></tr>
+    <tr><td>週次バックアップ</td><td>毎週月曜 3:00 AM にJSONデータをGoogle Drive自動同期</td></tr>
+    <tr><td>月次アーカイブ</td><td>6ヶ月以上古い変更履歴を外部ストレージにアーカイブ</td></tr>
+  </tbody>
+</table>
+
+<h3>6-4. 運用環境</h3>
+<table>
+  <thead><tr><th>項目</th><th>要件</th></tr></thead>
+  <tbody>
+    <tr><td>推奨ブラウザ</td><td>Google Chrome 最新版</td></tr>
+    <tr><td>対応デバイス</td><td>デスクトップPC（モバイル対応はPhase 1対象外）</td></tr>
+    <tr><td>カスタムドメイン</td><td>system.toshado.jp（DNS設定後）</td></tr>
+    <tr><td>タイムゾーン</td><td>Asia/Tokyo (UTC+9)</td></tr>
+  </tbody>
+</table>
+
+<h3>6-5. 自動通知</h3>
+<table>
+  <thead><tr><th>通知名</th><th>タイミング</th><th>内容</th></tr></thead>
+  <tbody>
+    <tr><td>本日納品リマインド</td><td>毎朝 8:00</td><td>本日が納期の受注一覧を代表・事務にメール通知</td></tr>
+    <tr><td>納期3日以内リマインド</td><td>毎朝 8:00</td><td>納期3日以内の未完成受注リストを通知</td></tr>
+    <tr><td>納期超過レポート</td><td>毎週月曜 9:00</td><td>納期超過の未完成受注リストをメール</td></tr>
+  </tbody>
+</table>
+
+<h3>6-6. 金額計算ルール</h3>
+<table>
+  <thead><tr><th>項目</th><th>ルール</th></tr></thead>
+  <tbody>
+    <tr><td>明細小計</td><td><strong>「小計（税抜）」「小計（税込）」の個別入力欄</strong>で入力。どちらを入力しても自動換算され、内部は<strong>税抜（外税）で保持</strong>（税込＝round(税抜×1.10) / 税抜＝round(税込×100÷110)）</td></tr>
+    <tr><td>消費税率</td><td>一律10%（固定）</td></tr>
+    <tr><td>受注合計</td><td>Σ(各明細の税抜小計) から値引きを引き、消費税10%を加えた<strong>税込合計</strong>（端数は丸め）</td></tr>
+    <tr><td>値引き適用</td><td>見積書側で管理。値引き後の小計に対して消費税を計算。<strong>値引きの名目は選択値どおりに見積書へ表示</strong>（自由記載＝入力テキスト / JA全農… / 値引き）</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<!-- フッター -->
+<div style="text-align:center; padding:40px 0 20px; font-size:12px; color:var(--ink-500);">
+  <div style="margin-bottom:8px;">
+    <strong>有限会社 渡辺謄写堂</strong> × <strong>Unsee</strong>
+  </div>
+  本書に関するご質問・修正依頼は Unsee 担当者までご連絡ください。<br>
+  © 2026 Unsee. All rights reserved.
+</div>
+
+</div>
+<script>
+// スマホ対応: 全テーブルの td に data-label を自動付与（thead の th テキストを使用）
+document.querySelectorAll('table').forEach(table => {
+  const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+  if (headers.length === 0) return;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    tr.querySelectorAll('td').forEach((td, i) => {
+      if (headers[i]) td.setAttribute('data-label', headers[i]);
+    });
+  });
+});
+</script>
+</body>
+</html>
