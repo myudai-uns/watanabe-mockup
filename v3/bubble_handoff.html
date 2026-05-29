@@ -529,11 +529,112 @@ tailwind.config = { theme: { extend: {
 
     <h3 class="font-black">Reusable Element（先に作る）</h3>
     <ul class="list-disc pl-6 text-sm space-y-1">
-      <li>ヘッダー＋ナビ（全ページ共通）。</li>
-      <li>ステータスバッジ（OrderStatusのcolor属性で文字色を出し分け）。</li>
-      <li>「タイトル帯＋コンテンツ」カード（受付情報・案件属性・各セクションで再利用）。</li>
-      <li>一覧行／カンバンカード（Repeating Groupのセル）。</li>
+      <li><code>RE_HeaderNav</code>：ヘッダー＋ナビ（全ページ共通。ログイン/PWリセットは非表示）。</li>
+      <li><code>RE_StatusBadge</code>：ステータスバッジ（<code>OrderStatus.color</code> で文字色を出し分け・<code>.st</code>＝背景なし）。</li>
+      <li><code>RE_SectionCard</code>：「タイトル帯＋コンテンツ」カード（受付情報・案件属性・各セクションで再利用）。</li>
+      <li><code>RE_OrderRow</code> / <code>RE_KanbanCard</code> / <code>RE_CustomerRow</code>：一覧行・カンバンカード（Repeating Group のセル）。</li>
+      <li><code>FG_Toast</code>：トースト通知（FloatingGroup・右下・約2秒で自動消去）。</li>
+      <li><code>POP_NewCustomer</code> / <code>POP_EditCustomer</code>：顧客の新規/編集モーダル（起票・顧客一覧/詳細で共用）。</li>
     </ul>
+
+    <h3 class="font-black">画面別エレメント構成一覧（設置する部品）</h3>
+    <p class="text-sm text-ink-700">各ルートに置く要素を §1 命名規則で整理。<b>共通行</b>は全画面（ログイン/PW除く）に適用。<b>起票と編集は同一フォーム</b>を custom state <code>mode</code> で共用する。</p>
+    <table><thead><tr>
+      <th style="min-width:120px">画面 / ルート</th>
+      <th>Visual elements</th><th>Containers</th><th>Input forms</th><th>Reusable</th>
+    </tr></thead><tbody>
+      <tr>
+        <td><b>共通</b><br><span class="text-ink-500">全画面(login/PW除く)</span></td>
+        <td>TXT_システム名 / TXT_ログインユーザー名</td>
+        <td>RE_HeaderNav（sticky上部）</td>
+        <td>BTN_リセット / リンク(現在ユーザー→#login)</td>
+        <td>RE_HeaderNav / FG_Toast</td>
+      </tr>
+      <tr>
+        <td>ログイン<br><code>#login</code></td>
+        <td>TXT_タイトル / TXT_エラー文</td>
+        <td>GRP_ログインフォーム（中央カード）</td>
+        <td>INP_メール(email) / INP_パスワード(password) / CHK_状態保持(30日) / BTN_ログイン / リンク_PW忘れ</td>
+        <td>（ヘッダー非表示）</td>
+      </tr>
+      <tr>
+        <td>PWリセット<br><code>#password_reset</code></td>
+        <td>TXT_説明文</td>
+        <td>GRP_リセットフォーム</td>
+        <td>INP_メール / BTN_送信 / BTN_ログインへ戻る</td>
+        <td>（ヘッダー非表示）</td>
+      </tr>
+      <tr>
+        <td>ダッシュボード<br><code>#dashboard</code></td>
+        <td>TXT_見出し / 各KPI数値TXT / RE_StatusBadge / TXT_納期超過</td>
+        <td>GRP_KPIカード×5（本日納品/進行中/3日以内/超過/売上見込み）/ RG_本日納品予定 / RG_変更履歴</td>
+        <td>BTN_KPIカード(クリック絞込) / 行クリック→#order/:id</td>
+        <td>RE_HeaderNav / RE_SectionCard / RE_StatusBadge</td>
+      </tr>
+      <tr>
+        <td>受注一覧<br><code>#orders</code></td>
+        <td>TXT_件数 / RE_StatusBadge(各行) / TXT_納期超過(紫)</td>
+        <td>GRP_フィルタバー / RG_受注一覧 / GRP_ページネーション</td>
+        <td>INP_顧客名検索 / DD_ステータス / INP_日付From / INP_日付To / DD_タグ / BTN_クリア / BTN_新規起票 / BTN_前/次</td>
+        <td>RE_HeaderNav / RE_OrderRow / RE_StatusBadge</td>
+      </tr>
+      <tr>
+        <td>受注新規起票<br><code>#order/new</code><br><span class="text-ink-500">(state:new)</span></td>
+        <td>TXT_見出し / TXT_小計税抜・消費税・税込合計(サマリー)</td>
+        <td>GRP_受付情報(RE_SectionCard) / RG_通常明細 / RG_ページ物明細 / GRP_加工オプション(明細内) / GRP_案件属性 / FG_見積サマリー(右) / GRP_過去発注 / POP_NewCustomer</td>
+        <td>DD_顧客 / BTN_新規顧客→POP / INP_受付日 / DD_担当者 / DD_受付方法 / BTN_通常追加 / BTN_ページ物追加 ｜ 明細: INP_品名 / DD_用紙 / INP_数量 / DD_インク / INP_小計税抜 / INP_小計税込(UI換算) / CHK+DD_ミシン・折・穴・のり・ラミ / CHK+INP_ナンバリング(from/to) / CHK_野丁式 / ラジオ_納期区分 / INP_納期日/初校日/使用日 / INP_明細メモ / BTN_明細削除 ｜ ページ物: DD_サイズ / INP_ページ数/表紙/本文 ｜ 案件: DD_入稿データ / CHK_タグ(複数) / Uploader_添付 ｜ ラジオ_起票ステータス(2種) / INP_備考 / BTN_保存して起票</td>
+        <td>RE_HeaderNav / RE_SectionCard / RE_StatusBadge</td>
+      </tr>
+      <tr>
+        <td>受注確認<br><code>#order/:id</code><br><span class="text-ink-500">(state:view)</span></td>
+        <td>TXT_基本情報各種 / RE_StatusBadge / TXT_工場進捗(時刻/担当/出来高) / TXT_納期超過</td>
+        <td>GRP_基本情報 / RG_製作明細 / GRP_工場進捗 / RG_変更履歴 / GRP_添付一覧 / FG_アクションサイド</td>
+        <td>INP_工場メモ(view-allow) / BTN_ステータス変更×5 / BTN_見積書 / BTN_印刷ビュー / BTN_この仕様でコピー / BTN_編集に進む / BTN_削除</td>
+        <td>RE_HeaderNav / RE_SectionCard / RE_StatusBadge</td>
+      </tr>
+      <tr>
+        <td>受注編集<br><code>#order/:id/edit</code><br><span class="text-ink-500">(state:edit)</span></td>
+        <td colspan="2"><b>起票画面と同一フォームを再利用</b>（mode=edit で読込）</td>
+        <td>＋ DD_ステータス(全5種) / BTN_変更を保存 / BTN_破棄 / BTN_削除 / BTN_確認に戻る</td>
+        <td>RE_HeaderNav / RE_SectionCard / RE_StatusBadge</td>
+      </tr>
+      <tr>
+        <td>見積書<br><code>#quote/:id</code></td>
+        <td>TXT_見積番号 / PDFプレビュー内TXT(宛先/合計/会社情報/振込先)</td>
+        <td>GRP_入力サイド / GRP_quote_pdf(プレビュー) / RG_見積パターン / RG_PDF明細</td>
+        <td>INP_見積日 / INP_有効期限 / DD_送付方法 / DD_状態 / INP_備考 ｜ パターン: INP_金額 / ラジオ_採用 / CHK_値引き表示 / DD_値引き名目 / INP_値引き金額 / INP_自由記載名目(条件表示) ｜ BTN_PDF出力 / BTN_送信済にする / BTN_受注に戻る</td>
+        <td>RE_HeaderNav / RE_SectionCard</td>
+      </tr>
+      <tr>
+        <td>工場カンバン<br><code>#factory</code></td>
+        <td>TXT_列見出し＋件数 / RE_StatusBadge(列色) / TXT_納期アラート</td>
+        <td>GRP_カンバン列×5(Draggable) / RG_カード(各列内)</td>
+        <td>D&D操作(Draggable Elements) / カードクリック→#order/:id</td>
+        <td>RE_HeaderNav / RE_KanbanCard / RE_StatusBadge</td>
+      </tr>
+      <tr>
+        <td>顧客一覧<br><code>#customers</code></td>
+        <td>TXT_件数 / TXT_累計売上(税抜/消費税/税込)</td>
+        <td>GRP_フィルタ / RG_顧客一覧 / GRP_ページネーション / POP_NewCustomer</td>
+        <td>INP_顧客名検索 / DD_種別 / BTN_新規顧客追加 / BTN_前/次</td>
+        <td>RE_HeaderNav / RE_CustomerRow</td>
+      </tr>
+      <tr>
+        <td>顧客詳細<br><code>#customer/:id</code></td>
+        <td>TXT_基本情報 / GRP_KPIタイル×5</td>
+        <td>GRP_基本情報 / GRP_KPIパネル / RG_過去発注履歴 / POP_EditCustomer</td>
+        <td>INP_メモ(+未保存警告 state:is_dirty) / BTN_メモ保存 / BTN_この仕様でコピー(各行) / BTN_この顧客で新規受注 / BTN_顧客編集</td>
+        <td>RE_HeaderNav / RE_SectionCard / RE_OrderRow</td>
+      </tr>
+      <tr>
+        <td>受注票印刷ビュー<br><code>#print</code></td>
+        <td>TXT_受注ヘッダー / TXT_件名・顧客・納期 / TXT_明細(チェック形式) / TXT_合計(税込太字) / 確認欄</td>
+        <td>GRP_印刷レイアウト(A4横) / RG_明細</td>
+        <td>BTN_印刷 / BTN_受注に戻る</td>
+        <td>RE_HeaderNav(no-print)</td>
+      </tr>
+    </tbody></table>
+    <div class="note text-xs">凡例：<code>GRP_</code>Group ／ <code>RG_</code>RepeatingGroup ／ <code>FG_</code>FloatingGroup ／ <code>POP_</code>Popup ／ <code>INP_</code>Input ／ <code>DD_</code>Dropdown ／ <code>CHK_</code>Checkbox ／ <code>BTN_</code>Button ／ <code>TXT_</code>Text ／ <code>RE_</code>Reusable（§1準拠）。Visual=表示専用 / Container=入れ物 / Input form=入力・操作 / Reusable=共通部品。</div>
 
     <h3 class="font-black">権限（ロール）</h3>
     <p class="text-sm"><code>User.role</code> は <b>Option Set <code>UserRole</code></b>（代表/製版/工場/事務/経理）で判定（v3.1：text廃止）。<code>User.is_active = no</code> はログイン不可・担当ドロップダウンの候補から除外。要件定義 第5章の権限表に従い、Bubble側で <b>privacy rules ＋ 条件表示</b>（要素の visible / workflow の only when）で制御する。</p>
