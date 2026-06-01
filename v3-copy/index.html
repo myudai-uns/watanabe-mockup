@@ -362,45 +362,54 @@ tailwind.config = {
   function pxr(n){ return Math.round(n)+'px'; }
   function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'?' dim':'')+'">'+v+'</span></div>'; }
 
-  function elDetails(t, ci, st){
-    var r=t.getBoundingClientRect(), cs=getComputedStyle(t);
-    var parent=t.parentElement, pcs=parent?getComputedStyle(parent):null;
-    var cont=ci.inner, cr=cont?cont.getBoundingClientRect():null, ctype=cont?containerType(cont):null;
+  function elDetails(t, ci, st, r){
+    var rc=t.getBoundingClientRect(), cs=getComputedStyle(t);
     var cls=(typeof t.className==='string')?t.className:'';
-    var rg=t.closest('ul,ol,table'), rowEl=t.closest('tr,li'), popup=t.closest('#modal-root,[role=dialog],.modal,.popup');
-    var relMap={'static':'In flow','relative':'In flow (relative)','absolute':'Absolute','fixed':'Fixed','sticky':'Sticky'};
-    var fluid=/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls);
-    var widthQual=fluid?'fluid/100%':((t.style.width||/\bw-\[/.test(cls))?'fixed':'auto/fit');
-    var hExplicit=!!t.style.height || /\bh-(\d|\[|full|screen)/.test(cls);
-    var minw=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
-    var maxw=(cs.maxWidth==='none')?'—':cs.maxWidth;
-    var dir='—', wrap='—';
-    if(pcs){
-      if(pcs.display.indexOf('flex')>=0){ dir='flex / '+pcs.flexDirection+(/(sm|md|lg|xl):flex-(row|col)/.test(parent.className||'')?' (応答切替)':''); wrap=pcs.flexWrap; }
-      else if(pcs.display==='grid'){ dir='grid'; wrap='grid'; }
-      else { dir=pcs.display; }
-    }
+    var tag=t.tagName.toLowerCase();
+    // content
+    var content;
+    if(tag==='input'||tag==='select'||tag==='textarea'){ content=(t.value||t.getAttribute('placeholder')||'（入力値）'); }
+    else { var tx=(t.textContent||'').trim().replace(/\s+/g,' '); content= tx? (tx.length>24?tx.slice(0,24)+'…':tx) : '—'; }
+    // configure（Bubble要素種別）
+    var configure=(r?r.type:'')+(t.type?(' / type='+t.type):'');
+    // width sizing
+    var fillW=/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls);
+    var fixedW=!!t.style.width || /\bw-\[/.test(cls);
+    var wMode= fixedW?'Fixed':(fillW?'Fill container':'Fit to content');
+    var minW=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
+    var maxW=(cs.maxWidth==='none')?'—':cs.maxWidth;
+    // height sizing
+    var fillH=/\b(h-full|min-h-screen|h-screen)\b/.test(cls);
+    var fixedH=!!t.style.height || /\bh-(\d|\[)/.test(cls);
+    var hMode= fixedH?'Fixed':(fillH?'Fill / 100%':'Fit to content');
+    var minH=(cs.minHeight==='0px'||cs.minHeight==='auto')?(/min-h-screen/.test(cls)?'100vh':'—'):cs.minHeight;
+    var maxH=(cs.maxHeight==='none')?'—':cs.maxHeight;
+    // layout
+    var relMap={'static':'In flow','relative':'In flow (relative)','absolute':'Absolute','fixed':'Fixed (floating)','sticky':'Sticky'};
+    var posv=relMap[cs.position]||cs.position;
+    var parent=t.parentElement, idx='—';
+    if(parent){ var sib=[].slice.call(parent.children); idx=(sib.indexOf(t)+1)+' / '+sib.length; }
     var orderCls=(cls.match(/(\w+:)?order-\w+/g)||[]).join(' ');
-    var collapse=/(^|\s)(\w+:)?hidden(\s|$)/.test(cls)?'応答クラスあり':'—';
-    var opacity=(parseFloat(cs.opacity)<1)?('opacity '+cs.opacity):'—';
+    var order= orderCls? orderCls : ('DOM順 '+idx);
+    var pad=cs.paddingTop+' '+cs.paddingRight+' '+cs.paddingBottom+' '+cs.paddingLeft;
+    var mar=cs.marginTop+' '+cs.marginRight+' '+cs.marginBottom+' '+cs.marginLeft;
+    // appearance（= Style）
+    var sname= st?st.name:'—';
+    var bw=parseFloat(cs.borderTopWidth)||0;
+    var border= bw>0? (Math.round(bw)+'px '+cs.borderTopStyle+' '+rgbToHex(cs.borderTopColor)) : 'none';
+    var bg= isTransparent(cs.backgroundColor)?'transparent':rgbToHex(cs.backgroundColor);
+    var shadow= cs.boxShadow==='none'?'none':'有';
     return {
-      pos:{ x:pxr(r.left+window.scrollX), y:pxr(r.top+window.scrollY),
-            inC: cont?(pxr(r.left-cr.left)+' , '+pxr(r.top-cr.top)+' ('+ctype+')'):'画面直下',
-            rel: relMap[cs.position]||cs.position },
-      w:{ fixed:pxr(r.width)+' ('+widthQual+')', max:maxw, min:minw, rg:rg?pxr(rg.getBoundingClientRect().width):'—' },
-      h:{ dyn:hExplicit?('Fixed '+pxr(r.height)):('Fit to content ('+pxr(r.height)+')'),
-          rowH:rowEl?pxr(rowEl.getBoundingClientRect().height):'—',
-          popupH:popup?pxr(popup.getBoundingClientRect().height):'—',
-          screenH:t.closest('.min-h-screen,.h-screen')?'100vh (#main)':'—' },
-      m:{ t:cs.marginTop, b:cs.marginBottom, l:cs.marginLeft, r:cs.marginRight },
-      resp:{ collapse:collapse, order:orderCls||'—', dir:dir, wrap:wrap },
-      cond:{ screen:(st&&st.cond)?'Yes（状態/アラートで色変更）':'—',
-             popupHide:popup?'Popup内（閉時に非表示）':'—', opacity:opacity }
+      content:content, configure:configure,
+      wMode:wMode, wPx:pxr(rc.width), minW:minW, maxW:maxW,
+      hMode:hMode, hPx:pxr(rc.height), minH:minH, maxH:maxH,
+      pos:posv, order:order, pad:pad, mar:mar,
+      sname:sname, opacity:cs.opacity, border:border, bg:bg, shadow:shadow
     };
   }
 
   function renderContent(t, r, ci, st){
-    var d; try{ d=elDetails(t,ci,st); }catch(e){ d=null; }
+    var d; try{ d=elDetails(t,ci,st,r); }catch(e){ d=null; }
     var chips = ci.types.length
       ? ci.types.slice().reverse().map(function(c,i){ return (i?'<span class="arr">›</span>':'')+'<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>'; }).join('')
       : '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
@@ -416,17 +425,16 @@ tailwind.config = {
     }
     html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
     if(d){
-      html += '<h5>📐 位置系</h5>'+drow('X座標',d.pos.x)+drow('Y座標',d.pos.y)+drow('Container内配置位置',d.pos.inC)+drow('Relative Position',d.pos.rel)
-            + '<h5>↔ 幅系</h5>'+drow('Width固定値',d.w.fixed)+drow('Max Width',d.w.max)+drow('Min Width',d.w.min)+drow('RG横幅',d.w.rg)
-            + '<h5>↕ 高さ系</h5>'+drow('Dynamic Height',d.h.dyn)+drow('RG Row Height',d.h.rowH)+drow('Popup高さ',d.h.popupH)+drow('画面固有Height',d.h.screenH)
-            + '<h5>⊞ Margin系</h5>'+drow('Margin Top',d.m.t)+drow('Margin Bottom',d.m.b)+drow('Margin Left',d.m.l)+drow('Margin Right',d.m.r)
-            + '<h5>📱 Responsive細部</h5>'+drow('Collapse条件',d.resp.collapse)+drow('モバイル時並び順',d.resp.order)+drow('Container direction切替',d.resp.dir)+drow('Wrap挙動',d.resp.wrap)
-            + '<h5>⚡ Conditional系</h5>'+drow('この画面だけ赤',d.cond.screen)+drow('Popup時だけ非表示',d.cond.popupHide)+drow('特定Group内だけOpacity変更',d.cond.opacity);
+      html += '<h5>📝 Content</h5>'+drow('content',d.content)+drow('configure',d.configure)
+            + '<h5>↔ Size – Width</h5>'+drow('sizewidth (Fixed/Fit/Fill)',d.wMode)+drow('sizewidth (px)',d.wPx)+drow('Min width',d.minW)+drow('Max width',d.maxW)
+            + '<h5>↕ Size – Height</h5>'+drow('sizeHeight (Fixed/Fit/Fill)',d.hMode)+drow('sizeHeight (px)',d.hPx)+drow('Min height',d.minH)+drow('Max height',d.maxH)
+            + '<h5>▦ Layout</h5>'+drow('layout position',d.pos)+drow('layout order',d.order)+drow('layout spacing – padding',d.pad)+drow('layout spacing – margin',d.mar)
+            + '<h5>🎨 Appearance（＝Style）</h5>'+drow('text','＝ Style（'+d.sname+'）')+drow('apperance','opacity '+d.opacity+'　＝Style')+drow('border',d.border+'　＝Style')+drow('background',d.bg+'　＝Style')+drow('shadow',d.shadow+'　＝Style');
     }
     content.innerHTML = html;
   }
 
-  function setEmpty(){ content.innerHTML='<div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・位置/幅/高さ/Margin/<br>Responsive/Conditional をここに表示します。</div>'; }
+  function setEmpty(){ content.innerHTML='<div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・Content/Size(W·H)/<br>Layout/Appearance(＝Style) をここに表示します。</div>'; }
 
   function onDashboard(){ var h=location.hash.slice(1)||'dashboard'; return h==='dashboard'||h.indexOf('dashboard')===0; }
 
