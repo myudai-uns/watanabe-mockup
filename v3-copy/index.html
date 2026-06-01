@@ -173,8 +173,8 @@ tailwind.config = {
 <script>
 /* ===== Bubble Element Inspector (dashboard only / right docked window) ===== */
 (function(){
-  var COL = { visual:'#2563EB', input:'#16A34A' };
-  var CATJP = { visual:'Visual element', input:'Input form' };
+  var COL = { visual:'#2563EB', input:'#16A34A', container:'#E8A54B' };
+  var CATJP = { visual:'Visual element', input:'Input form', container:'Container' };
   var CCOL = { 'Group':'#64748b', 'Repeating Group':'#E87825', 'Table':'#F59E0B', 'Popup':'#A855F7', 'FloatingGroup':'#06B6D4', 'GroupFocus':'#EC4899' };
 
   var win = document.getElementById('bbl-win');
@@ -301,10 +301,68 @@ tailwind.config = {
     return { types:types, inner:inner };
   }
 
+  // ---- 非Text要素の Style名解決 ----
+  function isTransparent(raw){ return raw==='rgba(0, 0, 0, 0)' || raw==='transparent'; }
+  function inputStyleName(t){
+    if(t==='Checkbox') return 'Checkbox';
+    if(t==='RadioButtons') return 'Radio';
+    if(t==='FileUploader') return 'File Uploader';
+    if(t==='PictureUploader') return 'PictureUploader';
+    if(t==='SliderInput') return 'SliderInput';
+    return 'Field – Base'; // Input/Multiline/Dropdown/SearchBox/Date
+  }
+  function buttonStyleName(el){
+    var cs=getComputedStyle(el); var bgRaw=cs.backgroundColor; var bg=rgbToHex(bgRaw); var col=rgbToHex(cs.color); var bw=parseFloat(cs.borderTopWidth)||0;
+    if(!isTransparent(bgRaw)){
+      if(bg==='#E87825') return 'Primary';
+      if(bg==='#7E22CE') return 'Page (紫)';
+      if(bg==='#1A1A1A') return 'Dark';
+      return 'Button';
+    }
+    if(col==='#EF4444'||col==='#DC2626') return 'Danger'+(bw>0?'（枠付き）':'（text）');
+    if(col==='#FFFFFF') return 'Add (normal)';
+    if(col==='#E87825') return 'Ghost brand'+(bw>0?'（枠あり）':'（枠なし）');
+    if(bw>0) return 'Secondary';
+    return 'Button';
+  }
+  function linkStyleInfo(el){
+    var cs=getComputedStyle(el); var white=(rgbToHex(cs.backgroundColor)==='#FFFFFF');
+    var hasBorder=(parseFloat(cs.borderTopWidth)||0)>0; var rad=parseFloat(cs.borderTopLeftRadius)||0; var shadow=cs.boxShadow!=='none';
+    if(white && (hasBorder||shadow) && rad>0 && el.childElementCount>0) return {name:'Group – Card（clickable）', detail:'カード型リンク（navigate）', color:'#64748b'};
+    return {name:'Link', detail:'リンク要素', color:'#2563EB'};
+  }
+  function containerStyleName(el, ctype){
+    if(ctype==='Table') return 'Table';
+    if(ctype==='Repeating Group') return 'RG – List';
+    if(ctype==='Popup') return 'Popup – Modal';
+    if(ctype==='FloatingGroup') return 'FloatingGroup – Card';
+    if(ctype==='GroupFocus') return 'GroupFocus';
+    var cs=getComputedStyle(el); var bgRaw=cs.backgroundColor; var bg=rgbToHex(bgRaw);
+    var shadow=cs.boxShadow!=='none'; var rad=parseFloat(cs.borderTopLeftRadius)||0;
+    if(bg==='#FFFFFF' && (shadow||rad>0)) return 'Group – Card';
+    if(!isTransparent(bgRaw) && bg!=='#FFFFFF') return 'Group – Title Bar';
+    return 'Group – Section';
+  }
+  function identify(el){
+    var r=classify(el); if(r) return r;
+    if(el===mainEl) return null;
+    var ct=containerType(el);
+    if(ct && ct!==SKIP) return { cat:'container', type:ct, ctype:ct };
+    return null;
+  }
+  function resolveStyle(t, r){
+    if(r.type==='Text'){ var ts=textStyle(t); return {name:ts.name, detail:ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' mono':''), color:ts.color, cond:ts.cond}; }
+    if(r.cat==='input'){ return {name:inputStyleName(r.type), detail:'Input form（'+r.type+'）', color:'#16A34A'}; }
+    if(r.type==='Button'){ var bn=buttonStyleName(t); var cs=getComputedStyle(t); var sw=isTransparent(cs.backgroundColor)?rgbToHex(cs.color):rgbToHex(cs.backgroundColor); return {name:'Button – '+bn, detail:'Button form', color:sw}; }
+    if(r.type==='Link'){ return linkStyleInfo(t); }
+    if(r.cat==='container'){ return {name:containerStyleName(t, r.ctype), detail:'Container（'+r.type+'）', color:CCOL[r.ctype]||'#E8A54B'}; }
+    return {name:r.type, detail:'（専用Styleなし）', color:'#6E7689'};
+  }
+
   function pxr(n){ return Math.round(n)+'px'; }
   function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'?' dim':'')+'">'+v+'</span></div>'; }
 
-  function elDetails(t, ci, isText, ts){
+  function elDetails(t, ci, st){
     var r=t.getBoundingClientRect(), cs=getComputedStyle(t);
     var parent=t.parentElement, pcs=parent?getComputedStyle(parent):null;
     var cont=ci.inner, cr=cont?cont.getBoundingClientRect():null, ctype=cont?containerType(cont):null;
@@ -336,23 +394,24 @@ tailwind.config = {
           screenH:t.closest('.min-h-screen,.h-screen')?'100vh (#main)':'—' },
       m:{ t:cs.marginTop, b:cs.marginBottom, l:cs.marginLeft, r:cs.marginRight },
       resp:{ collapse:collapse, order:orderCls||'—', dir:dir, wrap:wrap },
-      cond:{ screen:(isText&&ts&&ts.cond)?'Yes（状態/アラートで色変更）':'—',
+      cond:{ screen:(st&&st.cond)?'Yes（状態/アラートで色変更）':'—',
              popupHide:popup?'Popup内（閉時に非表示）':'—', opacity:opacity }
     };
   }
 
-  function renderContent(t, r, ci, ts){
-    var d; try{ d=elDetails(t,ci,!!ts,ts); }catch(e){ d=null; }
+  function renderContent(t, r, ci, st){
+    var d; try{ d=elDetails(t,ci,st); }catch(e){ d=null; }
     var chips = ci.types.length
       ? ci.types.slice().reverse().map(function(c,i){ return (i?'<span class="arr">›</span>':'')+'<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>'; }).join('')
       : '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
     var html='';
-    html += '<div class="hdr"><span class="cat" style="background:'+COL[r.cat]+'">'+CATJP[r.cat]+'</span><span class="typ">'+r.type+'</span></div>';
+    var catColor=COL[r.cat]||'#64748b';
+    html += '<div class="hdr"><span class="cat" style="background:'+catColor+'">'+(CATJP[r.cat]||r.cat)+'</span><span class="typ">'+r.type+'</span></div>';
     html += '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>';
-    if(ts){
-      html += '<div class="sty"><div class="nm">▦ '+ts.name+'</div>'
-            + '<div class="mt"><span class="sw" style="background:'+ts.color+'"></span>'+ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' mono':'')+'</div>'
-            + (ts.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
+    if(st){
+      html += '<div class="sty"><div class="nm">▦ Style: '+st.name+'</div>'
+            + '<div class="mt"><span class="sw" style="background:'+(st.color||'#6E7689')+'"></span>'+(st.detail||'')+'</div>'
+            + (st.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
             + '</div>';
     }
     html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
@@ -394,15 +453,15 @@ tailwind.config = {
     if(!enabled || !onDashboard()) return;
     var t=e.target;
     if(!t || !t.closest || win.contains(t) || !t.closest('#main')) return;
-    var r=classify(t);
+    var r=identify(t);
     if(!r) return;
     if(t===cur) return;
     if(cur) cur.style.outline=curOutline;
-    cur=t; curOutline=t.style.outline; t.style.outline='2px solid '+COL[r.cat]; t.style.outlineOffset='1px';
+    cur=t; curOutline=t.style.outline; t.style.outline='2px solid '+(COL[r.cat]||'#64748b'); t.style.outlineOffset='1px';
     var ci=containerInfo(t);
     if(ci.inner!==curC){ if(curC) curC.style.outline=curCOutline; curC=ci.inner; if(curC){ curCOutline=curC.style.outline; curC.style.outline='2px dashed #94a3b8'; curC.style.outlineOffset='2px'; } }
-    var ts=(r.type==='Text')?textStyle(t):null;
-    renderContent(t, r, ci, ts);
+    var st=resolveStyle(t, r);
+    renderContent(t, r, ci, st);
   }, true);
 
   setActive();
