@@ -157,7 +157,8 @@
   ⑥ 顧客メモを<strong>保存せず別ページへ移動しようとした場合に未保存警告</strong>を表示。<br>
   ⑦ 担当者を<strong>正式表記6名</strong>（渡辺 聡 / 渡辺 豊 / 吉村 栄子 / 菅野 香里 / 金井 奈々子 / 安斎 崇子）で登録。役職のかっこ書き表示は廃止。<br>
   ⑧ ステータスバッジ「受注」を<strong>赤色ベース</strong>に変更。<br>
-  ⑨ 見積書の値引き名目を、選んだ名目どおり（<strong>自由記載＝入力テキスト</strong> / JA全農… / 値引き）に表示。
+  ⑨ 見積書の値引き名目を、選んだ名目どおり（<strong>自由記載＝入力テキスト</strong> / JA全農… / 値引き）に表示。<br>
+  ⑩ <strong>【v3.1】見積書の表示を「1見積書＝採用パターン1行のみ」から「1見積書に受注の複数明細を行として並べて表示」に変更</strong>。採用ラジオは廃止し、すべての明細行が見積書に並びます（行ごとの値引き設定も可）。
 </div>
 
 <!-- ===== 目次 ===== -->
@@ -395,14 +396,14 @@
   <thead><tr><th style="width:30px">#</th><th style="width:200px">機能名</th><th>概要</th></tr></thead>
   <tbody>
     <tr><td>1</td><td>見積書基本情報入力</td><td>宛先（受注の顧客から自動取得）・見積日・有効期限・送付方法・状態・備考を入力</td></tr>
-    <tr><td>2</td><td>明細ごとの金額設定</td><td>受注の各明細に対応したパターン（1明細=1パターン）の金額を自由入力</td></tr>
-    <tr><td>3</td><td>採用パターンの選択</td><td>複数明細がある場合、ラジオボタンで採用する明細を選択。採用明細がPDFプレビューに反映</td></tr>
-    <tr><td>4</td><td>値引き設定</td><td>パターンごとに値引き表示ON/OFF、値引き名目（値引き/JA全農くみあい飼料㈱広告代負担金/自由記載）、金額を設定。<strong>見積書には選んだ名目どおりに表示</strong>（自由記載＝入力テキスト、JA＝その名称）。自由記載の入力欄は「自由記載」選択時のみ表示</td></tr>
-    <tr><td>5</td><td>PDFプレビュー表示</td><td>右側に見積書のPDFイメージをリアルタイム表示（見積書ヘッダー・宛先・合計金額・会社情報印・明細テーブル・備考・振込先）</td></tr>
+    <tr><td>2</td><td>明細行の金額設定（複数行）</td><td><strong>v3.1: 1見積書に受注の全明細を行として並べて表示</strong>。各行（=各明細）の金額を自由入力</td></tr>
+    <tr><td>3</td><td>明細行ごとの値引き</td><td>各行に値引き表示ON/OFF・名目（値引き/JA全農くみあい飼料㈱広告代負担金/自由記載）・金額を設定。<strong>見積書には選んだ名目どおりに表示</strong>（自由記載＝入力テキスト、JA＝その名称）。自由記載の入力欄は「自由記載」選択時のみ表示</td></tr>
+    <tr><td>4</td><td>合計の自動算出</td><td>小計（外税）= Σ(各行金額 − 行ごとの値引き)／消費税10%／合計（税込）= 小計 + 消費税。すべて自動計算</td></tr>
+    <tr><td>5</td><td>PDFプレビュー表示</td><td>右側に見積書のPDFイメージをリアルタイム表示（見積書ヘッダー・宛先・件名・合計金額・会社情報印・<strong>複数行の明細テーブル</strong>・小計/消費税/合計・備考・振込先）</td></tr>
     <tr><td>6</td><td>PDF出力（印刷）</td><td>ブラウザの印刷機能でPDFプレビュー領域のみをA4用紙に出力</td></tr>
     <tr><td>7</td><td>送信済み管理</td><td>「送信済にする」ボタンで見積書ステータスを「発行済」に更新</td></tr>
     <tr><td>8</td><td>自動保存</td><td>各入力フィールドの変更時に即時保存</td></tr>
-    <tr><td>9</td><td>受注との金額同期</td><td>採用パターンの金額変更が受注の合計金額に自動反映</td></tr>
+    <tr><td>9</td><td>受注との金額同期</td><td>各行の金額変更が、対応する受注明細の小計および受注合計に自動反映（複数行を合算）</td></tr>
     <tr><td>10</td><td>受注に戻る</td><td>受注確認画面へのリンク</td></tr>
   </tbody>
 </table>
@@ -631,7 +632,7 @@
 <div class="flow">
   <div class="flow-step"><div class="flow-num">1</div><div>受注確認画面の「見積書」ボタンをクリック</div></div>
   <div class="flow-step"><div class="flow-num">2</div><div>見積書が未作成の場合: 見積番号（Q-YYMMDD-NNN）を自動採番し新規作成</div></div>
-  <div class="flow-step"><div class="flow-num">3</div><div>見積書が作成済みの場合: 既存の見積書を開く。受注明細との1:1パターン同期を実行</div></div>
+  <div class="flow-step"><div class="flow-num">3</div><div>見積書が作成済みの場合: 既存の見積書を開く。<strong>v3.1: 受注明細の追加・削除に合わせて見積行（QuoteLine）を自動同期</strong>（1明細＝1行）</div></div>
   <div class="flow-step"><div class="flow-num">4</div><div>/quote?id=X へ遷移</div></div>
 </div>
 
@@ -659,9 +660,9 @@
   <tbody>
     <tr><td>ヘッダー</td><td>「御見積書」タイトル、見積番号、見積日</td></tr>
     <tr><td>宛先</td><td>顧客名 + 「御中」、件名（品名）</td></tr>
-    <tr><td>合計金額</td><td>採用パターンの税込合計金額（大文字表示）、有効期限</td></tr>
+    <tr><td>合計金額</td><td>全行を合算した税込合計金額（大文字表示）、有効期限</td></tr>
     <tr><td>会社情報</td><td>有限会社 渡辺謄写堂の社名・住所・電話・FAX・インボイス登録番号・印影</td></tr>
-    <tr><td>明細テーブル</td><td>品名・仕様・数量・金額（外税）・値引き（適用時）・小計・消費税・合計</td></tr>
+    <tr><td>明細テーブル</td><td><strong>v3.1: 1見積書に複数行を表示</strong>。No.（行番号）／品名・仕様／数量／金額（外税）の列。行ごとに値引き行（適用時）を直下に表示。最下部に小計・消費税・合計を集約表示</td></tr>
     <tr><td>備考</td><td>自由記述の備考欄</td></tr>
     <tr><td>振込先</td><td>東邦銀行二本松支店の口座情報（普通/当座）、振込名義</td></tr>
   </tbody>
@@ -778,7 +779,7 @@
     <tr><td><strong>Paper</strong></td><td>用紙マスタ</td><td>paper_name, quality, color, thickness_kg, paper_size, unit_price, is_major</td><td>100件</td></tr>
     <tr><td><strong>Order</strong></td><td>受注（案件）</td><td>order_number, title, customer, status, delivery_type/date, total_amount, items, tags, memo</td><td>5,000件</td></tr>
     <tr><td><strong>OrderItem</strong></td><td>受注明細</td><td>type(normal/page), title, paper, quantity, ink_pattern, 加工オプション群, subtotal, 納期群</td><td>10,000件</td></tr>
-    <tr><td><strong>Quote</strong></td><td>見積書</td><td>quote_number, order, patterns(明細1:1), issued_date, valid_until, status, memo</td><td>3,000件</td></tr>
+    <tr><td><strong>Quote</strong></td><td>見積書（v3.1: 1見積書=複数明細を複数行で表示）</td><td>quote_number, order, lines(QuoteLine, 各明細=1行), issued_date, valid_until, status, memo, total_amount</td><td>3,000件</td></tr>
     <tr><td><strong>FactoryRecord</strong></td><td>工場進捗の時刻メタ（v3: ステータスは Order に統一。本記録は時刻等のメタのみ保持）</td><td>order(1:1), started_at, completed_at, actual_quantity, completed_by, factory_memo</td><td>5,000件</td></tr>
     <tr><td><strong>ChangeLog</strong></td><td>変更履歴</td><td>target_type, target_id, changed_by, changed_at, change_summary</td><td>50,000件</td></tr>
   </tbody>

@@ -62,7 +62,7 @@ tailwind.config = { theme: { extend: {
       <li><b>User.role</b>：text → <b>Option Set <code>UserRole</code></b>（代表/製版/工場/事務/経理）を新設（§3）。</li>
       <li><b>User.is_active</b>：<code>yes/no</code> を追加（退職・停止の論理無効化, §2）。</li>
       <li><b>Order の税額を3フィールドに分離</b>：<code>subtotal_ex_tax</code>・<code>tax_amount</code>・<code>total_amount</code>（§2 / §4）。</li>
-      <li><b>QuotePattern.discount_amount</b>：<b>税抜</b>である旨を明記（§2 / §4）。</li>
+      <li><b>QuoteLine.discount_amount</b>：<b>税抜</b>である旨を明記（§2 / §4）。</li>
       <li><b>税込入力はUI換算のみ</b>：DBは税抜（<code>OrderItem.subtotal</code>）だけを保持し、<b>税込入力専用フィールドは作らない</b>（§4）。</li>
     </ol>
   </div>
@@ -92,7 +92,7 @@ tailwind.config = { theme: { extend: {
     <!-- 1-1 命名規則 -->
     <h3 class="font-black text-lg">1-1. オブジェクト命名規則</h3>
     <table><thead><tr><th>対象</th><th>規則</th><th>例</th></tr></thead><tbody>
-      <tr><td><b>Data Type</b></td><td>英語・PascalCase・<b>単数形</b></td><td>Customer / Order / OrderItem / QuotePattern / FactoryRecord / ChangeLog / Settings</td></tr>
+      <tr><td><b>Data Type</b></td><td>英語・PascalCase・<b>単数形</b></td><td>Customer / Order / OrderItem / Quote / QuoteLine / FactoryRecord / ChangeLog / Settings</td></tr>
       <tr><td><b>Option Set</b></td><td>英語・PascalCase。Displayは日本語可、英数キーが要る場合のみ <code>value</code> 属性に短縮キー</td><td>OrderStatus / InkPattern / UserRole（値: <code>4Cx4C</code> / <code>single</code>）</td></tr>
       <tr><td><b>Field</b></td><td>英語・snake_case。真偽=<code>is_</code>／日時=<code>_at</code>／日付=<code>_date</code>／金額=<code>_amount</code>・<code>subtotal_</code>／参照=対象名／list=複数形</td><td>is_active / started_at / received_date / total_amount / customer / tags</td></tr>
       <tr><td><b>Route（URL hash）</b></td><td>小文字＋スラッシュ区切り</td><td>#orders / #order/:id / #order/:id/edit / #customer/:id / #factory</td></tr>
@@ -194,7 +194,7 @@ tailwind.config = { theme: { extend: {
       <tr><td>Search Box</td><td>Field – Base（共用）</td><td>同上（顧客名検索）</td></tr>
       <tr><td>Date/Time Picker</td><td>Field – Base（共用）</td><td>同上（受付日・納期・初校日 input[type=date]）</td></tr>
       <tr><td>Checkbox</td><td>Checkbox – Default</td><td>native・accent=brand（加工オプション・タグ）</td></tr>
-      <tr><td>Radio Buttons</td><td>Radio – Default</td><td>native・accent=brand（納期区分・採用パターン）</td></tr>
+      <tr><td>Radio Buttons</td><td>Radio – Default</td><td>native・accent=brand（納期区分など）</td></tr>
       <tr><td>File Uploader</td><td>Uploader – Default</td><td>添付ファイル（複数可・個別削除）</td></tr>
       <tr><td>Picture Uploader</td><td>—</td><td>未使用（添付は File Uploader で対応）</td></tr>
       <tr><td>Slider Input</td><td>—</td><td>未使用</td></tr>
@@ -429,7 +429,7 @@ tailwind.config = { theme: { extend: {
     </div>
 
     <div class="card p-5">
-      <h3 class="font-black text-lg mb-2">Quote（見積書） ＋ QuotePattern（見積パターン）</h3>
+      <h3 class="font-black text-lg mb-2">Quote（見積書） ＋ QuoteLine（見積行）<span class="text-xs font-normal text-ink-500"> ※v3.1で QuotePattern→QuoteLine に変更</span></h3>
       <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
         <tr><td>quote_number</td><td>text</td><td>採番 Q-YYMMDD-連番3桁</td></tr>
         <tr><td>order</td><td>→ Order</td><td>対象受注</td></tr>
@@ -437,21 +437,23 @@ tailwind.config = { theme: { extend: {
         <tr><td>send_method</td><td>OptionSet SendMethod</td><td>送付方法</td></tr>
         <tr><td>status</td><td>OptionSet QuoteStatus</td><td>作成中/発行済/受諾/失注</td></tr>
         <tr><td>memo</td><td>text</td><td>備考（振込先等）</td></tr>
-        <tr><td>total_amount</td><td>number</td><td>採用パターンの税込額（互換保持）</td></tr>
-        <tr><td>patterns</td><td>list QuotePattern</td><td>下記</td></tr>
+        <tr><td>total_amount</td><td>number</td><td>全行（QuoteLine）の税込合計（自動算出）</td></tr>
+        <tr><td>lines</td><td>list QuoteLine</td><td>下記（<strong>v3.1: 1見積書に複数明細を行として並べて表示</strong>）</td></tr>
       </tbody></table>
-      <p class="text-sm font-bold mt-3 mb-1">QuotePattern（明細1件＝1パターンで自動同期）</p>
+      <p class="text-sm font-bold mt-3 mb-1">QuoteLine（見積行 ＝ 明細1件＝1行）</p>
+      <p class="text-xs text-ink-500 mb-1">v3.1 変更：v3.0までは「1見積書＝1採用パターン（accepted）の1行のみ表示」だったが、見積書1枚に<strong>複数の明細を複数行で並べて表示</strong>する方式に変更（採用フラグは廃止）。受注の各 OrderItem に対応する QuoteLine が自動で生成される。</p>
       <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
         <tr><td>quote</td><td>→ Quote</td><td>親見積</td></tr>
-        <tr><td>item</td><td>→ OrderItem</td><td>対象明細</td></tr>
-        <tr><td>label</td><td>text</td><td>パターン名（既定=明細title）</td></tr>
-        <tr><td>amount</td><td>number</td><td>金額（税抜）</td></tr>
-        <tr><td>accepted</td><td>yes/no</td><td>採用フラグ（1見積1採用）</td></tr>
-        <tr><td>show_discount</td><td>yes/no</td><td>値引き表示</td></tr>
-        <tr><td>discount_amount</td><td>number（税抜）</td><td>値引き額（<b>税抜</b>）。値引き後に消費税を計算（§4）</td></tr>
+        <tr><td>item</td><td>→ OrderItem</td><td>対象明細（1:1）</td></tr>
+        <tr><td>row_no</td><td>number</td><td>表示行番号（自動）</td></tr>
+        <tr><td>label</td><td>text</td><td>行ラベル（既定=明細title）</td></tr>
+        <tr><td>amount</td><td>number（税抜）</td><td>この行の金額（税抜）</td></tr>
+        <tr><td>show_discount</td><td>yes/no</td><td>値引き表示フラグ（行ごと）</td></tr>
+        <tr><td>discount_amount</td><td>number（税抜）</td><td>値引き額（<b>税抜</b>・行ごと）。値引き後に消費税を計算（§4）</td></tr>
         <tr><td>discount_label_type</td><td>OptionSet DiscountLabelType</td><td>名目種別</td></tr>
         <tr><td>discount_label_text</td><td>text</td><td>自由記載時の名目（§4 値引き名目解決）</td></tr>
       </tbody></table>
+      <p class="text-xs text-ink-500 mt-2">合計算定：<code>小計(税抜) = Σ(各行 amount − show_discount ? discount_amount : 0)</code> ／ <code>消費税 = round(小計 × 10%)</code> ／ <code>合計(税込) = 小計 + 消費税</code>。</p>
     </div>
 
     <div class="card p-5">
@@ -622,7 +624,7 @@ tailwind.config = { theme: { extend: {
     <h3 class="font-black">金額計算（消費税は一律10%）</h3>
     <ul class="list-disc pl-6 text-sm space-y-1">
       <li>明細小計 <code>OrderItem.subtotal</code> は<b>税抜（外税）で保持・自由入力</b>。<code>unit_price = round(subtotal / quantity)</code>。</li>
-      <li>受注小計 = Σ(明細subtotal)。値引き <code>QuotePattern.discount_amount</code>（<b>税抜</b>）を引き <code>afterDiscount = max(0, 小計 − 値引き)</code>。</li>
+      <li>受注小計 = Σ(明細subtotal)。値引き <code>QuoteLine.discount_amount</code>（<b>税抜</b>・行ごと）を引き <code>afterDiscount = max(0, 小計 − 値引き)</code>。</li>
       <li>値引きは小計に按分：<code>ratio = afterDiscount / 小計</code> を各明細に乗じてから税計算。</li>
       <li><b>受注は税額を3フィールドに分離保持（v3.1）</b>：<code>subtotal_ex_tax = afterDiscount</code>（税抜小計・課税対象）／<code>tax_amount = round(subtotal_ex_tax × 10%)</code>（消費税）／<code>total_amount = subtotal_ex_tax + tax_amount</code>（税込合計）。顧客一覧/詳細の「税抜小計・消費税・税込」はこの3値を集計するため、列の整合が常に成立する。</li>
       <li>税抜⇄税込の相互換算：<b>税込 = round(税抜 × 1.1)</b>／<b>税抜 = round(税込 × 100 / 110)</b>。</li>
