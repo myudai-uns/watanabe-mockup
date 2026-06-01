@@ -362,7 +362,7 @@ tailwind.config = {
   }
 
   function pxr(n){ return Math.round(n)+'px'; }
-  function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'?' dim':'')+'">'+v+'</span></div>'; }
+  function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'||v==='auto'?' dim':'')+'">'+v+'</span></div>'; }
 
   function elDetails(t, ci, st, r){
     var rc=t.getBoundingClientRect(), cs=getComputedStyle(t);
@@ -403,8 +403,8 @@ tailwind.config = {
     var shadow= cs.boxShadow==='none'?'none':'有';
     return {
       content:content, configure:configure,
-      wMode:wMode, wPx:pxr(rc.width), minW:minW, maxW:maxW,
-      hMode:hMode, hPx:pxr(rc.height), minH:minH, maxH:maxH,
+      wMode:wMode, wPx:(fixedW?pxr(rc.width):'auto'), minW:minW, maxW:maxW,
+      hMode:hMode, hPx:(fixedH?pxr(rc.height):'auto'), minH:minH, maxH:maxH,
       pos:posv, order:order, pad:pad, mar:mar,
       sname:sname, opacity:cs.opacity, border:border, bg:bg, shadow:shadow
     };
