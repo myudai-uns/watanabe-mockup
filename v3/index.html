@@ -45,6 +45,8 @@ tailwind.config = {
   body.view-mode input[type="file"] { display: none; }
   body.view-mode .edit-only { display: none !important; }
   body.view-mode button:not(.view-allow) { pointer-events: none; opacity: 0.5; }
+  /* v3: ラベル経由でhidden input/radio/checkboxがトグルできる箇所（タグ・納期区分・加工オプション）を確認モードで操作不可に */
+  body.view-mode label { pointer-events: none !important; cursor: default !important; }
   /* v2.6: .view-allow は操作可能。背景白は input/select のみに */
   body.view-mode .view-allow,
   body.view-mode .view-allow * { pointer-events: auto !important; opacity: 1 !important; }
