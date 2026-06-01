@@ -344,7 +344,7 @@ SEED_DATA.quotes = [
 
 // ========= DB Layer =========
 const DB = {
-  KEY: 'watanabe_db_v3_2',  // v3.2: シード明細にtitle補完／見積件名ロジック変更
+  KEY: 'watanabe_db_v3_3',  // v3.3: 見積書に表示する明細を選択可能（included flag）
   data: null,
   load() {
     const raw = localStorage.getItem(this.KEY);
@@ -531,6 +531,7 @@ const DB = {
           item_id: it.id,
           label: it.title || '',
           amount: +it.subtotal || 0,
+          included: true,   // v3.3: 既定で見積書に掲載
           accepted: false,
           show_discount: false,
           discount_amount: 0,
@@ -569,7 +570,8 @@ const DB = {
         item_id: it.id,
         label: it.title || '',
         amount: +it.subtotal || 0,
-        accepted: i === 0,    // v2.9: 先頭を初期採用
+        included: true,        // v3.3: 既定で見積書に掲載
+        accepted: i === 0,     // v2.9互換（不使用）
         show_discount: false,
         discount_amount: 0,
         discount_label_type: '値引き',
@@ -603,9 +605,11 @@ const DB = {
     const p = q.patterns.find(x => x.id === pattern_id);
     if (!p) return null;
     Object.assign(p, patch);
-    // v3: 1見積書=複数明細(複数行)。全パターン(=全明細)の金額を合算して総額を同期。各明細subtotalもパターン金額に同期
+    // v3.3: 見積総額は「掲載対象（included !== false）」のみ合算。各明細subtotalは全パターンの金額を同期（受注合計は常に全明細ベース）
     const order = this.find('orders', q.order_id);
-    const subtotalEx = q.patterns.reduce((s,x) => s + Math.max(0, (+x.amount||0) - (x.show_discount ? (+x.discount_amount||0) : 0)), 0);
+    const subtotalEx = q.patterns
+      .filter(x => x.included !== false)
+      .reduce((s,x) => s + Math.max(0, (+x.amount||0) - (x.show_discount ? (+x.discount_amount||0) : 0)), 0);
     q.total_amount = Math.round(subtotalEx * (100 + TAX_RATE_FIXED) / 100);
     if (order) {
       q.patterns.forEach(x => { if (x.item_id) { const it = order.items.find(it => it.id === x.item_id); if (it) it.subtotal = +x.amount || 0; } });
@@ -2429,19 +2433,22 @@ Screens.quote = {
       const extAD = Math.max(0, ext - disc);
       return { ext, disc, extAD };
     };
-    const subtotalEx = q.patterns.reduce((s,p) => s + rowCalc(p).extAD, 0);
+    // v3.3: 見積書に含める明細をユーザーが選択可能（included flag）。集計と件名は「含める」明細のみ対象
+    const included = q.patterns.filter(p => p.included !== false);
+    const subtotalEx = included.reduce((s,p) => s + rowCalc(p).extAD, 0);
     const tax = Math.round(subtotalEx * TAX_RATE_FIXED / 100);
     const grandTotal = subtotalEx + tax;
-    // v3.2: 件名は明細1件なら品名そのまま、2件以上なら「1件目の品名 など」
-    const firstTitle = o.items[0]?.title || o.title || '';
-    const subjectTitle = (o.items.length >= 2 && firstTitle) ? (firstTitle + ' など') : firstTitle;
+    // v3.2: 件名は明細1件なら品名そのまま、2件以上なら「1件目の品名 など」（含める明細ベース）
+    const firstItem = included[0] ? o.items.find(it => it.id === included[0].item_id) : null;
+    const firstTitle = firstItem?.title || included[0]?.label || o.title || '';
+    const subjectTitle = (included.length >= 2 && firstTitle) ? (firstTitle + ' など') : firstTitle;
 
     return `
       <div class="flex justify-between items-center mb-4">
         <div>
           <a href="#order/${o.id}" class="text-ink-500 text-sm">← 受注に戻る</a>
           <h1 class="text-2xl font-black">見積書 <span class="font-mono">#${esc(q.quote_number)}</span></h1>
-          <p class="text-sm text-ink-500">受注 ${esc(o.order_number)} / ${esc(fmt.customer(o.customer_id))} / 明細 <b>${q.patterns.length}件</b> / 合計 <b class="text-brand">${fmt.money(grandTotal)}</b>（税込）</p>
+          <p class="text-sm text-ink-500">受注 ${esc(o.order_number)} / ${esc(fmt.customer(o.customer_id))} / 見積掲載 <b>${included.length}件</b> / 受注明細 ${q.patterns.length}件 / 合計 <b class="text-brand">${fmt.money(grandTotal)}</b>（税込）</p>
         </div>
         <div class="flex gap-2">
           <button id="btn-print-quote" class="bg-ink-900 text-white px-4 py-2 rounded text-sm font-bold">PDF出力 (印刷)</button>
@@ -2467,7 +2474,8 @@ Screens.quote = {
           <div><label class="block text-xs font-bold mb-1">備考</label><textarea id="q-memo" class="w-full border rounded px-2 py-1.5" rows="3">${esc(q.memo)}</textarea></div>
 
           <div class="border-t pt-3">
-            <h4 class="font-bold mb-2">明細（${q.patterns.length}件 / 複数行を見積書に表示）</h4>
+            <h4 class="font-bold mb-2">明細（受注 ${q.patterns.length}件 / 見積掲載 <span class="text-brand">${included.length}件</span>）</h4>
+            <p class="text-xs text-ink-500 mb-2">チェックを外した明細は見積書に表示されません。</p>
             <div id="patterns-list" class="space-y-2">
               ${q.patterns.map((p, i) => this.renderPattern(p, q, o, i)).join('')}
             </div>
@@ -2508,7 +2516,7 @@ Screens.quote = {
               </div>
             </div>
 
-            ${q.patterns.length > 0 ? (() => {
+            ${included.length > 0 ? (() => {
               const specOf = (item) => {
                 if (!item) return '';
                 if (item.type === 'page') {
@@ -2517,7 +2525,7 @@ Screens.quote = {
                 }
                 return `${esc(fmt.paper(item.paper_id))}（${esc(fmt.ink(item.ink_pattern))}）`;
               };
-              const rows = q.patterns.map((p, i) => {
+              const rows = included.map((p, i) => {
                 const item = o.items.find(it => it.id === p.item_id);
                 const r = rowCalc(p);
                 let html = `<tr class="border-b">
@@ -2547,7 +2555,7 @@ Screens.quote = {
                   <tr class="font-black bg-ink-700/10"><td class="p-2" colspan="3">合計（税込）</td><td class="p-2 text-right text-sm">${fmt.money(grandTotal)}</td></tr>
                 </tbody>
               </table>`;
-            })() : '<p class="text-ink-500 text-xs">受注に明細がありません</p>'}
+            })() : `<p class="text-ink-500 text-xs">${q.patterns.length === 0 ? '受注に明細がありません' : '見積書に表示する明細を1件以上選択してください'}</p>`}
 
             <div class="mt-4 text-xs">
               <div class="font-bold">備考</div>
@@ -2566,14 +2574,20 @@ Screens.quote = {
   },
   renderPattern(p, q, order, rowIdx) {
     // v3: 1見積書=複数明細(複数行)。採用ラジオを廃止し、全明細を見積書に並べて表示
+    // v3.3: 見積書に表示する明細を選択可能（include checkbox）
     const items = order?.items || [];
     const idx = items.findIndex(it => it.id === p.item_id);
     const item = items[idx];
     const typeBadge = item?.type === 'page' ? '<span class="text-xs text-purple-700 font-bold">ページ物</span>' : '<span class="text-xs text-ink-500">通常</span>';
     const rowNo = (rowIdx ?? idx) + 1;
+    const included = p.included !== false;
     return `
-      <div class="border rounded p-3 bg-white" data-pid="${p.id}">
+      <div class="border rounded p-3 ${included ? 'bg-white border-brand/30' : 'bg-ink-300/10 border-dashed opacity-60'}" data-pid="${p.id}">
         <div class="flex items-center gap-2 flex-wrap">
+          <label class="flex items-center gap-1 cursor-pointer text-xs font-bold ${included ? 'text-brand' : 'text-ink-500'}" title="チェックすると見積書に表示されます">
+            <input type="checkbox" class="qp-include" ${included ? 'checked' : ''}>
+            見積掲載
+          </label>
           <span class="text-xs font-black bg-ink-700 text-white px-2 py-0.5 rounded">行 ${rowNo}</span>
           ${typeBadge}
           <span class="flex-1 font-bold text-sm">${esc(item?.title || '(品名未設定)')}</span>
@@ -2607,6 +2621,12 @@ Screens.quote = {
       App.render();
     });
     // v3: 採用ラジオは廃止（全明細を見積書に並べて表示）
+    // v3.3: 見積書に含める明細を選択するチェックボックス
+    $$('.qp-include').forEach(el => el.addEventListener('change', (e) => {
+      const pid = el.closest('[data-pid]').dataset.pid;
+      DB.updateQuotePattern(id, pid, { included: e.target.checked });
+      App.render();
+    }));
     $$('.qp-amount').forEach(el => el.addEventListener('change', (e) => {
       const pid = el.closest('[data-pid]').dataset.pid;
       DB.updateQuotePattern(id, pid, { amount: +e.target.value || 0 });

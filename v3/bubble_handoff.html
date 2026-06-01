@@ -448,12 +448,13 @@ tailwind.config = { theme: { extend: {
         <tr><td>row_no</td><td>number</td><td>表示行番号（自動）</td></tr>
         <tr><td>label</td><td>text</td><td>行ラベル（既定=明細title）</td></tr>
         <tr><td>amount</td><td>number（税抜）</td><td>この行の金額（税抜）</td></tr>
+        <tr><td>included</td><td>yes/no</td><td><strong>v3.3: 見積書に表示するか</strong>（既定 yes）。falseの行は見積書PDFに表示せず、合計算定からも除外</td></tr>
         <tr><td>show_discount</td><td>yes/no</td><td>値引き表示フラグ（行ごと）</td></tr>
         <tr><td>discount_amount</td><td>number（税抜）</td><td>値引き額（<b>税抜</b>・行ごと）。値引き後に消費税を計算（§4）</td></tr>
         <tr><td>discount_label_type</td><td>OptionSet DiscountLabelType</td><td>名目種別</td></tr>
         <tr><td>discount_label_text</td><td>text</td><td>自由記載時の名目（§4 値引き名目解決）</td></tr>
       </tbody></table>
-      <p class="text-xs text-ink-500 mt-2">合計算定：<code>小計(税抜) = Σ(各行 amount − show_discount ? discount_amount : 0)</code> ／ <code>消費税 = round(小計 × 10%)</code> ／ <code>合計(税込) = 小計 + 消費税</code>。</p>
+      <p class="text-xs text-ink-500 mt-2">合計算定：<code>小計(税抜) = Σ(included !== false の各行 amount − show_discount ? discount_amount : 0)</code> ／ <code>消費税 = round(小計 × 10%)</code> ／ <code>合計(税込) = 小計 + 消費税</code>。<strong>v3.3</strong>: included=false の行は除外。</p>
     </div>
 
     <div class="card p-5">
