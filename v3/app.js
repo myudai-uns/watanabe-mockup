@@ -166,7 +166,8 @@ function buildSeedOrders() {
     created_by_id: 'u1',
     created_at: o.received_date + 'T09:00:00',
     updated_at: o.received_date + 'T09:00:00',
-    items: o.items,
+    // v3.2: シード明細にtitleがない場合は受注の品名（または順番付きの既定名）を補完
+    items: (o.items || []).map((it, i, arr) => ({ ...it, title: it.title || (arr.length === 1 ? (o.title || '') : (o.title ? `${o.title} #${i+1}` : `明細 ${i+1}`)) })),
   });
   const it = (paper_id, qty, ink, opts = {}) => ({
     id: 'it_' + Math.random().toString(36).slice(2, 8),
@@ -343,7 +344,7 @@ SEED_DATA.quotes = [
 
 // ========= DB Layer =========
 const DB = {
-  KEY: 'watanabe_db_v3_1',  // v3.1: 見積書を1見積=複数明細(複数行)表示に変更
+  KEY: 'watanabe_db_v3_2',  // v3.2: シード明細にtitle補完／見積件名ロジック変更
   data: null,
   load() {
     const raw = localStorage.getItem(this.KEY);
@@ -2431,7 +2432,9 @@ Screens.quote = {
     const subtotalEx = q.patterns.reduce((s,p) => s + rowCalc(p).extAD, 0);
     const tax = Math.round(subtotalEx * TAX_RATE_FIXED / 100);
     const grandTotal = subtotalEx + tax;
-    const subjectTitle = o.title || (o.items[0]?.title || '');
+    // v3.2: 件名は明細1件なら品名そのまま、2件以上なら「1件目の品名 など」
+    const firstTitle = o.items[0]?.title || o.title || '';
+    const subjectTitle = (o.items.length >= 2 && firstTitle) ? (firstTitle + ' など') : firstTitle;
 
     return `
       <div class="flex justify-between items-center mb-4">
