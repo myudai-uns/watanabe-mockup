@@ -494,6 +494,48 @@ tailwind.config = { theme: { extend: {
         <tr><td>holidays</td><td>list date（休業日：営業日計算に使用）</td></tr>
       </tbody></table>
     </div>
+
+    <!-- ============ 日付・日時の階層構造 ============ -->
+    <div class="card p-5">
+      <h3 class="font-black text-lg mb-2">日付・日時の階層構造</h3>
+      <p class="text-sm text-ink-700 mb-3">本システムは日付/日時を <b>「業務日（<code>_date</code>）」</b>と <b>「タイムスタンプ（<code>_at</code>）」</b>の2系統で運用し、<b>Order（受注代表）→ OrderItem（明細単位）</b>の2階層に展開する。代表値は items[0] と同期し、一覧／カンバン／納期超過判定の表示に用いる。</p>
+
+      <h4 class="font-bold text-sm mb-1">A. 種別（命名規約）</h4>
+      <table><thead><tr><th>サフィックス</th><th>意味</th><th>例</th></tr></thead><tbody>
+        <tr><td><code>_date</code></td><td>業務上の日付（年月日のみ・時刻不使用）</td><td>received_date / delivered_date / delivery_date_start・_end / first_proof_date / used_date / issued_date / valid_until</td></tr>
+        <tr><td><code>_at</code></td><td>システムが自動記録するタイムスタンプ（日時）</td><td>created_at / updated_at / started_at / completed_at / logged_at / changed_at</td></tr>
+      </tbody></table>
+
+      <h4 class="font-bold text-sm mt-3 mb-1">B. 配置（どの Data Type のどの階層に持つか）</h4>
+      <table><thead><tr><th>Data Type</th><th>業務日（<code>_date</code>）</th><th>タイムスタンプ（<code>_at</code>）</th></tr></thead><tbody>
+        <tr><td><b>Order</b>（受注代表）</td><td>received_date / delivered_date / delivery_date_start・_end / first_proof_date / used_date</td><td>created_at / updated_at</td></tr>
+        <tr><td><b>OrderItem</b>（明細単位）</td><td>delivery_date_start・_end / first_proof_date / used_date <span class="text-ink-500">※明細ごとに独立保持。複数明細の異なる納期/初校/使用日に対応</span></td><td>—</td></tr>
+        <tr><td><b>Quote</b>（見積書）</td><td>issued_date / valid_until</td><td>—（Bubble標準 Created/Modified を使用）</td></tr>
+        <tr><td><b>FactoryRecord</b>（工場進捗）</td><td>—</td><td>started_at / completed_at</td></tr>
+        <tr><td><b>ContactLog</b>（連絡履歴）</td><td>—</td><td>logged_at</td></tr>
+        <tr><td><b>ChangeLog</b>（操作履歴）</td><td>—</td><td>changed_at</td></tr>
+        <tr><td><b>Settings</b>（休業日マスタ）</td><td><code>holidays</code>（<code>list date</code>）</td><td>—</td></tr>
+      </tbody></table>
+
+      <h4 class="font-bold text-sm mt-3 mb-1">C. 同期・自動セット規則</h4>
+      <ul class="list-disc pl-5 text-sm space-y-1">
+        <li><b>代表 ↔ 明細の同期</b>：Order の <code>delivery_type / delivery_date_start / _end / first_proof_date / used_date</code> は<b>明細 items[0]</b> と同期（一覧／カンバン／納期超過判定の代表値）。明細単位の <code>delivery_*</code> は独立保持され、複数明細で異なる納期を持てる。</li>
+        <li><b>納品済み移行</b>：<code>Order.status</code> を「納品済み」に変更 → <code>Order.delivered_date</code> を当日に自動セット（未設定時のみ）。</li>
+        <li><b>印刷中移行</b>：<code>Order.status</code> を「印刷中」に変更 → <code>FactoryRecord.started_at</code> を現在時刻に自動セット（未設定時のみ）。</li>
+        <li><b>完成／納品済み移行</b>：<code>Order.status</code> を「完成」または「納品済み」に変更 → <code>FactoryRecord.completed_at</code> ・ <code>completed_by</code> を自動セット（未設定時のみ）。</li>
+        <li><b>採番との連動</b>：<code>order_number = YYMMDD-連番3桁</code>（<code>received_date</code> 由来）／ <code>quote_number = Q-YYMMDD-連番3桁</code>（<code>issued_date</code> 由来）。</li>
+        <li><b>納期区分「仮」</b>：<code>delivery_date_*</code> の必須を免除。<b>「範囲指定」のみ</b> <code>delivery_date_end</code> を有効化。</li>
+        <li><b>営業日計算</b>：<code>Settings.holidays</code>（<code>list date</code>）を除外して算出。</li>
+      </ul>
+
+      <h4 class="font-bold text-sm mt-3 mb-1">D. 表示フォーマット規約</h4>
+      <ul class="list-disc pl-5 text-sm space-y-1">
+        <li>標準表示：<code>YYYY/M/D（曜）</code>（fmt.dateW）。受注一覧／カンバンで使用。</li>
+        <li>長表示（見積書PDF等）：<code>YYYY年M月D日</code>（fmt.dateJp）。</li>
+        <li>タイムスタンプ表示：<code>YYYY/M/D HH:mm</code>（fmt.dateTime）。変更履歴／工場進捗で使用。</li>
+        <li>納期超過：<code>status ∉ {納品済み, 見積もり段階}</code> かつ「本日 − 納期 &gt; 0」のとき<b>「N日経過」</b>を紫表示。</li>
+      </ul>
+    </div>
   </section>
 
   <!-- ============ Option Set ============ -->
