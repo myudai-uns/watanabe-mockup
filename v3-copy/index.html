@@ -366,6 +366,29 @@ tailwind.config = {
   function pxr(n){ return Math.round(n)+'px'; }
   function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'||v==='auto'?' dim':'')+'">'+v+'</span></div>'; }
 
+  function parentBox(parent){ var pr=parent.getBoundingClientRect(), pcs=getComputedStyle(parent); var padL=parseFloat(pcs.paddingLeft)||0, padR=parseFloat(pcs.paddingRight)||0; return {pr:pr, padL:padL, padR:padR, cw:pr.width-padL-padR}; }
+  function widthMode(t, rc, cls){
+    if(!!t.style.width || /\bw-\[/.test(cls)) return 'Fixed';
+    if(/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls)) return 'Fill container';
+    var p=t.parentElement; if(p){ var m=parentBox(p); if(m.cw>0 && rc.width>=m.cw-2) return 'Fill container'; } // 親幅いっぱい＝Fill（テキスト/コンテナは基本これ）
+    return 'Fit to content';
+  }
+  function posAlign(t, rc){
+    var p=t.parentElement; if(!p) return 'left';
+    var m=parentBox(p); if(m.cw<=0) return 'left';
+    if(rc.width>=m.cw-2) return 'left'; // Fill（stretch）は left 扱い
+    var lg=rc.left-(m.pr.left+m.padL), rg=(m.pr.right-m.padR)-rc.right;
+    if(Math.abs(lg-rg)<4) return 'center';
+    return rg<lg?'right':'left';
+  }
+  function containerLayout(cs, el){
+    for(var i=0;i<el.children.length;i++){ if(getComputedStyle(el.children[i]).position==='absolute') return 'Align to parent'; }
+    var disp=cs.display;
+    if(disp.indexOf('flex')>=0) return (cs.flexDirection.indexOf('column')>=0?'Column':'Row')+(cs.flexWrap==='wrap'?' (wrap)':'');
+    if(disp==='grid'){ var cols=(cs.gridTemplateColumns||'').split(' ').filter(Boolean).length; return 'Row'+(cols?'（grid '+cols+'列）':''); }
+    return 'Column';
+  }
+
   function elDetails(t, ci, st, r){
     var rc=t.getBoundingClientRect(), cs=getComputedStyle(t);
     var cls=(typeof t.className==='string')?t.className:'';
@@ -377,9 +400,7 @@ tailwind.config = {
     // configure（Bubble要素種別）
     var configure=(r?r.type:'')+(t.type?(' / type='+t.type):'');
     // width sizing
-    var fillW=/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls);
-    var fixedW=!!t.style.width || /\bw-\[/.test(cls);
-    var wMode= fixedW?'Fixed':(fillW?'Fill container':'Fit to content');
+    var wMode=widthMode(t,rc,cls); var fixedW=(wMode==='Fixed');
     var minW=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
     var maxW=(cs.maxWidth==='none')?'—':cs.maxWidth;
     // height sizing
@@ -389,8 +410,7 @@ tailwind.config = {
     var minH=(cs.minHeight==='0px'||cs.minHeight==='auto')?(/min-h-screen/.test(cls)?'100vh':'—'):cs.minHeight;
     var maxH=(cs.maxHeight==='none')?'—':cs.maxHeight;
     // layout
-    var relMap={'static':'In flow','relative':'In flow (relative)','absolute':'Absolute','fixed':'Fixed (floating)','sticky':'Sticky'};
-    var posv=relMap[cs.position]||cs.position;
+    var posv=posAlign(t,rc);
     var parent=t.parentElement, idx='—';
     if(parent){ var sib=[].slice.call(parent.children); idx=(sib.indexOf(t)+1)+' / '+sib.length; }
     var orderCls=cls.split(/\s+/).filter(function(c){return /^(\w+:)?order-/.test(c);}).join(' ');
@@ -419,22 +439,19 @@ tailwind.config = {
     var cls=(typeof t.className==='string')?t.className:'';
     var ctype=r.ctype||'Group';
     var isList=(ctype==='Repeating Group'||ctype==='Table');
-    var fillW=/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls), fixedW=!!t.style.width||/\bw-\[/.test(cls);
-    var wMode=fixedW?'Fixed':(fillW?'Fill container':'Fit to content');
+    var wMode=widthMode(t,rc,cls), fixedW=(wMode==='Fixed');
     var fillH=/\b(h-full|min-h-screen|h-screen)\b/.test(cls), fixedH=!!t.style.height||/\bh-(\d|\[)/.test(cls);
     var hMode=fixedH?'Fixed':(fillH?'Fill / 100%':'Fit to content');
-    var disp=cs.display, layout, gap='—', align='—';
+    var disp=cs.display, gap='—', align='—';
     if(disp.indexOf('flex')>=0){
-      layout=(cs.flexDirection.indexOf('column')>=0?'Column':'Row')+(cs.flexWrap==='wrap'?' / wrap':'');
       align='justify:'+shortJC(cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
       if(cs.columnGap&&cs.columnGap!=='normal'&&parseFloat(cs.columnGap)>0) gap=cs.columnGap;
     } else if(disp==='grid'){
-      var cols=(cs.gridTemplateColumns||'').split(' ').filter(Boolean).length;
-      layout='Grid'+(cols?' ('+cols+' cols)':'');
       align='justify:'+shortJC(cs.justifyItems||cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
       if(cs.gap&&cs.gap!=='normal'&&parseFloat(cs.gap)>0) gap=cs.gap.replace(/ .*/,'');
-    } else { layout='Column (stack)'; }
-    var pos=({'static':'In flow','relative':'In flow (relative)','absolute':'Absolute','fixed':'Fixed (floating)','sticky':'Sticky'})[cs.position]||cs.position;
+    }
+    var layout=containerLayout(cs,t);
+    var pos=posAlign(t,rc);
     var parent=t.parentElement, idx='—'; if(parent){var sib=[].slice.call(parent.children);idx=(sib.indexOf(t)+1)+' / '+sib.length;}
     var order=cls.split(/\s+/).filter(function(c){return /^(\w+:)?order-/.test(c);}).join(' ')||('DOM順 '+idx);
     var bw=parseFloat(cs.borderTopWidth)||0;
