@@ -290,6 +290,8 @@ tailwind.config = {
       if(isFixedSticky(el)) return 'FloatingGroup';
       if(el.id) return 'Group';
       if(/\b(bg-(white|ink|red|brand|ok|blue|gray|green|yellow|amber)|shadow|border-2|card)\b/.test(el.className||'')) return 'Group';
+      var dsp=getComputedStyle(el).display; // レイアウトGroup（flex/gridで子2つ以上）も Group として扱う
+      if((dsp==='flex'||dsp==='inline-flex'||dsp==='grid') && el.childElementCount>=2) return 'Group';
     }
     return SKIP;
   }
@@ -391,7 +393,7 @@ tailwind.config = {
     var posv=relMap[cs.position]||cs.position;
     var parent=t.parentElement, idx='—';
     if(parent){ var sib=[].slice.call(parent.children); idx=(sib.indexOf(t)+1)+' / '+sib.length; }
-    var orderCls=(cls.match(/(\w+:)?order-\w+/g)||[]).join(' ');
+    var orderCls=cls.split(/\s+/).filter(function(c){return /^(\w+:)?order-/.test(c);}).join(' ');
     var order= orderCls? orderCls : ('DOM順 '+idx);
     var pad=cs.paddingTop+' '+cs.paddingRight+' '+cs.paddingBottom+' '+cs.paddingLeft;
     var mar=cs.marginTop+' '+cs.marginRight+' '+cs.marginBottom+' '+cs.marginLeft;
@@ -410,8 +412,49 @@ tailwind.config = {
     };
   }
 
+  function shortJC(v){ return ({'flex-start':'start','flex-end':'end','space-between':'between','space-around':'around','space-evenly':'evenly','center':'center','normal':'—','stretch':'stretch'})[v]||v; }
+  function shortAI(v){ return ({'flex-start':'start','flex-end':'end','center':'center','stretch':'stretch','baseline':'baseline','normal':'—'})[v]||v; }
+  function groupDetails(t, r, st){
+    var rc=t.getBoundingClientRect(), cs=getComputedStyle(t);
+    var cls=(typeof t.className==='string')?t.className:'';
+    var ctype=r.ctype||'Group';
+    var isList=(ctype==='Repeating Group'||ctype==='Table');
+    var fillW=/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls), fixedW=!!t.style.width||/\bw-\[/.test(cls);
+    var wMode=fixedW?'Fixed':(fillW?'Fill container':'Fit to content');
+    var fillH=/\b(h-full|min-h-screen|h-screen)\b/.test(cls), fixedH=!!t.style.height||/\bh-(\d|\[)/.test(cls);
+    var hMode=fixedH?'Fixed':(fillH?'Fill / 100%':'Fit to content');
+    var disp=cs.display, layout, gap='—', align='—';
+    if(disp.indexOf('flex')>=0){
+      layout=(cs.flexDirection.indexOf('column')>=0?'Column':'Row')+(cs.flexWrap==='wrap'?' / wrap':'');
+      align='justify:'+shortJC(cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
+      if(cs.columnGap&&cs.columnGap!=='normal'&&parseFloat(cs.columnGap)>0) gap=cs.columnGap;
+    } else if(disp==='grid'){
+      var cols=(cs.gridTemplateColumns||'').split(' ').filter(Boolean).length;
+      layout='Grid'+(cols?' ('+cols+' cols)':'');
+      align='justify:'+shortJC(cs.justifyItems||cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
+      if(cs.gap&&cs.gap!=='normal'&&parseFloat(cs.gap)>0) gap=cs.gap.replace(/ .*/,'');
+    } else { layout='Column (stack)'; }
+    var pos=({'static':'In flow','relative':'In flow (relative)','absolute':'Absolute','fixed':'Fixed (floating)','sticky':'Sticky'})[cs.position]||cs.position;
+    var parent=t.parentElement, idx='—'; if(parent){var sib=[].slice.call(parent.children);idx=(sib.indexOf(t)+1)+' / '+sib.length;}
+    var order=cls.split(/\s+/).filter(function(c){return /^(\w+:)?order-/.test(c);}).join(' ')||('DOM順 '+idx);
+    var bw=parseFloat(cs.borderTopWidth)||0;
+    return {
+      typeContent: isList?'list（行データ）':'—（固定Group/非リスト）',
+      dataSource: isList?'リスト（受注/履歴 等）':'—',
+      width: wMode+(fixedW?' / '+pxr(rc.width):' / auto'),
+      height: hMode+(fixedH?' / '+pxr(rc.height):' / auto'),
+      pos:pos, order:order, layout:layout, align:align, gap:gap,
+      pad:cs.paddingTop+' '+cs.paddingRight+' '+cs.paddingBottom+' '+cs.paddingLeft,
+      mar:cs.marginTop+' '+cs.marginRight+' '+cs.marginBottom+' '+cs.marginLeft,
+      sname: st?st.name:'—', opacity:cs.opacity,
+      border: bw>0?(Math.round(bw)+'px '+cs.borderTopStyle+' '+rgbToHex(cs.borderTopColor)):'none',
+      bg: isTransparent(cs.backgroundColor)?'transparent':rgbToHex(cs.backgroundColor),
+      shadow: cs.boxShadow==='none'?'none':'有'
+    };
+  }
+
   function renderContent(t, r, ci, st){
-    var d; try{ d=elDetails(t,ci,st,r); }catch(e){ d=null; }
+    var d; try{ d=(r.cat==='container')?groupDetails(t,r,st):elDetails(t,ci,st,r); }catch(e){ d=null; }
     var chips = ci.types.length
       ? ci.types.slice().reverse().map(function(c,i){ return (i?'<span class="arr">›</span>':'')+'<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>'; }).join('')
       : '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
@@ -426,7 +469,12 @@ tailwind.config = {
             + '</div>';
     }
     html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
-    if(d){
+    if(d && r.cat==='container'){
+      html += '<h5>📦 Group / Container</h5>'+drow('Type of content',d.typeContent)+drow('data source',d.dataSource)
+            + '<h5>↔↕ Size</h5>'+drow('width',d.width)+drow('height',d.height)
+            + '<h5>▦ Layout</h5>'+drow('position',d.pos)+drow('order',d.order)+drow('container layout',d.layout)+drow('container alignment',d.align)+drow('gap',d.gap)+drow('padding',d.pad)+drow('margin',d.mar)
+            + '<h5>🎨 Appearance（＝Style）</h5>'+drow('style','＝ Style（'+d.sname+'）')+drow('Apperance','opacity '+d.opacity+'　＝Style')+drow('border',d.border+'　＝Style')+drow('background',d.bg+'　＝Style')+drow('shadow',d.shadow+'　＝Style');
+    } else if(d){
       html += '<h5>📝 Content</h5>'+drow('content',d.content)+drow('configure',d.configure)
             + '<h5>↔ Size – Width</h5>'+drow('sizewidth (Fixed/Fit/Fill)',d.wMode)+drow('sizewidth (px)',d.wPx)+drow('Min width',d.minW)+drow('Max width',d.maxW)
             + '<h5>↕ Size – Height</h5>'+drow('sizeHeight (Fixed/Fit/Fill)',d.hMode)+drow('sizeHeight (px)',d.hPx)+drow('Min height',d.minH)+drow('Max height',d.maxH)
