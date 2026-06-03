@@ -270,7 +270,7 @@ tailwind.config = {
     if(tag==='I' && /\b(icon|fa-|material)\b/.test(el.className||'')) return V('Icon');
     var textTags=['SPAN','P','H1','H2','H3','H4','H5','H6','TD','TH','LI','LABEL','STRONG','B','SMALL','EM','CODE','TIME','DT','DD'];
     if(textTags.indexOf(tag)>=0 && hasText(el)) return V('Text');
-    if(tag==='DIV' && hasDirectText(el)) return V('Text');
+    if(tag==='DIV' && hasDirectText(el) && !/\brounded-t\b/.test(el.className||'')) return V('Text'); // rounded-tのタイトル帯はコンテナ扱い
     return null;
   }
 
@@ -459,7 +459,7 @@ tailwind.config = {
       typeContent: isList?'list（行データ）':'—（固定Group/非リスト）',
       dataSource: isList?'リスト（受注/履歴 等）':'—',
       width: wMode+(fixedW?' / '+pxr(rc.width):' / auto'),
-      height: hMode+(fixedH?' / '+pxr(rc.height):' / auto'),
+      height: ((st&&st.name==='Group – Title Bar')||/\brounded-t\b/.test(cls)) ? 'max 32px' : (hMode+(fixedH?' / '+pxr(rc.height):' / auto')),
       pos:pos, order:order, layout:layout, align:align, gap:gap,
       pad:cs.paddingTop+' '+cs.paddingRight+' '+cs.paddingBottom+' '+cs.paddingLeft,
       mar:cs.marginTop+' '+cs.marginRight+' '+cs.marginBottom+' '+cs.marginLeft,
