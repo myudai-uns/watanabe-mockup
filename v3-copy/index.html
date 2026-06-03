@@ -399,15 +399,14 @@ tailwind.config = {
     else { var tx=(t.textContent||'').trim().replace(/\s+/g,' '); content= tx? (tx.length>24?tx.slice(0,24)+'…':tx) : '—'; }
     // configure（Bubble要素種別）
     var configure=(r?r.type:'')+(t.type?(' / type='+t.type):'');
-    // width sizing：コンテント（leaf要素）は基本 Fit to content（中身に合わせる）。明示的な固定幅のみ Fixed
+    // width sizing：明示的な固定幅のみ Fixed、それ以外は全て Fill container
     var fixedW=!!t.style.width || /\bw-\[/.test(cls);
-    var wMode= fixedW?'Fixed':'Fit to content';
+    var wMode= fixedW?'Fixed':'Fill container';
     var minW=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
     var maxW=(cs.maxWidth==='none')?'—':cs.maxWidth;
     // height sizing
-    var fillH=/\b(h-full|min-h-screen|h-screen)\b/.test(cls);
     var fixedH=!!t.style.height || /\bh-(\d|\[)/.test(cls);
-    var hMode= fixedH?'Fixed':(fillH?'Fill / 100%':'Fit to content');
+    var hMode= fixedH?'Fixed':'Fill / 100%';
     var minH=(cs.minHeight==='0px'||cs.minHeight==='auto')?(/min-h-screen/.test(cls)?'100vh':'—'):cs.minHeight;
     var maxH=(cs.maxHeight==='none')?'—':cs.maxHeight;
     // layout
@@ -440,9 +439,9 @@ tailwind.config = {
     var cls=(typeof t.className==='string')?t.className:'';
     var ctype=r.ctype||'Group';
     var isList=(ctype==='Repeating Group'||ctype==='Table');
-    var wMode=widthMode(t,rc,cls), fixedW=(wMode==='Fixed');
-    var fillH=/\b(h-full|min-h-screen|h-screen)\b/.test(cls), fixedH=!!t.style.height||/\bh-(\d|\[)/.test(cls);
-    var hMode=fixedH?'Fixed':(fillH?'Fill / 100%':'Fit to content');
+    var fixedW=!!t.style.width||/\bw-\[/.test(cls); var wMode=fixedW?'Fixed':'Fill container';
+    var fixedH=!!t.style.height||/\bh-(\d|\[)/.test(cls);
+    var hMode=fixedH?'Fixed':'Fill / 100%';
     var disp=cs.display, gap='—', align='—';
     if(disp.indexOf('flex')>=0){
       align='justify:'+shortJC(cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
