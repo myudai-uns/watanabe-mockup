@@ -399,8 +399,9 @@ tailwind.config = {
     else { var tx=(t.textContent||'').trim().replace(/\s+/g,' '); content= tx? (tx.length>24?tx.slice(0,24)+'…':tx) : '—'; }
     // configure（Bubble要素種別）
     var configure=(r?r.type:'')+(t.type?(' / type='+t.type):'');
-    // width sizing
-    var wMode=widthMode(t,rc,cls); var fixedW=(wMode==='Fixed');
+    // width sizing：コンテント（leaf要素）は基本 Fit to content（中身に合わせる）。明示的な固定幅のみ Fixed
+    var fixedW=!!t.style.width || /\bw-\[/.test(cls);
+    var wMode= fixedW?'Fixed':'Fit to content';
     var minW=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
     var maxW=(cs.maxWidth==='none')?'—':cs.maxWidth;
     // height sizing
