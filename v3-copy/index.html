@@ -165,7 +165,7 @@ tailwind.config = {
     </div>
     <div id="bbl-content"><div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・位置/幅/高さ/Margin/<br>Responsive/Conditional をここに表示します。</div></div>
     <div class="note">対象＝画面本体(#main)の要素のみ。ヘッダー/ナビ等は除外。実線=対象要素 / 点線=最も近いコンテナ。<br>右のこのウィンドウ分だけ画面を確保するため、アプリUIには重なりません。OFFで通常操作に戻ります。</div>
-    <div class="note" id="bbl-offnote" style="color:#f6c177;display:none">▶ #dashboard に移動すると判定が有効になります。</div>
+    <div class="note" id="bbl-offnote" style="color:#f6c177;display:none">▶ #dashboard または #orders（受注一覧）に移動すると判定が有効になります。</div>
   </div>
 </div>
 
@@ -501,9 +501,9 @@ tailwind.config = {
     content.innerHTML = html;
   }
 
-  function setEmpty(){ content.innerHTML='<div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・Content/Size(W·H)/<br>Layout/Appearance(＝Style) をここに表示します。</div>'; }
+  function setEmpty(){ content.innerHTML='<div class="empty">ダッシュボード／受注一覧 の要素にマウスを載せると、<br>種別・Style・所属コンテナ・Content/Size(W·H)/<br>Layout/Appearance(＝Style) をここに表示します。</div>'; }
 
-  function onDashboard(){ var h=location.hash.slice(1)||'dashboard'; return h==='dashboard'||h.indexOf('dashboard')===0; }
+  function onDashboard(){ var h=location.hash.slice(1)||'dashboard'; return /^(dashboard|orders)/.test(h); } // 対象画面：ダッシュボード＋受注一覧
 
   function clearHL(){
     if(cur){ cur.style.outline=curOutline; cur=null; }
