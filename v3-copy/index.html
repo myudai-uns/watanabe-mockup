@@ -261,6 +261,10 @@ tailwind.config = {
     else if(STYLE_FULL[sig]){ name=STYLE_FULL[sig]; }
     else if(STYLE_CORE[core]){ name=STYLE_CORE[core]; cond=true; }
     else { name='Text '+size+'·'+weight+(mono?' mono':'')+(italic?' italic':''); }
+    // 白太字はシグネチャ衝突するので背景/文脈で出し分け（Tag chip=色背景 / Header title=ヘッダー / Section Title=濃色帯）
+    if(weight==='700' && color==='#FFFFFF' && (size===14||size===16)){
+      name = !isTransparent(cs.backgroundColor) ? 'Tag chip' : ((el.closest&&el.closest('header')) ? 'Header title' : 'Section Title (on dark)');
+    }
     return { name:name, size:size, weight:weight, color:color, mono:mono, cond:cond };
   }
 
@@ -315,6 +319,7 @@ tailwind.config = {
     if(/\bgroup-?focus\b/.test(el.className||'')) return 'GroupFocus';
     var groupTags=['DIV','SECTION','FORM','ARTICLE','ASIDE','HEADER','FOOTER','NAV','A','BUTTON','LABEL'];
     if(groupTags.indexOf(tag)>=0 && el.childElementCount>0){
+      if(tag==='HEADER') return 'Group'; // RE_HeaderNav（sticky だが Reusable として扱う）
       if(isFixedSticky(el)) return 'FloatingGroup';
       if(el.id) return 'Group';
       if(/\b(bg-(white|ink|red|brand|ok|blue|gray|green|yellow|amber)|shadow|border-2|card)\b/.test(el.className||'')) return 'Group';
@@ -354,6 +359,7 @@ tailwind.config = {
     if(col==='#EF4444'||col==='#DC2626') return 'Danger'+(bw>0?'（枠付き）':'（text）');
     if(col==='#FFFFFF') return 'Add (normal)';
     if(col==='#E87825') return 'Ghost brand'+(bw>0?'（枠あり）':'（枠なし）');
+    var rm=col.match(/^#(..)(..)(..)$/); if(rm){var R=parseInt(rm[1],16),G=parseInt(rm[2],16),B=parseInt(rm[3],16); if(R>150&&R-G>40&&R-B>40) return 'Danger'+(bw>0?'（枠付き）':'（text）');}
     if(bw>0) return 'Secondary';
     return 'Button';
   }
@@ -361,9 +367,12 @@ tailwind.config = {
     var cs=getComputedStyle(el); var white=(rgbToHex(cs.backgroundColor)==='#FFFFFF');
     var hasBorder=(parseFloat(cs.borderTopWidth)||0)>0; var rad=parseFloat(cs.borderTopLeftRadius)||0; var shadow=cs.boxShadow!=='none';
     if(white && (hasBorder||shadow) && rad>0 && el.childElementCount>0) return {name:'Group – Card（clickable）', detail:'カード型リンク（navigate）', color:'#64748b'};
+    if((el.closest&&el.closest('nav'))||/\bnav-btn\b/.test(el.className||'')) return {name:'Link – Nav', detail:'ナビゲーションリンク', color:'#2563EB'};
     return {name:'Link', detail:'リンク要素', color:'#2563EB'};
   }
   function containerStyleName(el, ctype){
+    if(el.tagName==='HEADER') return 'RE_HeaderNav（Reusable・全ページ共通）';
+    if(el.tagName==='NAV') return 'Group – Nav bar';
     if(ctype==='Table') return 'Table';
     if(ctype==='Repeating Group') return 'RG – List';
     if(ctype==='Popup') return 'Popup – Modal';
@@ -619,7 +628,7 @@ tailwind.config = {
   document.addEventListener('mousemove', function(e){
     if(!enabled || !onDashboard()) return;
     var t=e.target;
-    if(!t || !t.closest || win.contains(t) || !(t.closest('#main')||t.closest('#modal-root'))) return;
+    if(!t || !t.closest || win.contains(t) || !(t.closest('#main')||t.closest('#modal-root')||t.closest('header'))) return;
     var r=identify(t);
     if(!r) return;
     if(t===cur) return;
