@@ -470,6 +470,29 @@ tailwind.config = {
     };
   }
 
+  function wfInfo(el){
+    var node=el, guard=0;
+    while(node && node!==mainEl && guard++<8){
+      var oc=(node.getAttribute&&node.getAttribute('onclick'))||'';
+      var href=(node.tagName==='A'&&node.getAttribute('href'))||'';
+      if(oc){
+        if(/#order\//.test(oc)) return {t:'行(セル)が clicked', a:"Go to page order（受注確認）／ send Current cell's Order（mode=view）", g:'#order/:id'};
+        var hm=oc.match(/#([\w\/?=&-]+)/);
+        if(hm) return {t:'clicked', a:'Go to page '+hm[1].split(/[\/?]/)[0], g:'#'+hm[1]};
+        return {t:'clicked', a:oc.slice(0,46), g:'—'};
+      }
+      if(href.charAt(0)==='#'){
+        var h=href.slice(1);
+        if(/^orders\?filter=/.test(h)) return {t:'カードが clicked', a:'Go to page orders（受注一覧）／ URL param filter='+h.split('filter=')[1], g:href};
+        if(/^order\//.test(h)) return {t:'clicked', a:'Go to page order（受注確認）／ send Order', g:href};
+        return {t:'clicked', a:'Go to page '+h.split(/[\/?]/)[0], g:href};
+      }
+      if(node.getAttribute&&node.getAttribute('draggable')==='true') return {t:'Drag & Drop（列間移動）', a:'Order.status を移動先列の値に変更＋開始/完了/納品時刻を自動記録', g:'status'};
+      node=node.parentElement;
+    }
+    return null;
+  }
+
   function renderContent(t, r, ci, st){
     var d; try{ d=(r.cat==='container')?groupDetails(t,r,st):elDetails(t,ci,st,r); }catch(e){ d=null; }
     var chips = ci.types.length
@@ -485,6 +508,8 @@ tailwind.config = {
             + (st.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
             + '</div>';
     }
+    var wf=wfInfo(t);
+    if(wf){ html += '<h5>⚙ Workflow（WF）</h5>'+drow('event (trigger)',wf.t)+drow('action',wf.a)+drow('navigate to',wf.g); }
     html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
     if(d && r.cat==='container'){
       html += '<h5>📦 Group / Container</h5>'+drow('Type of content',d.typeContent)+drow('data source',d.dataSource)
