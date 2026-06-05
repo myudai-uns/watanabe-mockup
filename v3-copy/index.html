@@ -513,6 +513,12 @@ tailwind.config = {
       if(node.id && WFMAP[node.id]) return WFMAP[node.id];
       var ds=node.getAttribute&&(node.getAttribute('data-status')||node.getAttribute('data-set-status'));
       if(ds) return {t:'ステータスボタン clicked', a:'Order.status を「'+ds+'」に変更＋開始/完了/納品時刻を自動記録＋ChangeLog', g:'status'};
+      var ncls=(typeof node.className==='string')?node.className:'';
+      if(node.getAttribute&&node.getAttribute('data-copy-from')) return {t:'この内容でコピー clicked', a:'過去発注の全明細を現在の起票フォームにコピー（OrderItem複製・同画面）', g:'—'};
+      if(/\bbtn-copy-order\b/.test(ncls)) return {t:'この仕様でコピー clicked', a:'顧客プリセットで過去発注の明細を複製し Go to page order/new（納期リセット）', g:'#order/new'};
+      if(/\bbtn-remove-item\b/.test(ncls)) return {t:'明細削除 clicked', a:'この明細(OrderItem)をフォームから削除＋合計/消費税を再計算', g:'—'};
+      if(/\bbtn-remove-attach\b/.test(ncls)) return {t:'添付削除 clicked', a:'添付ファイルを削除（attachments から除外）', g:'—'};
+      if(/\bqp-include\b/.test(ncls)) return {t:'採用パターン clicked', a:'この見積パターンを採用(accepted)に設定＋受注合計に同期', g:'—'};
       var oc=(node.getAttribute&&node.getAttribute('onclick'))||'';
       var href=(node.tagName==='A'&&node.getAttribute('href'))||'';
       if(oc){
@@ -530,6 +536,8 @@ tailwind.config = {
       if(node.getAttribute&&node.getAttribute('draggable')==='true') return {t:'Drag & Drop（列間移動）', a:'Order.status を移動先列の値に変更＋開始/完了/納品時刻を自動記録', g:'status'};
       node=node.parentElement;
     }
+    var btn=el.closest&&el.closest('button');
+    if(btn) return {t:'button clicked', a:'（WFは要件§3に準拠／JSハンドラ駆動。自動検出なし＝実装で確定）', g:'—'};
     return null;
   }
 
