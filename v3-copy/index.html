@@ -540,6 +540,8 @@ tailwind.config = {
   }, true);
 
   setActive();
+  // デバッグ用API（他画面のプロパティ抽出に使用）
+  try{ window.__BBL = { identify:identify, resolveStyle:resolveStyle, elDetails:elDetails, groupDetails:groupDetails, containerInfo:containerInfo }; }catch(e){}
 })();
 </script>
 </body>
