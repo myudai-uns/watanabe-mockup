@@ -178,6 +178,34 @@ tailwind.config = {
   var COL = { visual:'#2563EB', input:'#16A34A', container:'#E8A54B' };
   var CATJP = { visual:'Visual element', input:'Input form', container:'Container' };
   var CCOL = { 'Group':'#64748b', 'Repeating Group':'#E87825', 'Table':'#F59E0B', 'Popup':'#A855F7', 'FloatingGroup':'#06B6D4', 'GroupFocus':'#EC4899' };
+  // 操作ボタンのWF（idベース・要件§3に基づく推定。JSリスナー駆動でinline onclickが無いため）
+  var WFMAP = {
+    'btn-login':{t:'btn-login clicked', a:'ユーザー認証(email/password) → 成功で Go to page dashboard', g:'#dashboard'},
+    'btn-save':{t:'btn-save clicked', a:'バリデーション→採番(YYMMDD-NNN)→Order作成/更新(+OrderItem/FactoryRecord)→ChangeLog→Go to page order(view)', g:'#order/:id'},
+    'btn-cancel':{t:'btn-cancel clicked', a:'編集を破棄して 確認画面/一覧へ戻る', g:'戻る'},
+    'btn-add-item':{t:'btn-add-item clicked', a:'通常明細を追加（RGに OrderItem type=normal を1行）', g:'—'},
+    'btn-add-page-item':{t:'btn-add-page-item clicked', a:'ページ物明細を追加（OrderItem type=page）', g:'—'},
+    'btn-new-customer':{t:'btn-new-customer clicked', a:'新規顧客モーダルを開く（POP_NewCustomer 表示）', g:'POP_NewCustomer'},
+    'btn-new-customer-top':{t:'clicked', a:'新規顧客モーダルを開く（POP_NewCustomer）', g:'POP_NewCustomer'},
+    'btn-delete':{t:'btn-delete clicked', a:'確認後 Order を削除（関連 FactoryRecord/Quote も削除）→ 一覧へ', g:'#orders'},
+    'btn-quote':{t:'btn-quote clicked', a:'見積書へ（未作成なら採番 Q-YYMMDD-NNN し Quote作成）→ Go to page quote', g:'#quote/:id'},
+    'btn-spec-copy':{t:'btn-spec-copy clicked', a:'この仕様でコピー：顧客/明細/メモ/タグを複製し Go to page order/new（納期リセット）', g:'#order/new'},
+    'btn-edit-fields':{t:'clicked', a:'編集モードへ（custom state mode=edit）', g:'mode=edit'},
+    'btn-edit-fields-inline':{t:'clicked', a:'編集モードへ（mode=edit）', g:'mode=edit'},
+    'btn-edit-customer':{t:'clicked', a:'顧客編集モーダルを開く（POP_EditCustomer）', g:'POP_EditCustomer'},
+    'btn-new-with':{t:'clicked', a:'この顧客で新規受注：顧客プリセットで Go to page order/new', g:'#order/new'},
+    'btn-print':{t:'btn-print clicked', a:'印刷（ブラウザ印刷ダイアログ起動）', g:'print'},
+    'btn-print-quote':{t:'clicked', a:'PDF出力（印刷ダイアログ／PDFプラグイン）', g:'print/PDF'},
+    'btn-send-quote':{t:'clicked', a:'送信済にする（Quote.status=発行済 に更新）', g:'status'},
+    'btn-pr-send':{t:'clicked', a:'見積 送付処理（status/履歴更新）', g:'status'},
+    'btn-save-memo':{t:'clicked', a:'メモ保存（Customer.notes を更新）', g:'save'},
+    'btn-filter-clear':{t:'clicked', a:'フィルタ条件を全クリア', g:'—'},
+    'btn-clear-quick':{t:'clicked', a:'クイック絞込を解除', g:'—'},
+    'pg-prev':{t:'clicked', a:'前ページ（custom state page − 1）', g:'—'},
+    'pg-next':{t:'clicked', a:'次ページ（custom state page + 1）', g:'—'},
+    'current-user-link':{t:'clicked', a:'Go to page login', g:'#login'},
+    'btn-reset':{t:'clicked', a:'データをリセット（localStorage 初期化）', g:'—'}
+  };
 
   var win = document.getElementById('bbl-win');
   var content = document.getElementById('bbl-content');
@@ -297,7 +325,7 @@ tailwind.config = {
   }
   function containerInfo(el){
     var types=[], inner=null, node=el.parentElement, guard=0;
-    while(node && node!==mainEl && node!==document.body && guard++<50){
+    while(node && node!==mainEl && node!==document.body && node.id!=='modal-root' && guard++<50){
       var ct=containerType(node);
       if(ct && ct!==SKIP){ types.push({t:ct,node:node}); if(!inner) inner=node; }
       node=node.parentElement;
@@ -473,6 +501,9 @@ tailwind.config = {
   function wfInfo(el){
     var node=el, guard=0;
     while(node && node!==mainEl && guard++<8){
+      if(node.id && WFMAP[node.id]) return WFMAP[node.id];
+      var ds=node.getAttribute&&(node.getAttribute('data-status')||node.getAttribute('data-set-status'));
+      if(ds) return {t:'ステータスボタン clicked', a:'Order.status を「'+ds+'」に変更＋開始/完了/納品時刻を自動記録＋ChangeLog', g:'status'};
       var oc=(node.getAttribute&&node.getAttribute('onclick'))||'';
       var href=(node.tagName==='A'&&node.getAttribute('href'))||'';
       if(oc){
@@ -526,9 +557,9 @@ tailwind.config = {
     content.innerHTML = html;
   }
 
-  function setEmpty(){ content.innerHTML='<div class="empty">ダッシュボード／受注一覧 の要素にマウスを載せると、<br>種別・Style・所属コンテナ・Content/Size(W·H)/<br>Layout/Appearance(＝Style) をここに表示します。</div>'; }
+  function setEmpty(){ content.innerHTML='<div class="empty">各画面の要素にマウスを載せると、<br>種別・Style・Workflow・所属コンテナ・Content/Size(W·H)/<br>Layout/Appearance(＝Style) をここに表示します。</div>'; }
 
-  function onDashboard(){ var h=location.hash.slice(1)||'dashboard'; return /^(dashboard|orders)/.test(h); } // 対象画面：ダッシュボード＋受注一覧
+  function onDashboard(){ return true; } // 全画面で有効（login〜印刷ビューまで）
 
   function clearHL(){
     if(cur){ cur.style.outline=curOutline; cur=null; }
@@ -552,7 +583,7 @@ tailwind.config = {
   document.addEventListener('mousemove', function(e){
     if(!enabled || !onDashboard()) return;
     var t=e.target;
-    if(!t || !t.closest || win.contains(t) || !t.closest('#main')) return;
+    if(!t || !t.closest || win.contains(t) || !(t.closest('#main')||t.closest('#modal-root'))) return;
     var r=identify(t);
     if(!r) return;
     if(t===cur) return;
