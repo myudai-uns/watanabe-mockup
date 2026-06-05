@@ -524,6 +524,40 @@ tailwind.config = {
     return null;
   }
 
+  function tableSig(headers){
+    var h=headers.join('|');
+    if(/受注番号/.test(h)&&/品目/.test(h)&&/状態/.test(h)&&!/受付日/.test(h)) return {dt:'Order', src:'本日納期 かつ status≠納品済み の受注', f:['order_number','customer.company_name','items[0]（用紙×数量）','Σ items.quantity','status']};
+    if(/受注番号/.test(h)&&/受付日/.test(h)&&/顧客/.test(h)&&/金額/.test(h)&&/状態/.test(h)) return {dt:'Order', src:'全受注（受付日降順）＋各フィルタ', f:['order_number','received_date','customer','title / tags','Σ quantity','delivered_date','total_amount','status']};
+    if(/顧客名/.test(h)&&/種別/.test(h)&&/地域/.test(h)) return {dt:'Customer', src:'全顧客＋検索/種別フィルタ（売上は受注集計）', f:['company_name / individual_name','kind','area','phone','fax','Σ税抜','Σ消費税','Σ税込=累計売上','最終納品日']};
+    if(/受注番号/.test(h)&&/品名/.test(h)&&/金額/.test(h)&&/状態/.test(h)&&!/顧客/.test(h)) return {dt:'Order', src:'この顧客の全受注（受付日降順）', f:['order_number','received_date','title / tags','Σ quantity','delivered_date','total_amount','status']};
+    return null;
+  }
+  function dataBinding(el){
+    var ul=el.closest('ul');
+    if(ul){
+      var prev=ul.previousElementSibling;
+      if(prev && /変更履歴|履歴/.test(prev.textContent||'')){
+        var field=null, li=el.closest('li');
+        if(li && el!==ul){
+          if(el.tagName==='SPAN'){ var sp=el.parentElement.querySelectorAll('span'); field=(sp[0]===el)?'changed_by（→User.name＝操作者）':'changed_at（日時）'; }
+          else if(el.querySelector && el.querySelector('span')){ field='changed_by / changed_at（操作者・日時）'; }
+          else { field='change_summary（内容）'; }
+        }
+        return {dt:'ChangeLog', src:'直近の変更履歴（changed_at 降順・8件）', field:field};
+      }
+    }
+    var table=el.closest('table');
+    if(table){
+      var headers=[].map.call(table.querySelectorAll('thead th'),function(th){return th.textContent.trim();});
+      var sig=tableSig(headers); if(!sig) return null;
+      var field=null, td=el.closest('td');
+      if(td) field=sig.f[td.cellIndex]||'—';
+      else if(el.closest('th')) field='（列見出し）';
+      return {dt:sig.dt, src:sig.src, field:field};
+    }
+    return null;
+  }
+
   function renderContent(t, r, ci, st){
     var d; try{ d=(r.cat==='container')?groupDetails(t,r,st):elDetails(t,ci,st,r); }catch(e){ d=null; }
     var chips = ci.types.length
@@ -541,6 +575,8 @@ tailwind.config = {
     }
     var wf=wfInfo(t);
     if(wf){ html += '<h5>⚙ Workflow（WF）</h5>'+drow('event (trigger)',wf.t)+drow('action',wf.a)+drow('navigate to',wf.g); }
+    var db=dataBinding(t);
+    if(db){ html += '<h5>🗂 Data source（行データ）</h5>'+drow('Type of content (DT)',db.dt)+drow('data source',db.src)+(db.field?drow('この要素 ＝',db.dt+'.'+db.field):''); }
     html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
     if(d && r.cat==='container'){
       html += '<h5>📦 Group / Container</h5>'+drow('Type of content',d.typeContent)+drow('data source',d.dataSource)
