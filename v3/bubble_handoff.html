@@ -401,6 +401,9 @@ tailwind.config = { theme: { extend: {
       <h3 class="font-black text-lg mb-2">OrderItem（受注明細）<span class="text-xs font-normal text-ink-500">※モックでは Order に内包</span></h3>
       <table><thead><tr><th>フィールド</th><th>型</th><th>内容・備考</th></tr></thead><tbody>
         <tr><td>order</td><td>→ Order</td><td>親受注</td></tr>
+        <tr><td>is_committed</td><td>yes/no <span class="req">★v3.1</span></td><td><b>yes=確定 / no=下書きコピー</b>。編集は下書き(no)に auto-bind、保存で yes（§4 CRUD）。一覧/集計は yes のみ対象</td></tr>
+        <tr><td>source_item</td><td>→ OrderItem <span class="req">★v3.1</span></td><td>下書きコピーが指す<b>元の確定明細</b>（新規追加分は空）。保存時 source へ書き戻し</td></tr>
+        <tr><td>is_deleted</td><td>yes/no <span class="req">★v3.1</span></td><td>編集中の<b>削除予約</b>（保存で source も Delete）。RGは is_deleted=no で表示</td></tr>
         <tr><td>type</td><td>OptionSet ItemType</td><td>normal / page（ページ物）</td></tr>
         <tr><td>title</td><td>text <span class="req">★</span></td><td>品名（必須）</td></tr>
         <tr><td>paper</td><td>→ Paper</td><td>用紙（空=自由入力）</td></tr>
@@ -676,16 +679,52 @@ tailwind.config = { theme: { extend: {
     </ul>
 
     <div class="note">
-      <b>明細小計 → 見積サマリーの反映方式：ドラフトDB方式（下書きレコードに保存 → 保存ボタンで正式化）</b><br>
-      ・データモデル：Order に <code>is_draft : yes/no</code> を追加し下書きを識別（§2）。<br>
-      ・受注起票/編集を<b>開いた時点で 下書き Order（is_draft=yes）を Create</b>。明細追加で <code>OrderItem</code> を Create（親＝下書き Order）。<br>
-      ・各小計 Input は <b>下書きの <code>OrderItem.subtotal</code> に保存</b>（下書きレコード相手のため auto-bind 即時保存でOK／税込は税抜へ正規化して格納）。<br>
-      ・見積サマリーは <b><code>下書きOrder の OrderItems : subtotal : sum</code></b> でDB直結ライブ算出（消費税=round(×10%)・合計=小計+消費税）。RepeatingGroup の data source も下書き Order の items。<br>
-      ・<b>「保存して起票／変更を保存」＝下書きを正式化</b>：<code>is_draft=no</code>・status確定・受注番号採番(YYMMDD-NNN)・FactoryRecord作成・ChangeLog記録。<br>
-      ・<b>「変更破棄／キャンセル」＝下書き Order＋OrderItem を Delete</b>。<br>
-      ・放置された下書き（<code>is_draft=yes</code> が一定時間）は <b>Backend workflow / Scheduler で定期削除</b>。<b>一覧・集計・KPI は必ず <code>is_draft=no</code> で絞り込む</b>。<br>
-      ・編集は対象受注を直接編集 or 下書きコピー上で編集→保存。いずれもサマリーは上記 sum で同様にライブ表示。
+      <b>明細の下書き保存ロジック：下書きコピー方式（保存ボタンで確定／未保存は破棄）</b><br>
+      使用フィールド（§2）：<code>Order.is_draft</code>（新規起票の親下書き）／ <code>OrderItem.is_committed</code>（yes=確定/no=下書き）／ <code>OrderItem.source_item</code>（コピー元）／ <code>OrderItem.is_deleted</code>（編集中の削除予約）。<br>
+      <b>原則：auto-bind してよいのは下書き(is_committed=no)だけ。確定明細(yes)は保存まで触らない。</b>見積サマリーは <code>OrderItems : is_committed=no AND is_deleted=no : subtotal : sum</code>（DB直結ライブ／消費税=round(×10%)・合計=小計+消費税）。
     </div>
+
+    <h4 class="font-bold text-sm">A. 受注新規起票 — CRUDタイミング</h4>
+    <table><thead><tr><th>タイミング</th><th>C/R/U/D</th><th>操作</th></tr></thead><tbody>
+      <tr><td>ページ表示時</td><td>D</td><td>自分の古い下書き掃除（§G）</td></tr>
+      <tr><td>　〃</td><td><b>C</b></td><td><b>draft Order を Create</b>（is_draft=yes / received_date=Today / received_by=Current User / status=見積もり段階(仮)）→ state <code>draft_order</code></td></tr>
+      <tr><td>　〃</td><td>R</td><td>RG data source = <code>draft_order's OrderItems : is_committed=no</code>（初期空）</td></tr>
+      <tr><td>＋通常/＋ページ物を追加</td><td><b>C</b></td><td>OrderItem を Create（order=draft_order / type / <b>is_committed=no</b> / source_item=空 / 既定値）</td></tr>
+      <tr><td>明細フィールド入力</td><td><b>U</b></td><td>その OrderItem に auto-bind（is_committed=no のまま・税込→税抜正規化）</td></tr>
+      <tr><td>明細 削除</td><td><b>D</b></td><td>その OrderItem を Delete（is_committed=no）</td></tr>
+      <tr><td>見積サマリー</td><td>R</td><td><code>draft_order's OrderItems : is_committed=no : subtotal : sum</code></td></tr>
+      <tr><td>保存して起票</td><td><b>U</b></td><td>draft_order：is_draft=no / order_number=採番 / status=選択 / total_amount確定</td></tr>
+      <tr><td>　〃</td><td><b>U</b></td><td>list of OrderItems（order=draft_order）→ <b>is_committed=yes</b></td></tr>
+      <tr><td>　〃</td><td><b>C</b></td><td>FactoryRecord（order=draft_order）／ ChangeLog「新規起票」→ Go to page order(view)</td></tr>
+      <tr><td>破棄/キャンセル/離脱</td><td><b>D</b></td><td>draft_order を Delete ＋ OrderItems（order=draft_order, is_committed=no）を Delete</td></tr>
+    </tbody></table>
+
+    <h4 class="font-bold text-sm">B. 受注編集（既存の確定Order）— CRUDタイミング</h4>
+    <table><thead><tr><th>タイミング</th><th>C/R/U/D</th><th>操作</th></tr></thead><tbody>
+      <tr><td>ページ表示時</td><td>D</td><td>この注文の自分の残存下書き掃除（§G）</td></tr>
+      <tr><td>　〃</td><td>R</td><td>元の確定明細：<code>対象Order's OrderItems : is_committed=yes</code></td></tr>
+      <tr><td>　〃</td><td><b>C</b></td><td><b>各確定明細の下書きコピーを Create</b>（is_committed=no / source_item=元 / order=対象Order / 全フィールド値コピー）</td></tr>
+      <tr><td>　〃</td><td>R</td><td>RG data source = <code>対象Order's OrderItems : is_committed=no AND is_deleted=no</code>（=コピー）</td></tr>
+      <tr><td>明細入力（編集）</td><td><b>U</b></td><td>下書きコピーに auto-bind（is_committed=no）</td></tr>
+      <tr><td>＋明細追加（編集中）</td><td><b>C</b></td><td>OrderItem を Create（order=対象Order / is_committed=no / <b>source_item=空</b>＝新規）</td></tr>
+      <tr><td>明細 削除（編集中）</td><td><b>U</b></td><td>その下書きを <b>is_deleted=yes</b>（削除予約）。※新規追加分(source空)は素直に <b>D</b></td></tr>
+      <tr><td>見積サマリー</td><td>R</td><td><code>対象Order's OrderItems : is_committed=no AND is_deleted=no : subtotal : sum</code></td></tr>
+      <tr><td colspan="3" class="bg-ink-700/5"><b>変更を保存：下書きコピーを1件ずつ確定処理</b></td></tr>
+      <tr><td>　└ source有・is_deleted=no</td><td><b>U→D</b></td><td>下書きの値を source_item へ<b>上書きコピー</b> → 下書きを Delete（元のid温存）</td></tr>
+      <tr><td>　└ source有・is_deleted=yes</td><td><b>D→D</b></td><td>source_item を Delete → 下書きを Delete（明細削除を確定）</td></tr>
+      <tr><td>　└ source空・is_deleted=no</td><td><b>U</b></td><td>下書きを <b>is_committed=yes に昇格</b>（新規明細を確定。コピー不要）</td></tr>
+      <tr><td>　└ source空・is_deleted=yes</td><td><b>D</b></td><td>下書きを Delete（追加して消した＝確定対象なし）</td></tr>
+      <tr><td>　〃（仕上げ）</td><td><b>U/C</b></td><td>Order.total_amount再計算 ／ ChangeLog「編集」→ Go to page order(view)</td></tr>
+      <tr><td>破棄/キャンセル/離脱</td><td><b>D</b></td><td>OrderItems（order=対象Order, <b>is_committed=no</b>）を Delete（削除予約含む）。<b>source(確定)は無傷</b></td></tr>
+    </tbody></table>
+
+    <h4 class="font-bold text-sm">G. 孤児掃除（保存せず離脱・リロード）</h4>
+    <table><thead><tr><th>タイミング</th><th>C/R/U/D</th><th>操作</th></tr></thead><tbody>
+      <tr><td>ページ表示時（下書き作成の前）</td><td><b>D</b></td><td><code>OrderItems : is_committed=no AND created_by=Current User AND order=対象</code>（前回の自分の下書き除去）</td></tr>
+      <tr><td>Backend WF（Scheduler・毎日）</td><td><b>D</b></td><td><code>OrderItems : is_committed=no AND created_at &lt; now-24h</code>（孤児明細）＋ <code>Orders : is_draft=yes AND created_at &lt; now-24h</code>（放置draft＋配下）</td></tr>
+    </tbody></table>
+
+    <div class="note text-xs"><b>H. Read 時の必須絞り込み（漏れ厳禁）：</b>明細を直接見る箇所は <code>is_committed=yes</code>（かつ親 Order <code>is_draft=no</code>）＝受注一覧 / KPI / 顧客の累計売上・最終納品日集計 / 工場カンバン / Privacy Rules。<b>編集画面の RG だけ <code>is_committed=no AND is_deleted=no</code>。</b></div>
 
     <h3 class="font-black">採番</h3>
     <ul class="list-disc pl-6 text-sm space-y-1">
