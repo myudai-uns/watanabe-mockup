@@ -675,11 +675,12 @@ tailwind.config = { theme: { extend: {
     </ul>
 
     <div class="note">
-      <b>明細小計 → 見積サマリーの反映方式：採用＝方式B（auto-binding／即保存）</b><br>
-      ・各明細の小計 Input を <code>OrderItem.subtotal</code> に <b>auto-binding</b>（税込入力は changed WF で税抜へ正規化してから格納）。<br>
-      ・見積サマリーは <code>RepeatingGroup の OrderItems : each item's subtotal : sum</code> で算出し、消費税=round(×10%)・合計=小計+消費税を<b>ライブ表示</b>（DB直結のため自動再計算）。<br>
-      ・<b>auto-binding は即保存のため「変更破棄／キャンセル」は廃止</b>（戻せない）。受注編集の <code>BTN_破棄</code>・新規起票の取消は置かない（または手動Undoを別途実装）。<br>
-      ・<b>新規起票では「開いた時点で Order(下書き)＋OrderItem を Create」</b>して auto-bind 対象を用意する（保存＝status確定/正式化、離脱した下書きは定期削除等で掃除）。Repeating Group の data source はこの下書き Order の items。
+      <b>明細小計 → 見積サマリーの反映方式：手動保存（保存ボタンで確定）前提</b><br>
+      ・<b>auto-binding は使わない</b>（即保存＝自動保存になり、手動保存方針と相反するため）。<br>
+      ・明細は <b>custom state のリスト（draft items）</b>で保持。各小計 Input の <b>changed WF</b> で該当行の値を state に反映（税込入力はその時に税抜へ正規化）。<br>
+      ・見積サマリーは <b>state（list）の subtotal : sum</b> でライブ算出（消費税=round(×10%)・合計=小計+消費税）。RepeatingGroup の data source も同じ state。<br>
+      ・<b>「保存して起票／変更を保存」ボタンで初めて Order＋OrderItem を Create/Update</b>（手動保存）。それまでDBは未変更。<br>
+      ・未保存のため <b>「変更破棄／キャンセル」は維持</b>（state を捨てる／画面を離れるだけで元に戻る）。新規起票で下書きレコードを作る必要もない。
     </div>
 
     <h3 class="font-black">採番</h3>
@@ -800,7 +801,7 @@ tailwind.config = { theme: { extend: {
       <tr>
         <td>受注編集<br><code>#order/:id/edit</code><br><span class="text-ink-500">(state:edit)</span></td>
         <td colspan="2"><b>起票画面と同一フォームを再利用</b>（mode=edit で読込）</td>
-        <td>＋ DD_ステータス(全5種) / BTN_変更を保存 / <s>BTN_破棄</s>（<b>方式B採用で廃止</b>＝auto-bind即保存） / BTN_削除 / BTN_確認に戻る</td>
+        <td>＋ DD_ステータス(全5種) / BTN_変更を保存 / BTN_破棄（<b>手動保存のため維持</b>＝未保存のstateを破棄） / BTN_削除 / BTN_確認に戻る</td>
         <td>RE_HeaderNav / RE_SectionCard / RE_StatusBadge</td>
       </tr>
       <tr>
