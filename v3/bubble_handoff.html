@@ -379,6 +379,7 @@ tailwind.config = { theme: { extend: {
         <tr><td>delivery_date_start / _end</td><td>date</td><td>納期（_end は範囲指定時のみ）</td></tr>
         <tr><td>first_proof_date / used_date</td><td>date</td><td>初校日／使用日</td></tr>
         <tr><td>status</td><td>OptionSet OrderStatus</td><td>見積もり段階/受注/印刷中/完成/納品済み</td></tr>
+        <tr><td>is_draft</td><td>yes/no <span class="req">★v3.1</span></td><td>下書きフラグ。起票/編集中の<b>ドラフトレコード</b>を識別（既定 yes、保存で no）。一覧/集計は <code>is_draft=no</code> のみ対象</td></tr>
         <tr><td>memo</td><td>text</td><td>備考（フリーメモ）</td></tr>
         <tr><td>subtotal_ex_tax</td><td>number <span class="req">★v3.1</span></td><td><b>税抜小計</b>＝値引き後の課税対象額 afterDiscount（§4）</td></tr>
         <tr><td>tax_amount</td><td>number <span class="req">★v3.1</span></td><td><b>消費税</b>＝round(subtotal_ex_tax × 10%)（§4）</td></tr>
@@ -675,12 +676,15 @@ tailwind.config = { theme: { extend: {
     </ul>
 
     <div class="note">
-      <b>明細小計 → 見積サマリーの反映方式：手動保存（保存ボタンで確定）前提</b><br>
-      ・<b>auto-binding は使わない</b>（即保存＝自動保存になり、手動保存方針と相反するため）。<br>
-      ・明細は <b>custom state のリスト（draft items）</b>で保持。各小計 Input の <b>changed WF</b> で該当行の値を state に反映（税込入力はその時に税抜へ正規化）。<br>
-      ・見積サマリーは <b>state（list）の subtotal : sum</b> でライブ算出（消費税=round(×10%)・合計=小計+消費税）。RepeatingGroup の data source も同じ state。<br>
-      ・<b>「保存して起票／変更を保存」ボタンで初めて Order＋OrderItem を Create/Update</b>（手動保存）。それまでDBは未変更。<br>
-      ・未保存のため <b>「変更破棄／キャンセル」は維持</b>（state を捨てる／画面を離れるだけで元に戻る）。新規起票で下書きレコードを作る必要もない。
+      <b>明細小計 → 見積サマリーの反映方式：ドラフトDB方式（下書きレコードに保存 → 保存ボタンで正式化）</b><br>
+      ・データモデル：Order に <code>is_draft : yes/no</code> を追加し下書きを識別（§2）。<br>
+      ・受注起票/編集を<b>開いた時点で 下書き Order（is_draft=yes）を Create</b>。明細追加で <code>OrderItem</code> を Create（親＝下書き Order）。<br>
+      ・各小計 Input は <b>下書きの <code>OrderItem.subtotal</code> に保存</b>（下書きレコード相手のため auto-bind 即時保存でOK／税込は税抜へ正規化して格納）。<br>
+      ・見積サマリーは <b><code>下書きOrder の OrderItems : subtotal : sum</code></b> でDB直結ライブ算出（消費税=round(×10%)・合計=小計+消費税）。RepeatingGroup の data source も下書き Order の items。<br>
+      ・<b>「保存して起票／変更を保存」＝下書きを正式化</b>：<code>is_draft=no</code>・status確定・受注番号採番(YYMMDD-NNN)・FactoryRecord作成・ChangeLog記録。<br>
+      ・<b>「変更破棄／キャンセル」＝下書き Order＋OrderItem を Delete</b>。<br>
+      ・放置された下書き（<code>is_draft=yes</code> が一定時間）は <b>Backend workflow / Scheduler で定期削除</b>。<b>一覧・集計・KPI は必ず <code>is_draft=no</code> で絞り込む</b>。<br>
+      ・編集は対象受注を直接編集 or 下書きコピー上で編集→保存。いずれもサマリーは上記 sum で同様にライブ表示。
     </div>
 
     <h3 class="font-black">採番</h3>
@@ -801,7 +805,7 @@ tailwind.config = { theme: { extend: {
       <tr>
         <td>受注編集<br><code>#order/:id/edit</code><br><span class="text-ink-500">(state:edit)</span></td>
         <td colspan="2"><b>起票画面と同一フォームを再利用</b>（mode=edit で読込）</td>
-        <td>＋ DD_ステータス(全5種) / BTN_変更を保存 / BTN_破棄（<b>手動保存のため維持</b>＝未保存のstateを破棄） / BTN_削除 / BTN_確認に戻る</td>
+        <td>＋ DD_ステータス(全5種) / BTN_変更を保存（下書き→正式化 is_draft=no） / BTN_破棄（<b>下書きOrder/OrderItemを Delete</b>） / BTN_削除 / BTN_確認に戻る</td>
         <td>RE_HeaderNav / RE_SectionCard / RE_StatusBadge</td>
       </tr>
       <tr>
