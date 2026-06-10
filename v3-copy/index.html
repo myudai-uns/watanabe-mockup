@@ -590,8 +590,11 @@ tailwind.config = {
       ? ci.types.slice().reverse().map(function(c,i){ return (i?'<span class="arr">›</span>':'')+'<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>'; }).join('')
       : '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
     var html='';
-    var catColor=COL[r.cat]||'#64748b';
-    html += '<div class="hdr"><span class="cat" style="background:'+catColor+'">'+(CATJP[r.cat]||r.cat)+'</span><span class="typ">'+r.type+'</span></div>';
+    var pl=pluginInfo(t);
+    var catColor= pl?'#10B981':(COL[r.cat]||'#64748b');
+    var catLabel= pl?'🧩 Plugin':(CATJP[r.cat]||r.cat);
+    var typeLabel= pl?pl.name:r.type;
+    html += '<div class="hdr"><span class="cat" style="background:'+catColor+'">'+catLabel+'</span><span class="typ"'+(pl?' style="color:#34D399"':'')+'>'+typeLabel+'</span></div>';
     html += '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>';
     if(st){
       html += '<div class="sty"><div class="nm">▦ Style: '+st.name+'</div>'
@@ -599,8 +602,7 @@ tailwind.config = {
             + (st.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
             + '</div>';
     }
-    var pl=pluginInfo(t);
-    if(pl){ html += '<h5 style="color:#7be0b4">🧩 Plugin要素（要プラグイン）</h5>'+drow('Bubble要素',pl.name)+drow('プラグイン',pl.plugin)+drow('役割',pl.role); }
+    if(pl){ html += '<h5 style="color:#7be0b4">🧩 Plugin要素（要プラグイン）</h5>'+drow('プラグイン',pl.plugin)+drow('役割',pl.role); }
     var wf=wfInfo(t);
     if(wf){ html += '<h5>⚙ Workflow（WF）</h5>'+drow('event (trigger)',wf.t)+drow('action',wf.a)+drow('navigate to',wf.g); }
     var db=dataBinding(t);
