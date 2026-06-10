@@ -43,6 +43,7 @@ tailwind.config = { theme: { extend: {
       <a href="#option" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">Option Set</a>
       <a href="#logic" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">計算・採番・条件</a>
       <a href="#screen" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">画面・権限</a>
+      <a href="#kanban" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">カンバン詳細</a>
       <a href="#schedule" class="bg-brand px-2 py-1 rounded hover:bg-brand-dark">スケジュール</a>
     </nav>
   </div>
@@ -903,6 +904,62 @@ tailwind.config = { theme: { extend: {
     <div class="note text-xs">
       <b>Bubbleで手間がかかる箇所（後工程・プラグイン要）</b>：①工場カンバンのドラッグ&ドロップ（Draggable Elements）②顧客メモの未保存警告（custom state＋離脱時確認）③見積書PDF出力（PDFプラグイン）④明細の動的追加/削除＋税抜税込即時換算（各入力のworkflow）。レイアウト（タイトル＋コンテンツ）自体はGroup構成で容易。
     </div>
+  </section>
+
+  <!-- ============ 工場カンバン 詳細設計 ============ -->
+  <section id="kanban" class="card p-6 space-y-4">
+    <h2 class="text-2xl font-black">5-A. 工場カンバン 詳細設計（Draggable Elements）</h2>
+    <p class="text-sm text-ink-700">プラグイン <b>Draggable Elements</b>（公式・無料）使用。<b>列＝Drop Area／カード＝DragDrop Group</b>。状態変更は「ドロップ時WF」で行い、status更新→各列RGの Search が自動再評価されてカードが移動先列に並び直す。</p>
+
+    <h3 class="font-black">1. 使うデータ</h3>
+    <table><thead><tr><th>データ</th><th>用途・参照</th></tr></thead><tbody>
+      <tr><td><b>Order</b></td><td>カンバン本体。<code>status</code>（列分け）/<code>order_number</code>/<code>title</code>/<code>customer</code>/<code>items[0]</code>(用紙・数量)/<code>tags</code>/<code>delivery_date_start</code>/<code>is_draft</code></td></tr>
+      <tr><td><b>OrderStatus</b>(Option Set)</td><td>5列の値と<b>並び順＝Display順</b>。<code>color</code>属性を列見出し・件数バッジの配色に使用</td></tr>
+      <tr><td><b>FactoryRecord</b></td><td>時刻メタ（Order 1:1）。<code>started_at</code>/<code>completed_at</code>/<code>completed_by</code>。ドロップ時に自動セット</td></tr>
+      <tr><td><b>ChangeLog</b></td><td>「カンバン操作: 旧→新」を記録</td></tr>
+      <tr><td><b>User</b></td><td><code>completed_by</code>＝Current User</td></tr>
+    </tbody></table>
+
+    <h3 class="font-black">2. エレメント構成とインスペクター値</h3>
+    <table><thead><tr><th>エレメント</th><th>種別/Style</th><th>主なインスペクター設定</th></tr></thead><tbody>
+      <tr><td>Page <code>factory</code></td><td>Page – Base</td><td>bg #F3F4F6・RE_HeaderNav 配置</td></tr>
+      <tr><td>GRP_カンバン</td><td>Group（Row）</td><td>Container layout=<b>Row</b>／gap 12／width Fill／横スクロール可（min-width確保）</td></tr>
+      <tr><td>GRP_列_&lt;status&gt;（×5）</td><td>Group（Column）</td><td>Container layout=<b>Column</b>／width 例 240–280px（Fixed可）／bg #F3F4F6 or 薄色・OrderStatus.color枠</td></tr>
+      <tr><td>　TXT_列見出し</td><td>Text – <b>Column title</b></td><td>16·900／color=<code>OrderStatus.color</code>／文言＝status名＋件数</td></tr>
+      <tr><td>　TXT_件数</td><td>Text</td><td><code>Search for Orders: status=この列 AND is_draft=no :count</code></td></tr>
+      <tr><td>　<b>DA_列_&lt;status&gt;</b>（Drop Area）</td><td>Drop Area（plugin）</td><td>列ごとに1つ。height Fill／中に RG を入れる。<b>列の status を識別できるように列ごとに分けて作る</b>（WFで区別）</td></tr>
+      <tr><td>　　RG_列_&lt;status&gt;</td><td>Repeating Group</td><td>Type of content=<b>Order</b>／Data source=<code>Search for Orders: status=この列 AND is_draft=no</code>／Sort=<code>delivery_date_start</code> 昇順／縦並び・スクロール</td></tr>
+      <tr><td>　　　<b>DDG_カード</b>（DragDrop Group）</td><td>DragDrop Group（plugin）</td><td>Type of content=Order／<b>Data＝Current cell's Order</b>（※必須）／Style＝RE_KanbanCard（bg-white rounded shadow-sm p-3）</td></tr>
+      <tr><td>　　　　カード内テキスト</td><td>Text 各Style</td><td>受注番号=<b>Mono XS</b>／品名=Body／顧客=Body SM／用紙×数量=Body XS／タグ=<b>Tag chip</b>／納期＋<b>Overdue label</b>（本日/明日=赤、超過=紫「N日経過」）</td></tr>
+    </tbody></table>
+    <div class="note text-xs">v3変更点：カード左下の状態バッジ・データ未受領表示は<b>非表示</b>（状態は列で表す）。RGの Search は必ず <code>is_draft=no</code>。</div>
+
+    <h3 class="font-black">3. プラグイン要素の設定</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li><b>DragDrop Group（カード）</b>：要素の Data（中身）に <b>Current cell's Order</b> を必ずセット。これがドロップ時に「更新対象の Order」になる。掴める範囲＝カード全体。</li>
+      <li><b>Drop Area（列）</b>：各列に1つずつ（計5個）。<b>列ごとに別エレメントにして名前で区別</b>（DA_見積もり段階 … DA_納品済み）。これで「どの列に落ちたか」をWFのイベント単位で判定できる。</li>
+    </ul>
+
+    <h3 class="font-black">4. ドロップ時ワークフロー（列ごとに5本）</h3>
+    <p class="text-sm">各 Drop Area に対して1本ずつ。<b>イベント</b>＝「A DragDrop Group is dropped on <code>DA_列_&lt;S&gt;</code>」。S＝その列の status。アクションは下表（<b>順番厳守</b>：ChangeLogを先に作って旧statusを捕捉）。</p>
+    <table><thead><tr><th>#</th><th>アクション</th><th>設定値（Only when＝実行条件）</th></tr></thead><tbody>
+      <tr><td>0</td><td>（条件）イベントConditionで <code>Dropped DragDrop Group's Order's status ≠ S</code></td><td>同じ列へのドロップは無視（任意）</td></tr>
+      <tr><td>1</td><td><b>Create ChangeLog</b></td><td>target_type=「Order」／target_id=<code>Dropped…Order's unique id</code>／changed_by=Current User／changed_at=Current date/time／change_summary=「カンバン操作: <code>Dropped…Order's status</code>→S」<b>（status変更前に作成して旧値を取得）</b></td></tr>
+      <tr><td>2</td><td><b>Make changes to</b> Dropped…Order</td><td><code>status = S</code></td></tr>
+      <tr><td>3</td><td>Make changes to Order's FactoryRecord</td><td><code>started_at = Current date/time</code>　<b>Only when</b> S=印刷中 <b>and</b> FactoryRecord's started_at is empty</td></tr>
+      <tr><td>4</td><td>Make changes to Order's FactoryRecord</td><td><code>completed_at = Current date/time</code> / <code>completed_by = Current User</code>　<b>Only when</b> S∈{完成,納品済み} <b>and</b> completed_at is empty</td></tr>
+      <tr><td>5</td><td>Make changes to Order</td><td><code>delivered_date = Current date/time:rounded down to day</code>　<b>Only when</b> S=納品済み <b>and</b> delivered_date is empty</td></tr>
+      <tr><td>6</td><td>Show message / Toast</td><td>「ステータス: S」</td></tr>
+    </tbody></table>
+    <div class="note text-xs"><b>旧status捕捉のコツ</b>：#2 で status を変えると以後 S になるため、<b>#1 の ChangeLog を必ず status 変更前</b>に置く（または drop 開始時に custom state へ旧statusを退避）。時刻系は <b>「is empty のときだけ」</b>で二度書き防止。</div>
+
+    <h3 class="font-black">5. 注意点</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>1本にまとめる場合は Drop Area に status を持たせ「落ちた Drop Area の status」を S に使うが、<b>まずは5本（列ごと）</b>が確実。</li>
+      <li>status 更新後は各列RGの Search が自動再評価され、カードは移動先列へ自動移動（手動Refresh不要）。</li>
+      <li>権限：工場カンバン操作は 代表/製版/工場=○、事務=△、経理=×（§5権限表）。<b>条件表示/Privacyで制御</b>。</li>
+      <li>モバイル非対象（§要件6-4 デスクトップ前提）。D&DはPCのみ想定。</li>
+    </ul>
   </section>
 
   <!-- ============ スケジュール ============ -->
