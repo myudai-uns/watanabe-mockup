@@ -44,6 +44,7 @@ tailwind.config = { theme: { extend: {
       <a href="#logic" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">計算・採番・条件</a>
       <a href="#screen" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">画面・権限</a>
       <a href="#kanban" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">カンバン詳細</a>
+      <a href="#pdf" class="bg-ink-700 px-2 py-1 rounded hover:bg-ink-500">PDF出力</a>
       <a href="#schedule" class="bg-brand px-2 py-1 rounded hover:bg-brand-dark">スケジュール</a>
     </nav>
   </div>
@@ -959,6 +960,41 @@ tailwind.config = { theme: { extend: {
       <li>status 更新後は各列RGの Search が自動再評価され、カードは移動先列へ自動移動（手動Refresh不要）。</li>
       <li>権限：工場カンバン操作は 代表/製版/工場=○、事務=△、経理=×（§5権限表）。<b>条件表示/Privacyで制御</b>。</li>
       <li>モバイル非対象（§要件6-4 デスクトップ前提）。D&DはPCのみ想定。</li>
+    </ul>
+  </section>
+
+  <!-- ============ 見積書PDF出力 詳細設計 ============ -->
+  <section id="pdf" class="card p-6 space-y-4">
+    <h2 class="text-2xl font-black">5-B. 見積書PDF出力 詳細設計（PDF &amp; Screenshot Pro / BEP）</h2>
+    <p class="text-sm text-ink-700">類似アプリの実装に準拠。<b>専用ページに見積書本文を置き、ページ表示時WFの「Element PDF」アクションでPDF生成 → Save to Bubble＋Download</b>。前後に Pause を入れ「描画完了」「生成完了」を待つのがコツ。</p>
+
+    <h3 class="font-black">0. 前提設定（必須）</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>Settings → General → <b>Advanced options →「Expose the option to add an ID attribute to HTML elements」を ON</b>（PDF対象要素に <b>Element ID</b> を付けるため）。</li>
+      <li>プラグイン <b>PDF &amp; Screenshot Pro（BEP）</b>を Install。</li>
+    </ul>
+
+    <h3 class="font-black">1. PDF対象要素</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>見積書本文を1つの Group にまとめ、<b>PDF/IMG 要素（Element ID = <code>quote_pdf</code>）</b>として配置（モックの <code>#quote-pdf-page</code> 相当）。<b>A4縦＝幅760 × 高さ1123</b>px 目安。</li>
+      <li>中の体裁（社名/印影/登録番号/明細/合計税込/振込先）はこの要素内で組む（Bubble Style ではなく本要素のレイアウト＝§1-3でも「PDFはプラグインテンプレート」と明記）。</li>
+    </ul>
+
+    <h3 class="font-black">2. ワークフロー（専用PDFページの Page load）</h3>
+    <p class="text-sm">イベント：<b>Do once（Only when Page loaded entirely is "yes"）</b>。Step順は<b>厳守</b>（Pauseで描画/生成を待つ）。</p>
+    <table><thead><tr><th>Step</th><th>アクション</th><th>設定値</th></tr></thead><tbody>
+      <tr><td>1</td><td>Add a pause before next action</td><td><b>Pause length = 3,000 ms</b>（要素の描画完了待ち）</td></tr>
+      <tr><td>2</td><td><b>Element PDF</b>（PDF &amp; Screenshot Pro）</td><td>Element=PDF/IMG（見積書本文）／<b>Element ID=quote_pdf</b>／Orientation=<b>portrait</b>／<b>Element Width=760・Height=1123</b>／PDF Quality=<b>2</b>／File Name=動的（例「<code>【見積書】_見積番号_顧客名</code>」）／<b>Save to Bubble=ON・Download=ON</b>／Timeout(Advanced)=<b>1500</b></td></tr>
+      <tr><td>3</td><td>Add a pause before next action</td><td><b>Pause length = 2,000 ms</b>（PDF生成完了待ち）</td></tr>
+      <tr><td>4</td><td>Go to page（戻り先 例:見積書/受注確認）</td><td>Data to send=対象データ（例 Quote / Order）。※不要なら省略可</td></tr>
+    </tbody></table>
+
+    <h3 class="font-black">3. 注意点</h3>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li><b>Pause が肝</b>：前(3秒)＝要素が完全に描画されるのを待つ／後(2秒)＝PDF生成の完了を待つ。短いと白紙・欠けの原因。</li>
+      <li>File Name は動的（見積番号・顧客名 等）。<b>Save to Bubble=ON で Quote に PDF を保持</b>、Download=ON でその場DL。</li>
+      <li>「専用ページに遷移→Page loadで自動生成」方式が確実。ボタン直押しで同ページ生成も可だが描画タイミングに注意。</li>
+      <li>※受注票印刷ビュー（#print）も同方式で PDF 化可能（Element ID を別に付与）。</li>
     </ul>
   </section>
 
