@@ -79,7 +79,7 @@ tailwind.config = { theme: { extend: {
       <li><b>Reusable Element を先に作成</b>：ヘッダー/ナビ、ステータスバッジ（Option Set color駆動）、「タイトル帯＋コンテンツ」カード。</li>
       <li><b>一覧・詳細の“表示のみ”を構築</b>：受注一覧／顧客一覧／工場カンバン／変更履歴は Repeating Group。</li>
       <li><b>入力フォーム＋workflow</b>：受注起票・編集、見積パターン、税抜⇄税込換算、採番、保存（本書 §4）。</li>
-      <li><b>複雑機能は最後</b>：カンバンD&D（Draggable Elementsプラグイン）／顧客メモ未保存警告（custom state）／見積PDF（PDFプラグイン）。</li>
+      <li><b>複雑機能は最後</b>：カンバンD&D（<b>Draggable Elements</b>プラグイン）／顧客メモ未保存警告（custom state）／見積PDF（<b>PDF &amp; Screenshot Pro〔BEP〕</b>プラグイン）。</li>
       <li><b>権限/privacy rules・レスポンシブ調整</b>（本書 §5）。</li>
       <li><b>検証</b>：シードデータでモックと画面・計算・条件表示を1:1突合。</li>
     </ol>
@@ -771,7 +771,7 @@ tailwind.config = { theme: { extend: {
       <tr><td>#order/:id</td><td>受注確認（読取専用）</td><td>order page（state: view）</td></tr>
       <tr><td>#order/:id/edit</td><td>受注編集</td><td>order page（state: edit）</td></tr>
       <tr><td>#customer/:id</td><td>顧客詳細</td><td>page。メモは未保存警告対象</td></tr>
-      <tr><td>#quote/:id</td><td>見積書</td><td>page。PDFプラグインで出力</td></tr>
+      <tr><td>#quote/:id</td><td>見積書</td><td>page。<b>PDF &amp; Screenshot Pro〔BEP〕</b>で出力</td></tr>
       <tr><td>#factory</td><td>工場カンバン</td><td>page。5列 RG + Draggableプラグイン</td></tr>
       <tr><td>#login / #password_reset</td><td>ログイン等</td><td>page</td></tr>
       <tr><td>#print</td><td>印刷ビュー</td><td>PDF生成に置換</td></tr>
@@ -902,7 +902,7 @@ tailwind.config = { theme: { extend: {
     <p class="text-xs text-ink-500 mt-1">○=可／△=条件付き可／×=不可。本表は要件 第5章準拠（運用で確定）。判定キーは必ず <code>UserRole</code> の値で行う（text比較を禁止）。</p>
 
     <div class="note text-xs">
-      <b>Bubbleで手間がかかる箇所（後工程・プラグイン要）</b>：①工場カンバンのドラッグ&ドロップ（Draggable Elements）②顧客メモの未保存警告（custom state＋離脱時確認）③見積書PDF出力（PDFプラグイン）④明細の動的追加/削除＋税抜税込即時換算（各入力のworkflow）。レイアウト（タイトル＋コンテンツ）自体はGroup構成で容易。
+      <b>Bubbleで手間がかかる箇所（後工程・プラグイン要）</b>：①工場カンバンのドラッグ&ドロップ（Draggable Elements）②顧客メモの未保存警告（custom state＋離脱時確認）③見積書PDF出力（<b>PDF &amp; Screenshot Pro〔BEP〕</b>プラグイン）④明細の動的追加/削除＋税抜税込即時換算（各入力のworkflow）。レイアウト（タイトル＋コンテンツ）自体はGroup構成で容易。
     </div>
   </section>
 
