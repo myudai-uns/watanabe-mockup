@@ -308,7 +308,7 @@ tailwind.config = {
 
   function isFixedSticky(el){ try{ var p=getComputedStyle(el).position; return p==='fixed'||p==='sticky'; }catch(e){ return false; } }
   function containerType(el){
-    if(el===mainEl) return null;
+    if(!el || el.nodeType!==1 || el===mainEl) return el===mainEl?null:SKIP;
     var tag=el.tagName;
     if(tag==='TABLE') return 'Table';
     if(['THEAD','TBODY','TFOOT','TR','TD','TH','COLGROUP','COL','CAPTION'].indexOf(tag)>=0) return SKIP;
@@ -317,6 +317,7 @@ tailwind.config = {
     if((el.closest && el.closest('#modal-root')) || el.getAttribute('role')==='dialog' || /\b(modal|popup)\b/.test(el.className||'')) return 'Popup';
     if(el.id==='toast') return 'FloatingGroup';
     if(/\bgroup-?focus\b/.test(el.className||'')) return 'GroupFocus';
+    if(/\bkanban-col\b/.test(el.className||'')) return 'Group'; // カンバン列（Drop Area）は空でもコンテナ認識
     var groupTags=['DIV','SECTION','FORM','ARTICLE','ASIDE','HEADER','FOOTER','NAV','A','BUTTON','LABEL'];
     if(groupTags.indexOf(tag)>=0 && el.childElementCount>0){
       if(tag==='HEADER') return 'Group'; // RE_HeaderNav（sticky だが Reusable として扱う）
@@ -575,6 +576,14 @@ tailwind.config = {
     return null;
   }
 
+  function pluginInfo(el){
+    var card = el.closest && el.closest('[draggable="true"], .kanban-card');
+    if(card) return {name:'DragDrop Group', plugin:'Draggable Elements（公式・無料）', role:"カード本体。Data＝Current cell's Order（ドロップ時の更新対象）。※親の列＝Drop Area（同プラグイン）"};
+    var col = el.closest && el.closest('.kanban-col');
+    if(col) return {name:'Drop Area', plugin:'Draggable Elements（公式・無料）', role:'列のドロップ枠（列ごとに1つ＝status識別）。ドロップ時WFで status を変更'};
+    return null;
+  }
+
   function renderContent(t, r, ci, st){
     var d; try{ d=(r.cat==='container')?groupDetails(t,r,st):elDetails(t,ci,st,r); }catch(e){ d=null; }
     var chips = ci.types.length
@@ -590,6 +599,8 @@ tailwind.config = {
             + (st.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
             + '</div>';
     }
+    var pl=pluginInfo(t);
+    if(pl){ html += '<h5 style="color:#7be0b4">🧩 Plugin要素（要プラグイン）</h5>'+drow('Bubble要素',pl.name)+drow('プラグイン',pl.plugin)+drow('役割',pl.role); }
     var wf=wfInfo(t);
     if(wf){ html += '<h5>⚙ Workflow（WF）</h5>'+drow('event (trigger)',wf.t)+drow('action',wf.a)+drow('navigate to',wf.g); }
     var db=dataBinding(t);
