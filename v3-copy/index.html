@@ -577,10 +577,13 @@ tailwind.config = {
   }
 
   function pluginInfo(el){
-    var card = el.closest && el.closest('[draggable="true"], .kanban-card');
-    if(card) return {name:'DragDrop Group', plugin:'Draggable Elements（公式・無料）', role:"カード本体。Data＝Current cell's Order（ドロップ時の更新対象）。※親の列＝Drop Area（同プラグイン）"};
-    var col = el.closest && el.closest('.kanban-col');
-    if(col) return {name:'Drop Area', plugin:'Draggable Elements（公式・無料）', role:'列のドロップ枠（列ごとに1つ＝status識別）。ドロップ時WFで status を変更'};
+    if(!el || !el.closest) return null;
+    // 工場カンバン（Draggable Elements）
+    if(el.closest('[draggable="true"], .kanban-card')) return {name:'DragDrop Group', plugin:'Draggable Elements（公式・無料）', role:"カード本体。Data＝Current cell's Order（ドロップ時の更新対象）。※親の列＝Drop Area（同プラグイン）"};
+    if(el.closest('.kanban-col')) return {name:'Drop Area', plugin:'Draggable Elements（公式・無料）', role:'列のドロップ枠（列ごとに1つ＝status識別）。ドロップ時WFで status を変更'};
+    // 見積書PDF（PDFプラグイン）
+    if(el.closest('#btn-print-quote, #btn-print')) return {name:'PDF出力ボタン', plugin:'PDFプラグイン（例: PDF Conjurer・無料）', role:'クリックで見積書/受注票をPDF生成・出力（プラグインのアクション。ブラウザ印刷ではなくPDF生成）'};
+    if(el.closest('#quote-pdf-page')) return {name:'PDF Body', plugin:'PDFプラグイン（例: PDF Conjurer・無料）', role:'見積書PDF本文。Bubble Style対象外＝プラグインのテンプレート/HTMLで生成・出力'};
     return null;
   }
 
