@@ -52,14 +52,17 @@
   .meta-table td:first-child { font-weight: 700; width: 160px; background: #f9fafb; }
   .note { background: #eff6ff; border-left: 4px solid #3B82F6; padding: 10px 14px; font-size: 13px; margin: 12px 0; border-radius: 0 4px 4px 0; }
   .warn { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; font-size: 13px; margin: 12px 0; border-radius: 0 4px 4px 0; }
-  /* ===== 機能確認チェック列（共有・閲覧専用） ===== */
+  /* ===== 機能確認チェック列（名前入力でチェック可・共有） ===== */
   th.chk-col { text-align: center; width: 72px; }
   td.chk-cell { text-align: center; white-space: nowrap; }
   td.chk-cell input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--ok); cursor: not-allowed; }
   td.chk-cell input[type=checkbox]:not(:disabled) { cursor: pointer; }
   td.chk-cell .chk-meta { display: block; font-size: 10px; color: var(--ink-500); margin-top: 2px; line-height: 1.2; }
   .chk-banner { background: #ecfdf5; border-left: 4px solid var(--ok); padding: 8px 12px; font-size: 12px; margin: 8px 0 4px; border-radius: 0 4px 4px 0; color: var(--ink-700); }
-  .chk-editbar { position: sticky; top: 0; z-index: 60; background: #b91c1c; color: #fff; padding: 6px 12px; font-size: 12px; font-weight: 700; border-radius: 4px; margin: 8px 0; }
+  .chk-userbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: #fff7ed; border: 1px solid #f0d0b0; padding: 8px 12px; font-size: 13px; border-radius: 6px; margin: 8px 0; }
+  .chk-userbar .chk-name { border: 1px solid var(--ink-300); border-radius: 4px; padding: 4px 8px; font-size: 13px; }
+  .chk-userbar .chk-btn { background: var(--brand); color: #fff; border: 0; border-radius: 4px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .chk-userbar .chk-btn:hover { background: var(--brand-dark); }
   /* ===== スマホ対応: テーブルをカード型縦並びに ===== */
   @media (max-width: 768px) {
     .container { padding: 16px 12px; }
@@ -951,27 +954,24 @@
 </div>
 <script>
 /* =========================================================================
-   機能確認チェック列（第2章 機能一覧）— 共有・閲覧専用
+   機能確認チェック列（第2章 機能一覧）
    - 各機能行の右端に「確認」チェックを追加。
-   - 状態は共有データから読み込み、全員が同じ状態（誰がチェックしたか含む）を閲覧できる。
-   - 通常表示は disabled（＝自分は操作できない）。
-   - 入力は担当者のみ：URL のハッシュに #edit-<合言葉> を付けるとそのタブだけ編集可能になる。
-     例) requirements_v3.0.html#edit-watanabe2026
-   - 共有の仕組み：
-       (A) ライブ同期（推奨）… CHK_CFG.endpoint に Google Apps Script Web App の URL を設定
-           （GETでJSON取得・POSTで保存）。設定方法は同フォルダ feature-checks-backend.gs を参照。
-       (B) 既定（endpoint 空）… 同フォルダ feature-checks.json を読み取り専用で取得して表示。
-           編集者は #edit モードでチェック → 自動で feature-checks.json をダウンロード →
-           リポジトリにコミットして全員へ共有。
+   - お名前を入力すると、その名前でチェックできる（名前未入力なら閲覧のみ）。
+   - チェックすると行に「✔ 名前」が表示され、誰がチェックしたか分かる。
+   - 共有：
+       (A) ライブ同期（推奨）… CHK_CFG.endpoint に Google Apps Script Web App の URL を設定すると
+           チェックが即・全員に共有される（GETで取得・POSTで保存）。設定は feature-checks-backend.gs 参照。
+       (B) endpoint 空 … チェックはこの端末（localStorage）に保存。初期値は feature-checks.json から読込。
    ========================================================================= */
 (function(){
   var CHK_CFG = {
-    endpoint: '',                       // 例: 'https://script.google.com/macros/s/XXXX/exec'（空なら下のJSONを使用）
-    fallbackJson: 'feature-checks.json',
-    editToken: 'watanabe2026'           // 編集モードの合言葉（#edit-watanabe2026）
+    endpoint: '',                       // 例: 'https://script.google.com/macros/s/XXXX/exec'（空ならローカル保存）
+    fallbackJson: 'feature-checks.json'
   };
 
-  var EDIT = location.hash.indexOf('edit-' + CHK_CFG.editToken) >= 0;
+  function escHtml(s){ return String(s).replace(/[&<>"]/g, function(c){ return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]; }); }
+
+  var USER = (localStorage.getItem('chk_user') || '').trim();   // 入力者名（空＝閲覧のみ）
   var STATE = {};      // { key: { checked:bool, by:string, at:isostring } }
   var ROWS = [];       // [{ key, tr }]
 
@@ -1007,14 +1007,14 @@
         var cb = document.createElement('input');
         cb.type = 'checkbox';
         cb.setAttribute('data-key', key);
-        cb.disabled = !EDIT;            // 通常は操作不可（閲覧専用）
-        cb.title = EDIT ? 'クリックで確認チェック' : '確認状況（閲覧のみ・操作不可）';
+        cb.disabled = !USER;           // 名前未入力なら操作不可（閲覧のみ）
+        cb.title = USER ? (USER + ' としてチェック') : '名前を入力するとチェックできます';
         td.appendChild(cb);
         var meta = document.createElement('span');
         meta.className = 'chk-meta';
         td.appendChild(meta);
         tr.appendChild(td);
-        if (EDIT) cb.addEventListener('change', function(){ onToggle(key, cb.checked); });
+        cb.addEventListener('change', function(){ onToggle(key, cb.checked); });
         ROWS.push({ key: key, tr: tr });
       });
     });
@@ -1030,48 +1030,81 @@
     });
   }
 
+  function localChecks(){
+    try { var ls = JSON.parse(localStorage.getItem('watanabe_feature_checks') || 'null'); return (ls && ls.checks) ? ls.checks : {}; } catch(e){ return {}; }
+  }
   function load(){
+    // まずローカル保存を適用（取得失敗・オフラインでもチェックを保持）
+    STATE = Object.assign({}, localChecks());
+    applyState();
+    // 共有データ（endpoint or feature-checks.json）を取得して反映
     var url = CHK_CFG.endpoint || CHK_CFG.fallbackJson;
     fetch(url, { cache: 'no-store' })
       .then(function(res){ return res.ok ? res.json() : null; })
       .then(function(data){
         if (!data) return;
-        STATE = data.checks ? data.checks : data;
-        // endpoint 未使用時はローカルの編集中状態を優先表示（編集者向け）
-        if (!CHK_CFG.endpoint) {
-          try { var ls = JSON.parse(localStorage.getItem('watanabe_feature_checks') || 'null'); if (ls && ls.checks) STATE = Object.assign({}, STATE, ls.checks); } catch(e){}
-        }
+        var remote = data.checks ? data.checks : data;
+        // endpoint 利用時はリモートを正とする／未設定時はリモート(初期値)にローカルの変更を上書き
+        STATE = CHK_CFG.endpoint ? remote : Object.assign({}, remote, localChecks());
         applyState();
       })
-      .catch(function(){ /* 取得失敗時は空のまま */ });
-  }
-
-  function whoami(){
-    var who = localStorage.getItem('chk_user') || '';
-    if (!who) { who = (prompt('お名前（チェックの記録用）:') || '匿名').trim() || '匿名'; localStorage.setItem('chk_user', who); }
-    return who;
+      .catch(function(){ /* 取得失敗：ローカルのみで継続 */ });
   }
 
   function onToggle(key, checked){
-    var who = whoami();
-    STATE[key] = { checked: checked, by: who, at: new Date().toISOString() };
+    if (!USER) return;                 // 名前未入力時は記録しない（保険）
+    STATE[key] = { checked: checked, by: USER, at: new Date().toISOString() };
     applyState();
     save();
   }
 
+  function setEditable(){
+    ROWS.forEach(function(r){
+      var cb = r.tr.querySelector('input[type=checkbox]');
+      if (cb) { cb.disabled = !USER; cb.title = USER ? (USER + ' としてチェック') : '名前を入力するとチェックできます'; }
+    });
+  }
+
   function save(){
+    // この端末に保存（再読込でも保持）
+    try { localStorage.setItem('watanabe_feature_checks', JSON.stringify({ checks: STATE })); } catch(e){}
+    // endpoint があれば全員に共有（POST）
     if (CHK_CFG.endpoint) {
       fetch(CHK_CFG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ checks: STATE }) })
-        .catch(function(){ alert('保存に失敗しました。通信環境をご確認ください。'); });
+        .catch(function(){ /* 通信失敗時もローカルには保存済み */ });
+    }
+  }
+
+  function renderUserbar(card){
+    var bar = card.querySelector('.chk-userbar');
+    if (!bar) { bar = document.createElement('div'); bar.className = 'chk-userbar'; card.insertBefore(bar, card.firstChild); }
+    if (USER) {
+      bar.innerHTML = '✔ <b>' + escHtml(USER) + '</b> さんとして入力中（チェックを操作できます）　'
+        + '<button type="button" class="chk-btn" data-act="change">名前を変更</button>';
     } else {
-      // endpoint 未設定：ローカル保存＋JSONダウンロード（コミットして全員へ共有）
-      try { localStorage.setItem('watanabe_feature_checks', JSON.stringify({ checks: STATE })); } catch(e){}
-      var blob = new Blob([JSON.stringify({ checks: STATE }, null, 2)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'feature-checks.json';
-      a.click();
-      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+      bar.innerHTML = '<span>チェックするにはお名前を入力してください：</span>'
+        + '<input type="text" class="chk-name" placeholder="例）渡辺 聡">'
+        + '<button type="button" class="chk-btn" data-act="set">この名前で開始</button>';
+    }
+    var setBtn = bar.querySelector('[data-act=set]');
+    var nameInput = bar.querySelector('.chk-name');
+    var changeBtn = bar.querySelector('[data-act=change]');
+    if (setBtn && nameInput) {
+      var doSet = function(){
+        var v = (nameInput.value || '').trim();
+        if (!v) { nameInput.focus(); return; }
+        USER = v; localStorage.setItem('chk_user', USER);
+        setEditable(); renderUserbar(card);
+      };
+      setBtn.addEventListener('click', doSet);
+      nameInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') doSet(); });
+    }
+    if (changeBtn) {
+      changeBtn.addEventListener('click', function(){
+        USER = ''; localStorage.removeItem('chk_user');
+        setEditable(); renderUserbar(card);
+        var ni = card.querySelector('.chk-name'); if (ni) ni.focus();
+      });
     }
   }
 
@@ -1080,18 +1113,11 @@
     if (!sec) return;
     var card = sec.nextElementSibling; // <div class="card">
     if (!card) return;
-    if (EDIT) {
-      var bar = document.createElement('div');
-      bar.className = 'chk-editbar';
-      bar.textContent = '● 編集モード：確認チェックを操作できます（変更は自動保存' + (CHK_CFG.endpoint ? '＝全員に即共有' : '。endpoint未設定のため feature-checks.json がDLされます→コミットで共有') + '）。';
-      card.insertBefore(bar, card.firstChild);
-    }
     var note = document.createElement('div');
     note.className = 'chk-banner';
-    note.innerHTML = EDIT
-      ? '✔ <b>確認列</b>：各機能の確認チェック。表示は全員で共有され、誰がチェックしたかも表示されます。'
-      : '✔ <b>確認列</b>：各機能の確認チェックです。表示は<b>全員で共有</b>され、誰がチェックしたかも分かります（この画面では<b>閲覧のみ・操作不可</b>）。';
+    note.innerHTML = '✔ <b>確認列</b>：各機能の確認チェックです。<b>お名前を入力すると、その名前でチェックできます</b>（未入力なら閲覧のみ）。チェックした行には「✔ 名前」が表示されます。';
     card.insertBefore(note, card.firstChild);
+    renderUserbar(card); // banner より前（card 先頭）に名前バーを差し込む
   }
 
   addColumns();
