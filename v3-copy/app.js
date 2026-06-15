@@ -927,24 +927,24 @@ Screens.dashboard = {
       <div class="grid grid-cols-5 gap-3 mb-6">
         <a href="#orders?filter=today" class="dash-card bg-white border-2 border-brand p-4 rounded shadow-sm hover:shadow-md transition" data-filter="today">
           <div class="text-xs text-ink-500 font-bold">本日納品予定</div>
-          <div class="text-2xl font-black mt-1">${todayDue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1" data-ds-dt="Order" data-ds-src="受注：delivery_date_start = 本日（Current date/time:rounded down to day）かつ status ≠ 納品済み :count" data-ds-field=":count">${todayDue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
         <a href="#orders?filter=inprogress" class="dash-card bg-white border-2 border-ok p-4 rounded shadow-sm hover:shadow-md transition" data-filter="inprogress">
           <div class="text-xs text-ink-500 font-bold">進行中</div>
-          <div class="text-2xl font-black mt-1">${inProgress.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1" data-ds-dt="Order" data-ds-src="受注：status is 受注 / 印刷中 のいずれか :count" data-ds-field=":count">${inProgress.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
         <a href="#orders?filter=urgent" class="dash-card bg-white border-2 border-red-500 p-4 rounded shadow-sm hover:shadow-md transition" data-filter="urgent">
           <div class="text-xs text-ink-500 font-bold">納期3日以内</div>
-          <div class="text-2xl font-black mt-1 ${urgent.length>0?'text-red-600':''}">${urgent.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1 ${urgent.length>0?'text-red-600':''}" data-ds-dt="Order" data-ds-src="受注：status ≠ 納品済み かつ 納期(delivery_date_start)まで 0〜3日 :count" data-ds-field=":count">${urgent.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
         <a href="#orders?filter=overdue" class="dash-card bg-white border-2 border-red-700 p-4 rounded shadow-sm hover:shadow-md transition" data-filter="overdue">
           <div class="text-xs text-ink-500 font-bold">納期超過</div>
-          <div class="text-2xl font-black mt-1 ${overdue.length>0?'text-red-700':''}">${overdue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
+          <div class="text-2xl font-black mt-1 ${overdue.length>0?'text-red-700':''}" data-ds-dt="Order" data-ds-src="受注：status ≠ 納品済み・見積もり段階 かつ delivery_date_start < 本日 :count" data-ds-field=":count">${overdue.length}<span class="text-sm font-normal text-ink-500">件</span></div>
         </a>
         <div class="bg-white border-2 border-blue-500 p-4 rounded shadow-sm">
           <div class="text-xs text-ink-500 font-bold">今月売上見込み</div>
-          <div class="text-2xl font-black mt-1">${fmt.money(monthSalesForecast)}</div>
-          <div class="text-xs text-ink-500">受注済(${thisMonth.length}件) 合計</div>
+          <div class="text-2xl font-black mt-1" data-ds-dt="Order（集計）" data-ds-src="受注：received_date が今月 かつ status ≠ 見積もり段階 の total_amount :sum" data-ds-field="total_amount :sum">${fmt.money(monthSalesForecast)}</div>
+          <div class="text-xs text-ink-500" data-ds-dt="Order" data-ds-src="受注：received_date が今月 かつ status ≠ 見積もり段階 :count（売上見込みと同条件）" data-ds-field=":count">受注済(${thisMonth.length}件) 合計</div>
         </div>
       </div>
 
@@ -2448,7 +2448,7 @@ Screens.quote = {
         <div>
           <a href="#order/${o.id}" class="text-ink-500 text-sm">← 受注に戻る</a>
           <h1 class="text-2xl font-black">見積書 <span class="font-mono">#${esc(q.quote_number)}</span></h1>
-          <p class="text-sm text-ink-500">受注 ${esc(o.order_number)} / ${esc(fmt.customer(o.customer_id))} / 見積掲載 <b>${included.length}件</b> / 受注明細 ${q.patterns.length}件 / 合計 <b class="text-brand">${fmt.money(grandTotal)}</b>（税込）</p>
+          <p class="text-sm text-ink-500">受注 <span data-ds-dt="Order" data-ds-src="Current Page Quote's Order（この見積書の親受注）" data-ds-field="order_number">${esc(o.order_number)}</span> / <span data-ds-dt="Customer" data-ds-src="Current Page Quote's Order's Customer（親受注の顧客）" data-ds-field="company_name / individual_name">${esc(fmt.customer(o.customer_id))}</span> / 見積掲載 <b data-ds-dt="QuoteItem（明細）" data-ds-src="Current Page Quote's 明細：included = yes :count（見積掲載ONの明細数）" data-ds-field=":count">${included.length}件</b> / 受注明細 <span data-ds-dt="QuoteItem（明細）" data-ds-src="Current Page Quote's 明細 :count（全明細＝親受注の明細数。受注明細と1:1同期）" data-ds-field=":count">${q.patterns.length}件</span> / 合計 <b class="text-brand" data-ds-dt="Quote（計算値）" data-ds-src="Σ 見積掲載ON明細（金額 − 行値引）＋ 消費税10% ＝ Quote.total_amount" data-ds-field="total_amount（税込）">${fmt.money(grandTotal)}</b>（税込）</p>
         </div>
         <div class="flex gap-2">
           <button id="btn-print-quote" class="bg-ink-900 text-white px-4 py-2 rounded text-sm font-bold">PDF出力 (印刷)</button>
@@ -2474,7 +2474,7 @@ Screens.quote = {
           <div><label class="block text-xs font-bold mb-1">備考</label><textarea id="q-memo" class="w-full border rounded px-2 py-1.5" rows="3">${esc(q.memo)}</textarea></div>
 
           <div class="border-t pt-3">
-            <h4 class="font-bold mb-2">明細（受注 ${q.patterns.length}件 / 見積掲載 <span class="text-brand">${included.length}件</span>）</h4>
+            <h4 class="font-bold mb-2">明細（受注 <span data-ds-dt="QuoteItem（明細）" data-ds-src="Current Page Quote's 明細 :count（全明細＝親受注の明細数）" data-ds-field=":count">${q.patterns.length}件</span> / 見積掲載 <span class="text-brand" data-ds-dt="QuoteItem（明細）" data-ds-src="Current Page Quote's 明細：included = yes :count" data-ds-field=":count">${included.length}件</span>）</h4>
             <p class="text-xs text-ink-500 mb-2">チェックを外した明細は見積書に表示されません。</p>
             <div id="patterns-list" class="space-y-2">
               ${q.patterns.map((p, i) => this.renderPattern(p, q, o, i)).join('')}
@@ -2550,9 +2550,9 @@ Screens.quote = {
                 </tr></thead>
                 <tbody>
                   ${rows}
-                  <tr class="border-b"><td class="p-1 text-ink-500" colspan="3">小計（外税）</td><td class="p-1 text-right">${fmt.money(subtotalEx)}</td></tr>
-                  <tr class="border-b"><td class="p-1 text-ink-500" colspan="3">消費税（${TAX_RATE_FIXED}%）</td><td class="p-1 text-right">${fmt.money(tax)}</td></tr>
-                  <tr class="font-black bg-ink-700/10"><td class="p-2" colspan="3">合計（税込）</td><td class="p-2 text-right text-sm">${fmt.money(grandTotal)}</td></tr>
+                  <tr class="border-b"><td class="p-1 text-ink-500" colspan="3">小計（外税）</td><td class="p-1 text-right" data-ds-dt="Quote（計算値）" data-ds-src="Σ 見積掲載ON明細（金額 − 行値引）＝ subtotalEx" data-ds-field="小計（税抜）">${fmt.money(subtotalEx)}</td></tr>
+                  <tr class="border-b"><td class="p-1 text-ink-500" colspan="3">消費税（${TAX_RATE_FIXED}%）</td><td class="p-1 text-right" data-ds-dt="Quote（計算値）" data-ds-src="round(小計（外税）× ${TAX_RATE_FIXED}%)" data-ds-field="消費税">${fmt.money(tax)}</td></tr>
+                  <tr class="font-black bg-ink-700/10"><td class="p-2" colspan="3">合計（税込）</td><td class="p-2 text-right text-sm" data-ds-dt="Quote（計算値）" data-ds-src="小計（外税）＋ 消費税 ＝ Quote.total_amount" data-ds-field="total_amount（税込）">${fmt.money(grandTotal)}</td></tr>
                 </tbody>
               </table>`;
             })() : `<p class="text-ink-500 text-xs">${q.patterns.length === 0 ? '受注に明細がありません' : '見積書に表示する明細を1件以上選択してください'}</p>`}
@@ -2938,11 +2938,11 @@ Screens.customer = {
           </div>
         </div>
         <div class="grid grid-cols-5 border-t text-sm">
-          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計受注</div><div class="text-2xl font-black">${sales.count}件</div></div>
-          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">税抜小計</div><div class="text-lg font-black font-mono">${fmt.money(sales.subtotalEx)}</div></div>
-          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">消費税</div><div class="text-lg font-black font-mono text-ink-500">${fmt.money(sales.tax)}</div></div>
-          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計売上（税込）</div><div class="text-2xl font-black text-brand">${fmt.money(sales.total)}</div></div>
-          <div class="p-3"><div class="text-xs font-bold text-ink-500">最終納品</div><div class="text-lg font-black">${sales.lastDelivered ? fmt.dateW(sales.lastDelivered) : '—'}</div></div>
+          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計受注</div><div class="text-2xl font-black" data-ds-dt="Order" data-ds-src="受注：Customer = Current Page Customer かつ status ≠ 見積もり段階 :count" data-ds-field=":count">${sales.count}件</div></div>
+          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">税抜小計</div><div class="text-lg font-black font-mono" data-ds-dt="Order（集計）" data-ds-src="上記受注の 各明細小計（税抜・値引後）合計 :sum" data-ds-field="after_discount :sum">${fmt.money(sales.subtotalEx)}</div></div>
+          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">消費税</div><div class="text-lg font-black font-mono text-ink-500" data-ds-dt="Order（集計）" data-ds-src="上記受注の 消費税(10%)合計 :sum" data-ds-field="total_tax :sum">${fmt.money(sales.tax)}</div></div>
+          <div class="p-3 border-r"><div class="text-xs font-bold text-ink-500">累計売上（税込）</div><div class="text-2xl font-black text-brand" data-ds-dt="Order（集計）" data-ds-src="上記受注の 税込合計 :sum（＝累計売上）" data-ds-field="total :sum">${fmt.money(sales.total)}</div></div>
+          <div class="p-3"><div class="text-xs font-bold text-ink-500">最終納品</div><div class="text-lg font-black" data-ds-dt="Order" data-ds-src="上記受注のうち delivered_date 最大（最も新しい納品日）" data-ds-field="delivered_date :max">${sales.lastDelivered ? fmt.dateW(sales.lastDelivered) : '—'}</div></div>
         </div>
       </div>
       <div class="bg-white rounded shadow-sm mb-4">

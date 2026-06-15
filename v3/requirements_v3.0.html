@@ -52,6 +52,14 @@
   .meta-table td:first-child { font-weight: 700; width: 160px; background: #f9fafb; }
   .note { background: #eff6ff; border-left: 4px solid #3B82F6; padding: 10px 14px; font-size: 13px; margin: 12px 0; border-radius: 0 4px 4px 0; }
   .warn { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px 14px; font-size: 13px; margin: 12px 0; border-radius: 0 4px 4px 0; }
+  /* ===== 機能確認チェック列（共有・閲覧専用） ===== */
+  th.chk-col { text-align: center; width: 72px; }
+  td.chk-cell { text-align: center; white-space: nowrap; }
+  td.chk-cell input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--ok); cursor: not-allowed; }
+  td.chk-cell input[type=checkbox]:not(:disabled) { cursor: pointer; }
+  td.chk-cell .chk-meta { display: block; font-size: 10px; color: var(--ink-500); margin-top: 2px; line-height: 1.2; }
+  .chk-banner { background: #ecfdf5; border-left: 4px solid var(--ok); padding: 8px 12px; font-size: 12px; margin: 8px 0 4px; border-radius: 0 4px 4px 0; color: var(--ink-700); }
+  .chk-editbar { position: sticky; top: 0; z-index: 60; background: #b91c1c; color: #fff; padding: 6px 12px; font-size: 12px; font-weight: 700; border-radius: 4px; margin: 8px 0; }
   /* ===== スマホ対応: テーブルをカード型縦並びに ===== */
   @media (max-width: 768px) {
     .container { padding: 16px 12px; }
@@ -942,6 +950,155 @@
 
 </div>
 <script>
+/* =========================================================================
+   機能確認チェック列（第2章 機能一覧）— 共有・閲覧専用
+   - 各機能行の右端に「確認」チェックを追加。
+   - 状態は共有データから読み込み、全員が同じ状態（誰がチェックしたか含む）を閲覧できる。
+   - 通常表示は disabled（＝自分は操作できない）。
+   - 入力は担当者のみ：URL のハッシュに #edit-<合言葉> を付けるとそのタブだけ編集可能になる。
+     例) requirements_v3.0.html#edit-watanabe2026
+   - 共有の仕組み：
+       (A) ライブ同期（推奨）… CHK_CFG.endpoint に Google Apps Script Web App の URL を設定
+           （GETでJSON取得・POSTで保存）。設定方法は同フォルダ feature-checks-backend.gs を参照。
+       (B) 既定（endpoint 空）… 同フォルダ feature-checks.json を読み取り専用で取得して表示。
+           編集者は #edit モードでチェック → 自動で feature-checks.json をダウンロード →
+           リポジトリにコミットして全員へ共有。
+   ========================================================================= */
+(function(){
+  var CHK_CFG = {
+    endpoint: '',                       // 例: 'https://script.google.com/macros/s/XXXX/exec'（空なら下のJSONを使用）
+    fallbackJson: 'feature-checks.json',
+    editToken: 'watanabe2026'           // 編集モードの合言葉（#edit-watanabe2026）
+  };
+
+  var EDIT = location.hash.indexOf('edit-' + CHK_CFG.editToken) >= 0;
+  var STATE = {};      // { key: { checked:bool, by:string, at:isostring } }
+  var ROWS = [];       // [{ key, tr }]
+
+  function sec2Tables(){
+    var out = [];
+    document.querySelectorAll('table').forEach(function(t){
+      var ths = Array.prototype.map.call(t.querySelectorAll('thead th'), function(x){ return x.textContent.trim(); });
+      if (ths[0] === '#' && ths[1] === '機能名' && ths[2] === '概要') out.push(t);
+    });
+    return out;
+  }
+
+  function addColumns(){
+    sec2Tables().forEach(function(t){
+      // 直前の <h3> から セクション番号（例 "2-3"）を取得
+      var h = t.previousElementSibling;
+      while (h && h.tagName !== 'H3') h = h.previousElementSibling;
+      var sec = h ? h.textContent.trim().split('.')[0].trim() : '?';
+
+      var htr = t.querySelector('thead tr');
+      if (htr && !htr.querySelector('.chk-col')) {
+        var th = document.createElement('th');
+        th.className = 'chk-col';
+        th.textContent = '確認';
+        htr.appendChild(th);
+      }
+      t.querySelectorAll('tbody tr').forEach(function(tr){
+        if (tr.querySelector('.chk-cell')) return;
+        var num = tr.cells[0] ? tr.cells[0].textContent.trim() : '';
+        var key = 'f_' + sec + '_' + num;
+        var td = document.createElement('td');
+        td.className = 'chk-cell';
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.setAttribute('data-key', key);
+        cb.disabled = !EDIT;            // 通常は操作不可（閲覧専用）
+        cb.title = EDIT ? 'クリックで確認チェック' : '確認状況（閲覧のみ・操作不可）';
+        td.appendChild(cb);
+        var meta = document.createElement('span');
+        meta.className = 'chk-meta';
+        td.appendChild(meta);
+        tr.appendChild(td);
+        if (EDIT) cb.addEventListener('change', function(){ onToggle(key, cb.checked); });
+        ROWS.push({ key: key, tr: tr });
+      });
+    });
+  }
+
+  function applyState(){
+    ROWS.forEach(function(r){
+      var cb = r.tr.querySelector('input[type=checkbox]');
+      var meta = r.tr.querySelector('.chk-meta');
+      var st = STATE[r.key];
+      if (cb) cb.checked = !!(st && st.checked);
+      if (meta) meta.textContent = (st && st.checked && st.by) ? ('✔ ' + st.by) : '';
+    });
+  }
+
+  function load(){
+    var url = CHK_CFG.endpoint || CHK_CFG.fallbackJson;
+    fetch(url, { cache: 'no-store' })
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(data){
+        if (!data) return;
+        STATE = data.checks ? data.checks : data;
+        // endpoint 未使用時はローカルの編集中状態を優先表示（編集者向け）
+        if (!CHK_CFG.endpoint) {
+          try { var ls = JSON.parse(localStorage.getItem('watanabe_feature_checks') || 'null'); if (ls && ls.checks) STATE = Object.assign({}, STATE, ls.checks); } catch(e){}
+        }
+        applyState();
+      })
+      .catch(function(){ /* 取得失敗時は空のまま */ });
+  }
+
+  function whoami(){
+    var who = localStorage.getItem('chk_user') || '';
+    if (!who) { who = (prompt('お名前（チェックの記録用）:') || '匿名').trim() || '匿名'; localStorage.setItem('chk_user', who); }
+    return who;
+  }
+
+  function onToggle(key, checked){
+    var who = whoami();
+    STATE[key] = { checked: checked, by: who, at: new Date().toISOString() };
+    applyState();
+    save();
+  }
+
+  function save(){
+    if (CHK_CFG.endpoint) {
+      fetch(CHK_CFG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ checks: STATE }) })
+        .catch(function(){ alert('保存に失敗しました。通信環境をご確認ください。'); });
+    } else {
+      // endpoint 未設定：ローカル保存＋JSONダウンロード（コミットして全員へ共有）
+      try { localStorage.setItem('watanabe_feature_checks', JSON.stringify({ checks: STATE })); } catch(e){}
+      var blob = new Blob([JSON.stringify({ checks: STATE }, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'feature-checks.json';
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    }
+  }
+
+  function banners(){
+    var sec = document.getElementById('sec2');
+    if (!sec) return;
+    var card = sec.nextElementSibling; // <div class="card">
+    if (!card) return;
+    if (EDIT) {
+      var bar = document.createElement('div');
+      bar.className = 'chk-editbar';
+      bar.textContent = '● 編集モード：確認チェックを操作できます（変更は自動保存' + (CHK_CFG.endpoint ? '＝全員に即共有' : '。endpoint未設定のため feature-checks.json がDLされます→コミットで共有') + '）。';
+      card.insertBefore(bar, card.firstChild);
+    }
+    var note = document.createElement('div');
+    note.className = 'chk-banner';
+    note.innerHTML = EDIT
+      ? '✔ <b>確認列</b>：各機能の確認チェック。表示は全員で共有され、誰がチェックしたかも表示されます。'
+      : '✔ <b>確認列</b>：各機能の確認チェックです。表示は<b>全員で共有</b>され、誰がチェックしたかも分かります（この画面では<b>閲覧のみ・操作不可</b>）。';
+    card.insertBefore(note, card.firstChild);
+  }
+
+  addColumns();
+  banners();
+  load();
+})();
+
 // スマホ対応: 全テーブルの td に data-label を自動付与（thead の th テキストを使用）
 document.querySelectorAll('table').forEach(table => {
   const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());

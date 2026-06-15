@@ -996,6 +996,33 @@ tailwind.config = { theme: { extend: {
       <li>「専用ページに遷移→Page loadで自動生成」方式が確実。ボタン直押しで同ページ生成も可だが描画タイミングに注意。</li>
       <li>※受注票印刷ビュー（#print）も同方式で PDF 化可能（Element ID を別に付与）。</li>
     </ul>
+
+    <h3 class="font-black">4. 「印刷ボタンを押すとプレビューが出ずにDLされる」問題の対処（重要）</h3>
+    <p class="text-sm text-ink-700"><b>症状</b>：印刷／PDF出力ボタンを押すと、ブラウザの印刷プレビューが表示されないまま、いきなりPDFファイルがダウンロードされてしまう。</p>
+    <p class="text-sm text-ink-700"><b>原因</b>：<b>PDF &amp; Screenshot Pro の「Element PDF」は Download=ON にすると、ブラウザのネイティブ印刷ダイアログ（プレビュー）を経由せず、生成したPDFを直接ダウンロードする仕様</b>。印刷プレビューが出るのは OS の <code>window.print()</code> を呼んだ時だけで、本プラグインはそれを使わない。さらに <b>Page load 自動生成</b>方式にしていると、<b>ページに来た瞬間に生成＝DLが走る</b>ため「押した瞬間にDL」に見える。モック（HTML）は <code>window.print()</code>＋<code>@media print</code> のため一見プレビューが出るが、Bubbleでプラグインに置き換えると挙動が変わる点に注意。</p>
+
+    <h4>方式A：プレビュー → 明示ダウンロード（見積書 #quote 向き・推奨）</h4>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>トリガを <b>「Page load 自動生成」から「ボタン押下WF」へ変更</b>（来た瞬間のDLを止める）。</li>
+      <li>Element PDF を <b>Download=OFF・Save to Bubble=ON</b> にする（＝生成だけしてDLしない）。生成PDFのURLを <code>Quote.pdf_file</code> 等に保存。</li>
+      <li>生成完了の Pause(2,000ms) の後、<b>プレビュー用ポップアップ（GroupFocus / Popup）</b>を表示。中に PDF を表示するビューアを置く：HTML要素に <code>&lt;iframe src="[Quote's pdf_file]#toolbar=1" width="100%" height="100%"&gt;&lt;/iframe&gt;</code>（または PDF表示系プラグインの Viewer）。Source は Save to Bubble で保存したファイルURL。</li>
+      <li>ポップアップ内に <b>「ダウンロード」ボタン</b>を設置：Button/Link の <b>Open an external website</b> → <code>Quote's pdf_file</code>（新規タブ）、または PDF &amp; Screenshot Pro の Download だけのアクション。</li>
+      <li><b>結果</b>：ボタン押下 → 生成 → <b>プレビュー表示 → ユーザーが必要な時だけ明示DL</b>。勝手にDLされない。</li>
+    </ul>
+
+    <h4>方式B：ブラウザ標準の印刷プレビューを出す（受注票印刷ビュー #print 向き）</h4>
+    <ul class="list-disc pl-6 text-sm space-y-1">
+      <li>プラグインを使わず、<b>Toolbox プラグインの「Run javascript」</b>アクションで <code>window.print();</code> を実行 → <b>OSの印刷プレビューが開く</b>（プリンタ印刷も「PDFに保存」もユーザーが選べる）。</li>
+      <li>印刷対象だけを出すため、<b>印刷専用ページ（または印刷用Group）</b>を用意し、ヘッダー/ナビ等を Conditional（<code>isPrinting</code> 等の custom state）で非表示にし、A4レイアウトのGroupのみ表示。モックの <code>#print</code> はこの方式（<code>window.print()</code>＋<code>@media print</code>）。</li>
+      <li><b>長所</b>：プレビューが必ず出る／印刷もPDF保存も選べる。<b>短所</b>：体裁が印刷CSS依存で、プラグインPDFほど厳密な版面再現はしづらい。</li>
+    </ul>
+
+    <h4>使い分け</h4>
+    <table><thead><tr><th>画面</th><th>主目的</th><th>推奨</th></tr></thead><tbody>
+      <tr><td>見積書（#quote）</td><td>版面を厳密に固定したい正式帳票</td><td><b>方式A</b>（プラグイン＋プレビューポップアップ）</td></tr>
+      <tr><td>受注票印刷ビュー（#print）</td><td>社内回覧・即印刷が主目的</td><td><b>方式B</b>（<code>window.print()</code> でプレビュー＋印刷）</td></tr>
+    </tbody></table>
+    <div class="note text-xs"><b>最短の直し方</b>：今「Page load で自動生成＋Download=ON」になっているなら、①トリガをボタン押下に変更し②<b>Download=OFF・Save to Bubble=ON</b> にして③保存PDFをポップアップのiframeでプレビュー表示、の3点だけで「プレビューなしで勝手にDL」は解消する。</div>
   </section>
 
   <!-- ============ スケジュール ============ -->

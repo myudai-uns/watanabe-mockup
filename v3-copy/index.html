@@ -551,6 +551,16 @@ tailwind.config = {
     return null;
   }
   function dataBinding(el){
+    // v3-copy: data-ds-* による明示アノテーション（集計値・計算値など、行データに紐づかない表示の Data source を明示）
+    if(el.closest){
+      var ann=el.closest('[data-ds-src]');
+      if(ann) return {
+        dt: ann.getAttribute('data-ds-dt')||'—',
+        src: ann.getAttribute('data-ds-src')||'',
+        field: ann.getAttribute('data-ds-field')||null,
+        head: ann.getAttribute('data-ds-head')||'集計/計算値'
+      };
+    }
     var ul=el.closest('ul');
     if(ul){
       var prev=ul.previousElementSibling;
@@ -609,7 +619,7 @@ tailwind.config = {
     var wf=wfInfo(t);
     if(wf){ html += '<h5>⚙ Workflow（WF）</h5>'+drow('event (trigger)',wf.t)+drow('action',wf.a)+drow('navigate to',wf.g); }
     var db=dataBinding(t);
-    if(db){ html += '<h5>🗂 Data source（行データ）</h5>'+drow('Type of content (DT)',db.dt)+drow('data source',db.src)+(db.field?drow('この要素 ＝',db.dt+'.'+db.field):''); }
+    if(db){ html += '<h5>🗂 Data source（'+(db.head||'行データ')+'）</h5>'+drow('Type of content (DT)',db.dt)+drow('data source',db.src)+(db.field?drow('この要素 ＝',db.dt+'.'+db.field):''); }
     html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
     if(d && r.cat==='container'){
       html += '<h5>📦 Group / Container</h5>'+drow('Type of content',d.typeContent)+drow('data source',d.dataSource)
