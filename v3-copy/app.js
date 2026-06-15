@@ -3068,6 +3068,7 @@ Screens.customer = {
 // ---------- Login ----------
 Screens.login = {
   render() {
+    Screens.password_reset.sent = false; // 戻ってきたらリセット送信状態を初期化
     const users = DB.all('users');
     return `
       <div class="min-h-[80vh] flex items-center justify-center">
@@ -3112,9 +3113,27 @@ Screens.login = {
   },
 };
 
-// ---------- Password Reset ----------
+// ---------- Password Reset（リセットメール送信） ----------
 Screens.password_reset = {
+  sent: false,
+  email: '',
   render() {
+    if (this.sent) {
+      return `
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
+          <div class="w-12 h-12 bg-ok rounded-full flex items-center justify-center text-2xl text-white mb-4">✓</div>
+          <h1 class="text-xl font-black mb-2">メールを送信しました</h1>
+          <p class="text-xs text-ink-500 mb-4"><b>${esc(this.email || '')}</b> 宛にパスワード再設定用のリンクをお送りしました。メール内のリンクから新しいパスワードを設定してください。<br>（リンクの有効期限：24時間）</p>
+          <div class="bg-ink-700/5 border border-dashed border-ink-300 rounded p-3 text-xs mb-4">
+            <div class="text-ink-500 mb-1">📧 受信メール（モック）</div>
+            <div class="font-bold">件名：【渡辺謄写堂】パスワード再設定のご案内</div>
+            <button id="btn-open-reset-link" class="text-brand font-bold hover:underline mt-2">▶ メール内のリンクを開く（モック）</button>
+          </div>
+          <a href="#login" class="text-xs text-ink-500 hover:underline">← ログインに戻る</a>
+        </div>
+      </div>`;
+    }
     return `
       <div class="min-h-[80vh] flex items-center justify-center">
         <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
@@ -3133,11 +3152,86 @@ Screens.password_reset = {
     `;
   },
   bind() {
+    if (this.sent) {
+      $('#btn-open-reset-link')?.addEventListener('click', () => { this.sent = false; location.hash = '#reset_pw/mocktoken'; });
+      return;
+    }
     $('#btn-pr-send')?.addEventListener('click', () => {
       const email = $('#pr-email').value.trim();
       if (!email) { toast('メールアドレスを入力してください', 'err'); return; }
+      this.email = email;
+      this.sent = true;
       toast('リセット用リンクを送信しました（モック動作）', 'ok');
-      setTimeout(() => { location.hash = '#login'; }, 800);
+      App.render();
+    });
+  },
+};
+
+// ---------- Reset Password（メールリンクからの遷移先：新パスワード設定） ----------
+// メール内リンク = #reset_pw/<token>。token='expired' で期限切れ表示（モック）
+Screens.reset_pw = {
+  render(token) {
+    if (token === 'expired') {
+      return `
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm text-center">
+          <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-2xl text-white mx-auto mb-4">!</div>
+          <h1 class="text-xl font-black mb-2">リンクの有効期限が切れています</h1>
+          <p class="text-xs text-ink-500 mb-4">お手数ですが、もう一度パスワードリセットをやり直してください。</p>
+          <a href="#password_reset" class="inline-block w-full bg-brand text-white px-4 py-2 rounded font-bold">リセットをやり直す</a>
+        </div>
+      </div>`;
+    }
+    return `
+      <div class="min-h-[80vh] flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg p-8 w-full max-w-sm">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-12 h-12 bg-brand rounded flex items-center justify-center font-black text-2xl text-white">謄</div>
+            <div>
+              <div class="font-black">渡辺謄写堂</div>
+              <div class="text-xs text-ink-500">新しいパスワードの設定</div>
+            </div>
+          </div>
+          <p class="text-xs text-ink-500 mb-4">メールのリンクからアクセスしています。新しいパスワードを入力してください。</p>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="block text-xs font-bold mb-1">新しいパスワード</label>
+              <input id="rp-pass1" type="password" class="w-full border rounded px-2 py-2" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <div>
+              <label class="block text-xs font-bold mb-1">新しいパスワード（確認）</label>
+              <input id="rp-pass2" type="password" class="w-full border rounded px-2 py-2" placeholder="••••••••" autocomplete="new-password">
+            </div>
+            <label class="flex items-center gap-2 text-xs text-ink-500 cursor-pointer">
+              <input id="rp-show" type="checkbox" class="w-3.5 h-3.5"> パスワードを表示
+            </label>
+            <div class="bg-ink-700/5 rounded p-3 text-xs text-ink-500 leading-relaxed">
+              <div class="font-bold text-ink-700 mb-1">パスワードの要件</div>
+              ・8文字以上<br>・英大文字・小文字・数字を含む
+            </div>
+            <button id="btn-rp-submit" class="w-full bg-brand text-white px-4 py-2 rounded font-bold mt-1">パスワードを変更</button>
+            <div class="text-center"><a href="#login" class="text-xs text-ink-500 hover:underline">ログインに戻る</a></div>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+  bind() {
+    const show = $('#rp-show');
+    show?.addEventListener('change', () => {
+      const t = show.checked ? 'text' : 'password';
+      if ($('#rp-pass1')) $('#rp-pass1').type = t;
+      if ($('#rp-pass2')) $('#rp-pass2').type = t;
+    });
+    $('#btn-rp-submit')?.addEventListener('click', () => {
+      const p1 = $('#rp-pass1').value;
+      const p2 = $('#rp-pass2').value;
+      if (!p1 || !p2) { toast('新しいパスワードを入力してください', 'err'); return; }
+      if (p1.length < 8) { toast('パスワードは8文字以上にしてください', 'err'); return; }
+      if (!/[A-Z]/.test(p1) || !/[a-z]/.test(p1) || !/[0-9]/.test(p1)) { toast('英大文字・小文字・数字を含めてください', 'err'); return; }
+      if (p1 !== p2) { toast('パスワードが一致しません', 'err'); return; }
+      toast('パスワードを変更しました（モック動作）', 'ok');
+      setTimeout(() => { location.hash = '#login'; }, 900);
     });
   },
 };
