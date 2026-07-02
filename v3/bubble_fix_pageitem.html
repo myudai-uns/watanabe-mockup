@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修正図解｜編集状態でのページもの追加不具合（Bubble実装）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#E87825; --brand-dark:#B85D16; --brand-light:#FFF4EC;
+  --ok:#3F9D5E; --ok-dark:#2A7A44; --ok-light:#E8F5EE;
+  --ink9:#1A1A1A; --ink7:#3A3A3A; --ink5:#707070; --ink3:#B5B5B5;
+  --page:#7E22CE; --page-light:#F3E8FF;
+  --blue:#2563EB; --blue-light:#EFF6FF;
+  --red:#DC2626; --red-light:#FEF2F2;
+  --amber:#B45309; --amber-light:#FFFBEB;
+}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans JP',sans-serif;background:#F3F4F6;color:var(--ink9);margin:0;font-size:14px;line-height:1.7}
+header.top{background:var(--ink9);color:#fff;padding:26px 28px}
+header.top h1{margin:0;font-size:22px;font-weight:900}
+header.top .sub{color:var(--ink3);font-size:12px;margin-top:6px}
+header.top .sub a{color:#FFD9B8}
+main{max-width:1080px;margin:0 auto;padding:28px 20px 80px}
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:24px;margin-bottom:28px}
+h2{font-size:19px;font-weight:900;margin:0 0 4px;padding-left:12px;border-left:6px solid var(--brand)}
+h2 .en{font-size:11px;color:var(--ink5);font-weight:700;margin-left:8px}
+h3{font-size:15px;font-weight:900;margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+h3 .num{background:var(--ink9);color:#fff;border-radius:6px;font-size:11px;padding:2px 8px}
+h4{font-size:13px;font-weight:900;margin:18px 0 8px;color:var(--ink7)}
+p.lead{color:var(--ink5);font-size:12.5px;margin:4px 0 18px}
+code{font-family:Consolas,monospace;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:4px;padding:1px 5px;font-size:12px}
+.pill{display:inline-block;border-radius:20px;padding:2px 12px;font-size:11px;font-weight:900;color:#fff}
+.pill.a{background:var(--ok)} .pill.b{background:var(--amber)} .pill.c{background:var(--blue)}
+.badge{display:inline-block;border-radius:4px;padding:1px 7px;font-size:10px;font-weight:900}
+.badge.new{background:var(--ok);color:#fff}
+.badge.same{background:#E2E8F0;color:var(--ink5)}
+.badge.warn{background:var(--red);color:#fff}
+.badge.del{background:var(--red-light);color:var(--red);border:1px solid var(--red)}
+.badge.page{background:var(--page);color:#fff}
+
+/* ===== 比較表・DB表 ===== */
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0}
+table.tbl th{background:var(--ink9);color:#fff;padding:7px 10px;text-align:left;font-size:11.5px;white-space:nowrap}
+table.tbl td{border:1px solid #E5E7EB;padding:7px 10px;vertical-align:top;background:#fff}
+table.tbl tr:nth-child(even) td{background:#FAFAFA}
+table.tbl td.c{text-align:center}
+table.tbl .hd td{background:var(--brand-light);font-weight:900}
+table.tbl .em{font-weight:900;color:var(--brand-dark)}
+
+/* ===== コンテナ構造ツリー ===== */
+.tree{font-size:12.5px}
+.tree ul{list-style:none;margin:0;padding-left:26px;position:relative}
+.tree>ul{padding-left:0}
+.tree ul ul::before{content:'';position:absolute;left:8px;top:0;bottom:12px;border-left:2px solid #CBD5E1}
+.tree ul ul li{position:relative;padding-left:16px}
+.tree ul ul li::before{content:'';position:absolute;left:-16px;top:16px;width:28px;border-top:2px solid #CBD5E1}
+.tree li{margin:7px 0}
+.node{display:inline-block;background:#fff;border:2px solid var(--ink3);border-radius:8px;padding:6px 12px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.node b{font-size:12.5px}
+.node .t{display:inline-block;font-size:10px;font-weight:900;border-radius:4px;padding:0 6px;margin-right:6px;color:#fff;vertical-align:1px}
+.t.grp{background:#64748b}.t.rg{background:var(--brand)}.t.btn{background:var(--blue)}.t.inp{background:#16A34A}.t.pagegrp{background:var(--page)}.t.state{background:#0EA5E9}
+.node .meta{display:block;font-size:11px;color:var(--ink5);font-family:Consolas,monospace;margin-top:2px}
+.node.bad{border-color:var(--red);background:var(--red-light)}
+.node.good{border-color:var(--ok);background:var(--ok-light)}
+.node.focus{border-color:var(--brand);background:var(--brand-light)}
+
+/* ===== WFツリー（縦フロー） ===== */
+.wf{margin:14px 0 22px}
+.wf .ev{background:var(--ink9);color:#fff;border-radius:8px;padding:9px 16px;font-weight:900;font-size:13px;display:inline-block}
+.wf .ev .k{color:#FFD9B8;font-size:10.5px;font-weight:700;display:block}
+.wf .steps{margin:0;padding:0 0 0 26px;list-style:none;position:relative}
+.wf .steps::before{content:'';position:absolute;left:8px;top:0;bottom:26px;border-left:2px solid var(--ink3)}
+.wf .step{position:relative;padding:12px 0 0 22px}
+.wf .step::before{content:'';position:absolute;left:-18px;top:32px;width:38px;border-top:2px solid var(--ink3)}
+.wf .box{background:#fff;border:2px solid var(--ink3);border-radius:8px;overflow:hidden;max-width:640px}
+.wf .box .bh{background:#F1F5F9;padding:6px 12px;font-weight:900;font-size:12.5px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #E2E8F0}
+.wf .box .bh .sn{background:var(--ink9);color:#fff;border-radius:4px;font-size:10px;padding:1px 7px}
+.wf .box .bb{padding:8px 12px;font-size:12px}
+.wf .box.add{border-color:var(--ok)} .wf .box.add .bh{background:var(--ok-light)}
+.wf .box.warn{border-color:var(--red)} .wf .box.warn .bh{background:var(--red-light)}
+.wf .box.miss{border:2px dashed var(--red);background:var(--red-light)}
+.wf .box.miss .bh{background:transparent;border-bottom:none;color:var(--red)}
+.fieldrow{display:flex;gap:8px;padding:3px 0;border-bottom:1px dotted #E2E8F0;font-family:Consolas,monospace;font-size:11.5px}
+.fieldrow:last-child{border-bottom:none}
+.fieldrow .fk{color:var(--ink5);min-width:130px}
+.fieldrow .fv{color:var(--blue);font-weight:700}
+.onlywhen{font-size:11px;color:var(--amber);font-weight:700;padding:4px 12px;border-top:1px dashed #FCD34D;background:var(--amber-light)}
+
+/* ===== Bubbleインスペクタ再現 ===== */
+.insp{width:330px;background:#fff;border:1px solid #D7DBE2;border-radius:8px;box-shadow:0 6px 18px -8px rgba(0,0,0,.25);font-size:12px;overflow:hidden}
+.insp .ih{background:#3D4451;color:#fff;padding:8px 12px;font-weight:900;font-size:12px}
+.insp .isec{padding:8px 12px;border-bottom:1px solid #EDF0F4}
+.insp .isec .sl{font-weight:900;font-size:11px;color:#3D4451;margin-bottom:5px}
+.insp .irow{background:#F7F8FA;border:1px solid #E3E7ED;border-radius:5px;padding:5px 9px;margin:4px 0;font-family:Consolas,monospace;font-size:11px}
+.insp .irow .exp{color:#1D4ED8;font-weight:700}
+.insp .irow .lbl{color:#6B7280;display:block;font-family:'Noto Sans JP';font-weight:700;font-size:10px;margin-bottom:1px}
+.insp .irow.chg{border:2px solid var(--ok);background:var(--ok-light)}
+.insp .irow.old{border:2px solid var(--red);background:var(--red-light);text-decoration:line-through;opacity:.75}
+.insp .con{border-left:3px solid var(--brand);padding-left:8px;margin:5px 0}
+.insp .note{font-size:10px;color:#6B7280;padding:2px 0}
+.insprow{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin:12px 0}
+.insprow .cap{max-width:380px;font-size:12px;color:var(--ink7)}
+.insprow .cap b{color:var(--ink9)}
+
+/* ===== 原因データフロー図 ===== */
+.flow{display:flex;gap:0;align-items:stretch;flex-wrap:wrap;margin:16px 0}
+.fbox{border:2px solid var(--ink3);border-radius:10px;padding:12px 16px;background:#fff;min-width:190px;flex:1}
+.fbox .fh{font-weight:900;font-size:12.5px;margin-bottom:4px}
+.fbox .fs{font-size:11px;color:var(--ink5)}
+.fbox.okb{border-color:var(--ok);background:var(--ok-light)}
+.fbox.ngb{border-color:var(--red);background:var(--red-light)}
+.farrow{display:flex;align-items:center;justify-content:center;padding:0 10px;font-size:20px;font-weight:900;color:var(--ink5);min-width:70px;flex-direction:column}
+.farrow.ok{color:var(--ok)} .farrow.ng{color:var(--red)}
+.farrow small{font-size:10px;font-weight:700;text-align:center;line-height:1.3}
+
+.notebox{border-left:4px solid var(--brand);background:var(--brand-light);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;margin:12px 0}
+.warnbox{border-left:4px solid var(--red);background:var(--red-light);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;margin:12px 0}
+.okbox{border-left:4px solid var(--ok);background:var(--ok-light);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;margin:12px 0}
+.toc{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.toc a{background:var(--ink7);color:#fff;text-decoration:none;font-size:12px;font-weight:700;padding:5px 14px;border-radius:6px}
+.toc a:hover{background:var(--brand)}
+.check{list-style:none;padding:0}
+.check li{padding:7px 0 7px 30px;position:relative;border-bottom:1px dotted #E2E8F0}
+.check li::before{content:'☐';position:absolute;left:4px;color:var(--brand);font-size:16px;font-weight:900}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>修正図解｜編集状態での「ページものを追加」不具合</h1>
+  <div class="sub">渡辺謄写堂 業務管理システム（Bubble実装）／ 準拠仕様: <a href="bubble_handoff.html#crud" target="_blank">bubble_handoff.html §4-B 下書きコピー方式CRUD</a> ／ 理想動作の実機: <a href="../v3-copy/#orders" target="_blank">v3-copy モック</a></div>
+  <div class="toc">
+    <a href="#cause">原因の図解</a>
+    <a href="#db">DB / ステート図解</a>
+    <a href="#plan-a">案A search方式（推奨）</a>
+    <a href="#plan-b">案B 最小パッチ</a>
+    <a href="#plan-c">案C 再同期</a>
+    <a href="#checklist">修正後チェック</a>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================ -->
+<section class="card" id="summary">
+  <h2>TL;DR<span class="en">結論と3案比較</span></h2>
+  <p class="lead">Createアクションは正しい。RGが見ている「カスタムステート temp_items」がWFで更新されていないことが原因。</p>
+  <table class="tbl">
+    <thead><tr><th></th><th>やること</th><th>修正範囲</th><th>再発リスク</th><th>おすすめ度</th></tr></thead>
+    <tbody>
+      <tr><td class="c"><span class="pill a">案A</span></td><td>RGのデータソースを <b>Do a search for（DB直結）</b>に切替</td><td>RG＋Conditional＋保存/破棄WF</td><td class="c">ほぼなし</td><td class="c em">◎ 本命</td></tr>
+      <tr><td class="c"><span class="pill b">案B</span></td><td>Createの直後に <b>Set state（:plus item）</b>を1個追加</td><td>WFに1ステップ×2〜3か所</td><td class="c">高</td><td class="c">○ 応急処置</td></tr>
+      <tr><td class="c"><span class="pill c">案C</span></td><td>明細を触るWFの末尾で <b>ステートをDBから再同期</b></td><td>明細系WF全部（4か所）に1ステップ</td><td class="c">中</td><td class="c">△</td></tr>
+    </tbody>
+  </table>
+  <div class="notebox"><b>推奨の進め方:</b> まず<b>案B</b>で即日症状を止める → 落ち着いたら<b>案A</b>へ移行（B で足した Set state を削除してから A を適用）。案Aにすれば通常明細・削除系に潜む同種バグもまとめて消える。</div>
+</section>
+
+<!-- ============================================================ -->
+<section class="card" id="cause">
+  <h2>現状の構造と原因<span class="en">CONTAINER / DATA FLOW / CURRENT WF</span></h2>
+
+  <h3><span class="num">1</span>コンテナ構造（現状）</h3>
+  <div class="tree">
+    <ul>
+      <li><span class="node"><span class="t grp">Page</span><b>受注編集ページ</b></span>
+        <ul>
+          <li><span class="node focus"><span class="t grp">Group</span><b>Group V</b>（明細セクションのコンテナ）
+            <span class="meta">custom state: current_order（Order）＝編集対象</span>
+            <span class="meta">custom state: temp_items（List of OrderItems）← ★問題の中心</span>
+            <span class="meta">Conditional: temp_items:count &gt; 0 のとき visible</span></span>
+            <ul>
+              <li><span class="node"><span class="t btn">Button</span><b>＋ページ物を追加</b><span class="meta">WFは下記②</span></span></li>
+              <li><span class="node"><span class="t rg">RG</span><b>RG_ページ物明細</b>
+                <span class="meta">Type of content: OrderItem</span>
+                <span class="meta">Data source: Group V's temp_items ← ★ステートを見ている</span></span>
+                <ul>
+                  <li><span class="node"><span class="t pagegrp">Group</span><b>GroupPage</b>（セル内）
+                    <span class="meta">Conditional: This group's OrderItem's type is page</span></span>
+                    <ul>
+                      <li><span class="node"><span class="t inp">Input</span>品名 / サイズ / 数量(部) / ページ数 / 表紙 / 本文 / 小計<span class="meta">各Inputは Parent group's OrderItem に auto-bind</span></span></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+
+  <h3><span class="num">2</span>現状のWF（ボタン押下時）— どこが欠けているか</h3>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>Button「ページものを追加」 is clicked</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 1</span>Create a new OrderItem <span class="badge same">現状のまま正しい</span></div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">type</span><span class="fv">= page</span></div>
+            <div class="fieldrow"><span class="fk">order</span><span class="fv">= Group V's current_order</span></div>
+            <div class="fieldrow"><span class="fk">is_committed</span><span class="fv">= "no"</span></div>
+            <div class="fieldrow"><span class="fk">is_deleted</span><span class="fv">= "no"</span></div>
+            <div class="fieldrow"><span class="fk">quantity</span><span class="fv">= 1</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box miss">
+          <div class="bh">Step 2 が存在しない ＝ バグの正体</div>
+          <div class="bb">DBにはレコードができるが、RGが見ている <code>temp_items</code>（カスタムステート）には誰も追加していない。<br>カスタムステートは <b>Set state アクションで書き換えない限り絶対に変わらない</b>ため、RGには何も現れない。</div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <h3><span class="num">3</span>データフローで見る原因</h3>
+  <div class="flow">
+    <div class="fbox"><div class="fh">🖱 ボタン押下</div><div class="fs">＋ページ物を追加</div></div>
+    <div class="farrow ok">→<small>Create<br>成功</small></div>
+    <div class="fbox okb"><div class="fh">🗄 DB（OrderItem）</div><div class="fs">type=page / is_committed=no のレコードが<b>毎回作られている</b>（App dataに孤児として蓄積中）</div></div>
+    <div class="farrow ng">⇢<small>誰も繋いで<br>いない ✗</small></div>
+    <div class="fbox ngb"><div class="fh">📌 temp_items（ステート）</div><div class="fs">空のまま更新されない</div></div>
+    <div class="farrow ng">→<small>参照</small></div>
+    <div class="fbox ngb"><div class="fh">📋 RG_ページ物明細</div><div class="fs">0行のまま。さらにGroup Vの Conditional（count&gt;0）で<b>コンテナごと非表示</b></div></div>
+  </div>
+  <div class="warnbox"><b>症状の説明:</b>「押しても入力欄が出ない」＝ ①RGの行が増えない ＋ ②count&gt;0条件でコンテナ自体が隠れる、の二重の結果。DB側には押した回数分の下書きレコードが残っているので、修正後に掃除が必要（<a href="#checklist">チェックリスト</a>参照）。</div>
+</section>
+
+<!-- ============================================================ -->
+<section class="card" id="db">
+  <h2>DB / ステートの図解<span class="en">DATA MODEL</span></h2>
+
+  <h3><span class="num">1</span>OrderItem の関連フィールド（今回の修正で使うもの）</h3>
+  <table class="tbl">
+    <thead><tr><th>フィールド</th><th>型</th><th>役割</th><th>追加ボタンで入れる値</th></tr></thead>
+    <tbody>
+      <tr><td><code>type</code></td><td>OptionSet ItemType</td><td>normal（通常）/ page（ページ物）の区別。RG・セル内Groupの出し分けに使用</td><td class="em">page</td></tr>
+      <tr><td><code>order</code></td><td>→ Order</td><td>親の受注。<b>編集画面では必ず current_order（対象Order）</b>。新規起票画面では draft_order</td><td class="em">Group V's current_order</td></tr>
+      <tr><td><code>is_committed</code></td><td>yes/no</td><td><b>yes=確定明細 / no=下書き</b>。一覧・集計・カンバンは yes のみ、編集画面のRGだけ no を表示（§4 注記H）</td><td class="em">"no"</td></tr>
+      <tr><td><code>is_deleted</code></td><td>yes/no</td><td>編集中の<b>削除予約</b>フラグ。保存時に確定処理、破棄時は無視して下書きごと削除</td><td class="em">"no"</td></tr>
+      <tr><td><code>source_item</code></td><td>→ OrderItem</td><td>下書きコピーが指す<b>元の確定明細</b>。<b>空＝編集中の新規追加分</b>（保存時の分岐キー）</td><td class="em">（設定しない＝空）</td></tr>
+      <tr><td><code>quantity</code></td><td>number</td><td>数量（部）</td><td class="em">1</td></tr>
+      <tr><td colspan="4" style="background:var(--page-light);font-weight:900">ページ物の入力フィールド（auto-bindで更新）: <code>title</code>（品名）/ <code>page_size</code>（A4/B5/A5/自由）/ <code>page_size_custom</code> / <code>page_count</code> / <code>page_cover</code>（表紙）/ <code>page_body</code>（本文）/ <code>subtotal</code>（税抜小計）/ <code>unit_price</code> / <code>tax_rate</code> / 納期系（delivery_type / delivery_date_start / delivery_date_end / first_proof_date / used_date）</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="num">2</span>下書きレコードの状態と「変更を保存」時の4分岐（§4-B）</h3>
+  <table class="tbl">
+    <thead><tr><th>source_item</th><th>is_deleted</th><th>この下書きの意味</th><th>保存時の処理</th></tr></thead>
+    <tbody>
+      <tr><td class="c">あり</td><td class="c">no</td><td>既存明細を編集したコピー</td><td><b>U→D</b> 値を source_item へ上書きコピー → 下書きをDelete（元のレコードid温存）</td></tr>
+      <tr><td class="c">あり</td><td class="c">yes</td><td>既存明細の削除予約</td><td><b>D→D</b> source_item をDelete → 下書きをDelete</td></tr>
+      <tr><td class="c">空</td><td class="c">no</td><td><b>今回の「追加したページ物」</b></td><td><b>U</b> is_committed を "yes" に昇格（コピー不要）</td></tr>
+      <tr><td class="c">空</td><td class="c">yes</td><td>追加してすぐ消した明細</td><td><b>D</b> 下書きをDelete（確定対象なし）</td></tr>
+    </tbody>
+  </table>
+  <div class="notebox"><b>破棄/キャンセル/離脱:</b> <code>order=current_order AND is_committed="no"</code> の OrderItem を全部 Delete（is_deleted の値は問わない）。確定明細（yes）は条件に合致しないので無傷。</div>
+
+  <h3><span class="num">3</span>Group V のカスタムステート</h3>
+  <table class="tbl">
+    <thead><tr><th>state名</th><th>型</th><th>役割</th><th>案Aでの扱い</th><th>案B/Cでの扱い</th></tr></thead>
+    <tbody>
+      <tr><td><code>current_order</code></td><td>Order</td><td>編集対象の受注（ページ表示時にセット）</td><td class="c">そのまま使う</td><td class="c">そのまま使う</td></tr>
+      <tr><td><code>temp_items</code></td><td>List of OrderItems</td><td>RGに表示する明細の一時リスト</td><td class="c em">不要になる（参照を全撤去）</td><td class="c">維持（WFで同期し続ける）</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<section class="card" id="plan-a">
+  <h2><span class="pill a">案A</span> search方式に切り替える<span class="en">仕様書§4-B準拠・推奨</span></h2>
+  <p class="lead">RGをステート経由ではなくDB直結にする。Createした瞬間に自動反映され、ステート同期のコードが構造的に不要になる。</p>
+
+  <h3><span class="num">A-1</span>RG_ページ物明細のインスペクタ設定（変更）</h3>
+  <div class="insprow">
+    <div class="insp">
+      <div class="ih">RG_ページ物明細 — Repeating Group</div>
+      <div class="isec"><div class="sl">▼ Appearance</div>
+        <div class="irow"><span class="lbl">Type of content</span><span class="exp">OrderItem</span> <span class="badge same">変更なし</span></div>
+        <div class="irow old"><span class="lbl">Data source（旧）</span><span class="exp">Group V's temp_items</span></div>
+        <div class="irow chg"><span class="lbl">Data source（新）</span><span class="exp">Do a search for OrderItems</span>
+          <div class="con">
+            <div class="note">constraints（4つ全部・Ignore empty constraints は<b>OFF</b>）</div>
+            <div>order <b>=</b> <span class="exp">Group V's current_order</span></div>
+            <div>is_committed <b>=</b> <span class="exp">"no"</span></div>
+            <div>is_deleted <b>=</b> <span class="exp">"no"</span></div>
+            <div>type <b>=</b> <span class="exp">page</span></div>
+          </div>
+          <div class="note">Sorted by: Created Date ／ Descending: no（追加順に下へ）</div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">
+      <b>入力手順:</b><br>
+      ① RG_ページ物明細をダブルクリック<br>
+      ② Data source欄の <code>Group V's temp_items</code> を削除<br>
+      ③ <code>Do a search for</code> を選択 → Type: <code>OrderItem</code><br>
+      ④ <b>Add a new constraint</b> を4回押して左の4制約を追加<br>
+      ⑤ <b>Ignore empty constraints はチェックしない</b>（空値無視されると絞り込みが外れ、確定明細まで表示される事故になる）<br><br>
+      <b>RG_通常明細も同じ手順</b>で、制約4だけ <code>type = normal</code> にする。<br><br>
+      <span class="badge page">補足</span> GroupPageの「type is page」Conditionalで出し分ける構成を残すなら制約4は省略可。ただし入れておくとRGがページ物しか読まず行数もズレないため<b>推奨は「入れる」</b>。入れた場合GroupPage側のConditionalは冗長になるが害はない（消さなくてよい）。
+    </div>
+  </div>
+
+  <h3><span class="num">A-2</span>Group V の Conditional 設定（変更）</h3>
+  <div class="insprow">
+    <div class="insp">
+      <div class="ih">Group V — Conditional タブ</div>
+      <div class="isec">
+        <div class="irow old"><span class="lbl">When（旧）</span><span class="exp">Group V's temp_items:count &gt; 0</span><br>→ This element is visible</div>
+        <div class="irow chg"><span class="lbl">When（新）</span><span class="exp">Do a search for OrderItems:count &gt; 0</span>
+          <div class="con">
+            <div class="note">constraints（typeは付けない＝通常/ページ物どちらか1件でもあれば表示）</div>
+            <div>order <b>=</b> <span class="exp">Group V's current_order</span></div>
+            <div>is_committed <b>=</b> <span class="exp">"no"</span></div>
+            <div>is_deleted <b>=</b> <span class="exp">"no"</span></div>
+          </div>
+          <br>→ This element is visible
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>ここを直し忘れると、A-1を直してもコンテナが隠れたままで「直っていない」ように見える</b>ので注意。<br><br>この表示制御が「0件のとき空メッセージを出す」ためだけなら、<b>条件ごと削除して常時表示</b>にしてもよい（モックは常時表示＋空のときプレースホルダ）。</div>
+  </div>
+
+  <h3><span class="num">A-3</span>「ページものを追加」WF（変更なし・確認のみ）</h3>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>Button「ページものを追加」 is clicked</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 1</span>Create a new OrderItem <span class="badge same">現状のまま</span></div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">type</span><span class="fv">= page</span></div>
+            <div class="fieldrow"><span class="fk">order</span><span class="fv">= Group V's current_order</span></div>
+            <div class="fieldrow"><span class="fk">is_committed</span><span class="fv">= "no"</span></div>
+            <div class="fieldrow"><span class="fk">is_deleted</span><span class="fv">= "no"</span></div>
+            <div class="fieldrow"><span class="fk">quantity</span><span class="fv">= 1</span></div>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </div>
+  <div class="okbox">search方式ではCreateされた瞬間にRGへ自動反映されるため、<b>これ以外のステップは不要</b>。過去の試行で Set state 等のステップが残っていたら削除する。</div>
+
+  <h3><span class="num">A-4</span>「変更を保存」WF（temp_items参照をすべて検索に置換）</h3>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>Button「変更を保存」 is clicked</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 1</span>Schedule API Workflow on a list（既存明細への上書き反映）</div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">List to run on</span><span class="fv">Do a search for OrderItems（order=current_order / is_committed="no" / is_deleted="no" / source_item isn't empty）</span></div>
+            <div class="fieldrow"><span class="fk">API workflow</span><span class="fv">commit_draft（下記のBackend WF）</span></div>
+            <div class="fieldrow"><span class="fk">引数 draft</span><span class="fv">= This OrderItem</span></div>
+          </div>
+        </div>
+        <!-- backend sub-tree -->
+        <ol class="steps">
+          <li class="step">
+            <div class="box">
+              <div class="bh"><span class="sn">Backend Step 1</span>Make changes to draft's source_item</div>
+              <div class="bb">全編集対象フィールドに <span style="color:var(--blue);font-weight:700;font-family:Consolas,monospace">draft's 同名フィールド</span> を代入:<br>
+              <code>title</code> <code>type</code> <code>quantity</code> <code>page_size</code> <code>page_size_custom</code> <code>page_count</code> <code>page_cover</code> <code>page_body</code> <code>subtotal</code> <code>unit_price</code> <code>tax_rate</code> <code>delivery_type</code> <code>delivery_date_start</code> <code>delivery_date_end</code> <code>first_proof_date</code> <code>used_date</code> <code>item_notes</code> ＋用紙系・加工オプション系</div>
+            </div>
+          </li>
+          <li class="step">
+            <div class="box"><div class="bh"><span class="sn">Backend Step 2</span>Delete draft</div><div class="bb">元の確定明細のidは温存される（見積の item_id 参照が切れない）</div></div>
+          </li>
+        </ol>
+      </li>
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 2</span>Delete a list of things（削除予約の確定・元明細側）</div>
+          <div class="bb"><div class="fieldrow"><span class="fk">List</span><span class="fv">Do a search for OrderItems（order=current_order / is_committed="no" / is_deleted="yes" / source_item isn't empty）:each item's source_item</span></div></div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 3</span>Delete a list of things（削除予約の下書き自身）</div>
+          <div class="bb"><div class="fieldrow"><span class="fk">List</span><span class="fv">Do a search for OrderItems（order=current_order / is_committed="no" / is_deleted="yes" / source_item isn't empty）</span></div></div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box add">
+          <div class="bh"><span class="sn">Step 4</span>Make changes to a list of things（新規追加分の昇格）<span class="badge new">今回のページ物はここで確定</span></div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">List</span><span class="fv">Do a search for OrderItems（order=current_order / is_committed="no" / is_deleted="no" / source_item is empty）</span></div>
+            <div class="fieldrow"><span class="fk">変更内容</span><span class="fv">is_committed = "yes"</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 5</span>Delete a list of things（追加して消した分の掃除）</div>
+          <div class="bb"><div class="fieldrow"><span class="fk">List</span><span class="fv">Do a search for OrderItems（order=current_order / is_committed="no" / is_deleted="yes" / source_item is empty）</span></div></div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 6</span>Make changes to current_order（ヘッダ確定）</div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">total_amount</span><span class="fv">= Search for OrderItems（order=current_order / is_committed="yes"）:each item's subtotal:sum に消費税を加えた値</span></div>
+            <div class="fieldrow"><span class="fk">status ほか</span><span class="fv">= 画面の入力値（※status反映漏れは別バグの原因。ここで必ず選択値を代入）</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box"><div class="bh"><span class="sn">Step 7</span>Create a new ChangeLog（「編集」記録）→ Go to page（受注確認画面）</div></div>
+      </li>
+    </ol>
+  </div>
+
+  <h3><span class="num">A-5</span>「破棄／キャンセル」WF</h3>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>Button「変更を破棄」 is clicked（＋ページ離脱時）</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 1</span>Delete a list of things</div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">List</span><span class="fv">Do a search for OrderItems（order=Group V's current_order / is_committed="no"）</span></div>
+            <div class="fieldrow"><span class="fk">ポイント</span><span class="fv">is_deleted は問わず全削除。確定明細（yes）は条件外なので無傷</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step"><div class="box"><div class="bh"><span class="sn">Step 2</span>Go to page（受注確認画面）</div></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="card" id="plan-b">
+  <h2><span class="pill b">案B</span> Createの直後にステートへ1件追加<span class="en">最小パッチ・即日対応向け</span></h2>
+  <p class="lead">RG・Conditional・保存/破棄WFは一切触らない。ワークフローに Set state を1ステップ足すだけ。</p>
+
+  <h3><span class="num">B-1</span>「ページものを追加」WF（Step 2 を追加）</h3>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>Button「ページものを追加」 is clicked</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 1</span>Create a new OrderItem <span class="badge same">変更なし</span></div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">type</span><span class="fv">= page</span></div>
+            <div class="fieldrow"><span class="fk">order</span><span class="fv">= Group V's current_order</span></div>
+            <div class="fieldrow"><span class="fk">is_committed</span><span class="fv">= "no"</span></div>
+            <div class="fieldrow"><span class="fk">is_deleted</span><span class="fv">= "no"</span></div>
+            <div class="fieldrow"><span class="fk">quantity</span><span class="fv">= 1</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box add">
+          <div class="bh"><span class="sn">Step 2</span>Set state <span class="badge new">新規追加</span></div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">アクションの場所</span><span class="fv">Element Actions → Group → Set state</span></div>
+            <div class="fieldrow"><span class="fk">Element</span><span class="fv">Group V</span></div>
+            <div class="fieldrow"><span class="fk">Custom state</span><span class="fv">temp_items</span></div>
+            <div class="fieldrow"><span class="fk">Value</span><span class="fv">Group V's temp_items :plus item Result of step 1 (Create a new OrderItem...)</span></div>
+            <div class="fieldrow"><span class="fk">入力手順</span><span class="fv">Value欄で Group V's temp_items → More... → :plus item → Result of step 1</span></div>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <h3><span class="num">B-2</span>「通常を追加」WFにも同じ Step 2 を追加</h3>
+  <p>Createの中身が <code>type = normal</code> になるだけで、Set state の式は<b>まったく同じ</b>（<code>temp_items :plus item Result of step 1</code>）。</p>
+
+  <h3><span class="num">B-3</span>明細削除WFの修正（存在する場合）</h3>
+  <h4>パターン① 新規追加分（source_item が空）の削除 — 順序が重要</h4>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>セル内 Button「削除」 is clicked（Only when: Current cell's OrderItem's source_item is empty）</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box warn">
+          <div class="bh"><span class="sn">Step 1</span>Set state <span class="badge warn">必ずDeleteより先</span></div>
+          <div class="bb">
+            <div class="fieldrow"><span class="fk">Element / state</span><span class="fv">Group V / temp_items</span></div>
+            <div class="fieldrow"><span class="fk">Value</span><span class="fv">Group V's temp_items :minus item Current cell's OrderItem</span></div>
+            <div class="fieldrow"><span class="fk">⚠ 理由</span><span class="fv">先にDeleteすると :minus item の参照先が消え、ステートから外せなくなる</span></div>
+          </div>
+        </div>
+      </li>
+      <li class="step"><div class="box"><div class="bh"><span class="sn">Step 2</span>Delete Current cell's OrderItem</div></div></li>
+    </ol>
+  </div>
+  <h4>パターン② 既存明細の下書きコピー（source_item あり）の削除 ＝ 削除予約</h4>
+  <div class="wf">
+    <div class="ev"><span class="k">Event</span>セル内 Button「削除」 is clicked（Only when: Current cell's OrderItem's source_item isn't empty）</div>
+    <ol class="steps">
+      <li class="step">
+        <div class="box">
+          <div class="bh"><span class="sn">Step 1</span>Make changes to Current cell's OrderItem</div>
+          <div class="bb"><div class="fieldrow"><span class="fk">is_deleted</span><span class="fv">= "yes"</span></div><div class="fieldrow"><span class="fk">意味</span><span class="fv">削除予約（保存時に確定・破棄なら復活）。ここではDeleteしない</span></div></div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="box add">
+          <div class="bh"><span class="sn">Step 2</span>Set state <span class="badge new">新規追加</span></div>
+          <div class="bb"><div class="fieldrow"><span class="fk">Value</span><span class="fv">Group V's temp_items :minus item Current cell's OrderItem</span></div><div class="fieldrow"><span class="fk">意味</span><span class="fv">見た目上RGから消す（DBの下書きは残る）</span></div></div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <h3><span class="num">B-4</span>ページ表示時の初期化WF（確認）</h3>
+  <p>既存明細が現在表示できているなら実装済みのはずで、<b>変更不要</b>。もし初期化もされていなかった場合は、下書きコピー生成の最後に次を追加:</p>
+  <div class="wf">
+    <ol class="steps" style="padding-left:0">
+      <li class="step" style="padding-left:0">
+        <div class="box add">
+          <div class="bh"><span class="sn">追加Step</span>Set state（初期化）</div>
+          <div class="bb"><div class="fieldrow"><span class="fk">Value</span><span class="fv">temp_items = Do a search for OrderItems（order=current_order / is_committed="no" / is_deleted="no"）</span></div></div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <h3><span class="num">B-5</span>インスペクタ側は変更なし</h3>
+  <div class="insprow">
+    <div class="insp">
+      <div class="ih">RG_ページ物明細 / Group V</div>
+      <div class="isec">
+        <div class="irow"><span class="lbl">RG Data source</span><span class="exp">Group V's temp_items</span> <span class="badge same">そのまま</span></div>
+        <div class="irow"><span class="lbl">Group V Conditional</span><span class="exp">temp_items:count &gt; 0</span> <span class="badge same">そのまま</span></div>
+      </div>
+    </div>
+    <div class="cap">ステートが更新されれば Conditional は自動で再評価されるため、表示制御は触らなくてよい。<br><br><span class="badge warn">注意</span> 以後「明細を増減させる処理」を作るたびに Set state を書く義務が残る。<b>1か所でも忘れると今回と同じバグが再発する</b>（今回がまさにその事故）。恒久対応は案Aへ。</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section class="card" id="plan-c">
+  <h2><span class="pill c">案C</span> 操作のたびにステートをDBから再同期<span class="en">折衷案</span></h2>
+  <p class="lead">ステート方式は維持しつつ、手動の足し引き（:plus/:minus）ではなく「DBから作り直す」単一パターンに統一する。</p>
+
+  <h3><span class="num">C-1</span>共通の「再同期アクション」（毎回これと同じ内容）</h3>
+  <div class="insprow">
+    <div class="insp">
+      <div class="ih">Set state — 再同期アクション（共通定義）</div>
+      <div class="isec">
+        <div class="irow"><span class="lbl">アクション</span><span class="exp">Element Actions → Group → Set state</span></div>
+        <div class="irow"><span class="lbl">Element / Custom state</span><span class="exp">Group V / temp_items</span></div>
+        <div class="irow chg"><span class="lbl">Value</span><span class="exp">Do a search for OrderItems</span>
+          <div class="con">
+            <div class="note">constraints（Ignore empty constraints は OFF）</div>
+            <div>order <b>=</b> <span class="exp">Group V's current_order</span></div>
+            <div>is_committed <b>=</b> <span class="exp">"no"</span></div>
+            <div>is_deleted <b>=</b> <span class="exp">"no"</span></div>
+          </div>
+          <div class="note">Sorted by: Created Date ／ Descending: no</div>
+        </div>
+      </div>
+    </div>
+    <div class="cap"><b>「迷ったらWFの末尾にこの1アクションを置く」</b>という単一ルールで運用する。検索条件に <code>is_deleted="no"</code> が入っているので、削除予約した行は再同期だけで自動的にRGから消える（案Bのような順序問題が起きない）。</div>
+  </div>
+
+  <h3><span class="num">C-2</span>配置場所（4か所）</h3>
+  <div class="wf">
+    <div class="ev"><span class="k">WF ①</span>「ページものを追加」 is clicked</div>
+    <ol class="steps">
+      <li class="step"><div class="box"><div class="bh"><span class="sn">Step 1</span>Create a new OrderItem（type=page …）<span class="badge same">変更なし</span></div></div></li>
+      <li class="step"><div class="box add"><div class="bh"><span class="sn">Step 2</span>再同期アクション（C-1）<span class="badge new">追加</span></div></div></li>
+    </ol>
+  </div>
+  <div class="wf">
+    <div class="ev"><span class="k">WF ②</span>「通常を追加」 is clicked</div>
+    <ol class="steps">
+      <li class="step"><div class="box"><div class="bh"><span class="sn">Step 1</span>Create a new OrderItem（type=normal …）<span class="badge same">変更なし</span></div></div></li>
+      <li class="step"><div class="box add"><div class="bh"><span class="sn">Step 2</span>再同期アクション（C-1）<span class="badge new">追加</span></div></div></li>
+    </ol>
+  </div>
+  <div class="wf">
+    <div class="ev"><span class="k">WF ③</span>セル内「削除」 is clicked</div>
+    <ol class="steps">
+      <li class="step"><div class="box"><div class="bh"><span class="sn">Step 1</span>既存の削除処理（is_deleted="yes" または Delete）<span class="badge same">変更なし</span></div></div></li>
+      <li class="step"><div class="box add"><div class="bh"><span class="sn">Step 2</span>再同期アクション（C-1）<span class="badge new">追加</span></div></div></li>
+    </ol>
+  </div>
+  <div class="wf">
+    <div class="ev"><span class="k">WF ④</span>ページ表示時（下書きコピー生成WF）</div>
+    <ol class="steps">
+      <li class="step"><div class="box"><div class="bh"><span class="sn">Step 1〜n</span>確定明細の下書きコピーを Create（既存処理）<span class="badge same">変更なし</span></div></div></li>
+      <li class="step"><div class="box warn"><div class="bh"><span class="sn">Step n+1</span>Add a pause before next action（500ms）<span class="badge warn">表示時WFのみ推奨</span></div><div class="bb">同一WF内でCreate直後に検索すると、反映タイミングの関係で作りたてのレコードを拾い損ねることが稀にあるため。追加ボタン（1件Create）では通常不要。</div></div></li>
+      <li class="step"><div class="box add"><div class="bh"><span class="sn">Step n+2</span>再同期アクション（C-1）<span class="badge new">追加</span></div></div></li>
+    </ol>
+  </div>
+
+  <h3><span class="num">C-3</span>変更しない箇所と注意点</h3>
+  <table class="tbl">
+    <thead><tr><th>箇所</th><th>扱い</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td>RG_ページ物明細 Data source</td><td class="c"><span class="badge same">そのまま</span></td><td><code>Group V's temp_items</code> のまま</td></tr>
+      <tr><td>Group V Conditional</td><td class="c"><span class="badge same">そのまま</span></td><td><code>temp_items:count &gt; 0</code> のまま</td></tr>
+      <tr><td>GroupPage Conditional</td><td class="c"><span class="badge same">そのまま</span></td><td><code>type is page</code> のまま</td></tr>
+      <tr><td>保存WF</td><td class="c"><span class="badge same">原則そのまま</span></td><td>DB側の is_committed / is_deleted を正しく処理していれば整合</td></tr>
+      <tr><td>破棄WF</td><td class="c"><span class="badge warn">要確認</span></td><td>「temp_itemsのリストを消す」形はNG。temp_itemsは<b>削除予約行を除いた</b>リストなので、それだけ消すと is_deleted="yes" の下書きがDBに残る。必ず <code>Search for OrderItems（order=current_order / is_committed="no"）</code> を消す形にする</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<section class="card" id="checklist">
+  <h2>3案共通・修正後チェックリスト<span class="en">VERIFICATION</span></h2>
+  <ul class="check">
+    <li>編集画面を開く → 既存明細（通常・ページ物とも）が表示される</li>
+    <li>「ページものを追加」→ <b>押した瞬間に</b>入力欄（品名 / サイズ / 数量(部) / ページ数 / 表紙 / 本文 / 小計）が現れる</li>
+    <li>追加した明細に入力 → 「変更を保存」→ 確認画面に新しいページ物明細が表示される</li>
+    <li>もう一度編集 → 追加だけして「破棄」→ 確認画面に反映されて<b>いない</b>こと、Data → App data に is_committed="no" の残骸が<b>ない</b>こと</li>
+    <li>これまでのテストで溜まった孤児レコード（is_committed="no" の OrderItem）を App data から手動削除</li>
+    <li>§Gのバックエンド掃除WF（毎日: <code>is_committed="no" AND created_at &lt; 現在-24h</code> の OrderItem を削除）が未実装なら追加</li>
+    <li>【案B→案Aへ移行する場合】B で足した Set state ステップを<b>削除してから</b> A-1〜A-5 を適用（残っていても実害はないが、無駄なステートが動き続けて紛らわしい）</li>
+  </ul>
+  <div class="notebox">理想の挙動はモック <a href="../v3-copy/#orders" target="_blank">v3-copy</a> の 受注 → 編集に進む → 「＋ページ物を追加」で実機確認できる（明細#2としてページ物の入力欄が即時追加される）。</div>
+</section>
+
+<div style="text-align:center;color:var(--ink3);font-size:11px;margin-top:20px">渡辺謄写堂 業務管理システム — Bubble実装 修正図解（編集状態でのページもの追加不具合）</div>
+
+</main>
+</body>
+</html>
