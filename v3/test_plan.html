@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 業務管理システム v3 — 受入テスト仕様書</title>
+<style>
+  :root{
+    --brand:#E87825; --brand-dark:#B85D16; --brand-light:#FFF4EC;
+    --ok:#3F9D5E; --ok-light:#E8F5EE;
+    --ink9:#1A1A1A; --ink7:#3A3A3A; --ink5:#707070; --ink3:#B5B5B5;
+    --bg:#F3F4F6; --card:#fff; --danger:#EF4444; --border:#E5E7EB;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Noto Sans JP",-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink9); font-size:14px; line-height:1.6;}
+  header{background:var(--ink9); color:#fff; padding:14px 24px; position:sticky; top:0; z-index:50;}
+  header h1{font-size:16px; font-weight:900;}
+  header .sub{font-size:11px; color:var(--ink3); font-weight:400;}
+  .progress-wrap{background:var(--ink7); padding:8px 24px; position:sticky; top:54px; z-index:49; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  .pbar{flex:1; min-width:200px; height:10px; background:rgba(255,255,255,.15); border-radius:5px; overflow:hidden; display:flex;}
+  .pbar .ok{background:var(--ok); height:100%;}
+  .pbar .ng{background:var(--danger); height:100%;}
+  .pstat{color:#fff; font-size:12px; font-weight:700; white-space:nowrap;}
+  .pstat .n-ok{color:#7DDCA0;} .pstat .n-ng{color:#FCA5A5;} .pstat .n-rest{color:var(--ink3);}
+  main{max-width:1080px; margin:0 auto; padding:20px 16px 80px;}
+  .intro{background:var(--card); border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.05); padding:16px; margin-bottom:16px; font-size:13px;}
+  .intro b{color:var(--brand-dark);}
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center;}
+  .toolbar select, .toolbar input[type=text]{border:1px solid var(--border); border-radius:4px; padding:6px 8px; font-size:13px; background:#fff; font-family:inherit;}
+  .toolbar button{border:1px solid var(--border); border-radius:4px; padding:6px 12px; font-size:12px; font-weight:700; background:#fff; cursor:pointer;}
+  .toolbar button:hover{background:var(--brand-light);}
+  .toc{background:var(--card); border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.05); padding:12px 16px; margin-bottom:20px; font-size:12px; display:flex; flex-wrap:wrap; gap:6px 14px;}
+  .toc a{color:var(--brand-dark); text-decoration:none; font-weight:700;}
+  .toc a .cnt{color:var(--ink5); font-weight:400;}
+  section.tsec{margin-bottom:28px;}
+  .sec-head{background:var(--ink9); color:#fff; border-radius:4px 4px 0 0; padding:10px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .sec-head h2{font-size:15px; font-weight:900;}
+  .sec-head .goal{font-size:11px; color:var(--ink3); font-weight:400;}
+  .sec-head .sec-prog{margin-left:auto; font-size:12px; font-weight:700;}
+  .sec-body{background:var(--card); border-radius:0 0 4px 4px; box-shadow:0 1px 2px rgba(0,0,0,.05);}
+  .tc{border-top:1px solid var(--border); padding:10px 16px; display:grid; grid-template-columns:88px 1fr 150px; gap:8px 14px; align-items:start;}
+  .tc:first-child{border-top:none;}
+  .tc.st-ok{background:var(--ok-light);}
+  .tc.st-ng{background:#FEF2F2;}
+  .tc .tid{font-family:ui-monospace,Consolas,monospace; font-size:12px; font-weight:700; color:var(--ink5); padding-top:2px;}
+  .tc .tid .pri{display:block; font-family:inherit; font-size:10px; font-weight:900; margin-top:2px; border-radius:3px; padding:0 4px; width:fit-content;}
+  .pri.must{background:var(--brand); color:#fff;}
+  .pri.rec{background:var(--border); color:var(--ink5);}
+  .tc .ttl{font-weight:700; font-size:13px;}
+  .tc .steps{font-size:12px; color:var(--ink7); margin-top:2px;}
+  .tc .expect{font-size:12px; color:var(--ink9); margin-top:4px; padding-left:10px; border-left:3px solid var(--ok);}
+  .tc .expect::before{content:"期待結果: "; font-weight:700; color:var(--ok);}
+  .judge{display:flex; flex-direction:column; gap:6px;}
+  .judge .btns{display:flex; gap:6px;}
+  .judge button{flex:1; border:1px solid var(--border); background:#fff; border-radius:4px; padding:5px 0; font-size:12px; font-weight:700; cursor:pointer; color:var(--ink5); font-family:inherit;}
+  .judge button.b-ok.act{background:var(--ok); border-color:var(--ok); color:#fff;}
+  .judge button.b-ng.act{background:var(--danger); border-color:var(--danger); color:#fff;}
+  .judge input{border:1px solid var(--border); border-radius:4px; padding:4px 6px; font-size:11px; width:100%; font-family:inherit;}
+  .hidden{display:none !important;}
+  footer{max-width:1080px; margin:0 auto; padding:0 16px 40px; font-size:11px; color:var(--ink5);}
+  @media(max-width:760px){ .tc{grid-template-columns:1fr;} .tc .judge{flex-direction:row;} .tc .judge .btns{flex:0 0 130px;} }
+  @media print{ .toolbar,.judge input,header,.progress-wrap{display:none;} .tc{page-break-inside:avoid;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>渡辺謄写堂 業務管理システム v3 — 受入テスト仕様書（Bubble実装版）</h1>
+  <div class="sub">基準: bubble_handoff.html（v3.1〜v3.3整合）／ モック https://myudai-uns.github.io/watanabe-mockup/v3/ を正とする 1:1 突合を含む ／ 判定はこのページ上で保存されます（ブラウザごと）</div>
+</header>
+<div class="progress-wrap">
+  <div class="pbar"><div class="ok" id="pb-ok"></div><div class="ng" id="pb-ng"></div></div>
+  <div class="pstat"><span class="n-ok" id="c-ok">0 OK</span> ／ <span class="n-ng" id="c-ng">0 NG</span> ／ <span class="n-rest" id="c-rest">0 未実施</span> ／ 全 <span id="c-all">0</span> 件</div>
+</div>
+<main>
+  <div class="intro">
+    <b>■ テストの進め方</b><br>
+    ① シードCSV（watanabe_db_*.csv）投入済みの検証環境で実施する。<br>
+    ② <span class="pri must" style="display:inline;padding:0 6px;border-radius:3px;">必須</span> は納品判定に直結する項目。全件OKが納品条件。<span class="pri rec" style="display:inline;padding:0 6px;border-radius:3px;">推奨</span> はNGでも申し送りで納品可。<br>
+    ③ 各項目はOK/NGを押して判定。NGの場合はメモ欄に「何がどう違ったか」を必ず書く（例: 税額が101でなく100になる）。<br>
+    ④ 権限テスト（L章）は6ユーザー（代表/製版/工場/事務/経理＋無効ユーザー）のテストアカウントを事前に用意する。<br>
+    ⑤ 日付依存テスト（採番・納期超過・KPI）はシードデータの日付を「実施日基準」に調整してから行う。
+  </div>
+  <div class="toolbar">
+    <select id="f-sec"><option value="">全セクション</option></select>
+    <select id="f-pri"><option value="">必須+推奨</option><option value="must">必須のみ</option></select>
+    <select id="f-st"><option value="">全状態</option><option value="none">未実施のみ</option><option value="ok">OKのみ</option><option value="ng">NGのみ</option></select>
+    <input type="text" id="f-kw" placeholder="キーワード検索…">
+    <button id="btn-export">結果をテキストでコピー</button>
+    <button id="btn-reset">判定を全リセット</button>
+  </div>
+  <nav class="toc" id="toc"></nav>
+  <div id="sections"></div>
+</main>
+<footer>渡辺謄写堂 業務管理システム v3 受入テスト仕様書 ／ 作成 2026-07-03 ／ 株式会社Unsee</footer>
+
+<script>
+const SECTIONS = [
+  {key:"A", name:"ログイン・認証", goal:"全ロールが安全に出入りできること"},
+  {key:"B", name:"ダッシュボード", goal:"朝一で今日やるべきことが正しく見えること"},
+  {key:"C", name:"受注一覧・検索", goal:"過去案件を電話中に10秒で引けること"},
+  {key:"D", name:"受注新規起票", goal:"電話・来客を受けながら1件をミスなく起票できること"},
+  {key:"E", name:"受注確認（閲覧）とステータス操作", goal:"閲覧で誤編集が起きず、工程が正しく進むこと"},
+  {key:"F", name:"受注編集（下書きコピー方式）", goal:"編集途中の状態が他者・帳票に一切漏れないこと"},
+  {key:"G", name:"金額・消費税・値引き計算", goal:"1円もずれない請求根拠を作れること"},
+  {key:"H", name:"見積書・PDF出力", goal:"顧客に出せる正式帳票が正しく発行できること"},
+  {key:"I", name:"工場カンバン（D&D）", goal:"工場が付箋感覚で工程を動かせて記録も残ること"},
+  {key:"J", name:"顧客管理", goal:"顧客の履歴・売上・メモが営業の武器になること"},
+  {key:"K", name:"受注票印刷ビュー", goal:"社内回覧用の受注票が即印刷できること"},
+  {key:"L", name:"権限・Privacy Rules", goal:"見せてはいけないものが仕組みで見えないこと"},
+  {key:"M", name:"変更履歴・監査", goal:"「誰がいつ何をしたか」を後から追えること"},
+  {key:"N", name:"表示フォーマット・モック突合", goal:"モックと同じ見た目・書式で迷わず使えること"},
+  {key:"O", name:"異常系・データ整合・運用耐性", goal:"実運用の事故（同時編集・放置・誤操作）に耐えること"},
+];
+
+// [id, 必須(1)/推奨(0), タイトル, 手順, 期待結果]
+const TESTS = [
+// ===== A. ログイン・認証 =====
+["A-1",1,"正常ログイン","有効なメール＋パスワードでログイン","ダッシュボードへ遷移。ヘッダーにログインユーザー名が表示される"],
+["A-2",1,"パスワード誤り","正しいメール＋誤ったパスワードでログイン","エラー文が表示され遷移しない。パスワードは平文表示されない"],
+["A-3",1,"未登録メール","存在しないメールでログイン","エラー表示。登録有無が推測できる文言になっていないか確認"],
+["A-4",0,"ログイン状態保持（30日）","「状態を保持」ON でログイン→ブラウザを完全に閉じて再アクセス","再ログインなしでダッシュボードが開く"],
+["A-5",0,"状態保持OFF時の挙動","「状態を保持」OFF でログイン→ブラウザを閉じて再アクセス","Bubbleのセッション仕様どおり（想定挙動を実機確認し記録する）"],
+["A-6",1,"無効ユーザーのログイン拒否","User.is_active=no のユーザーでログイン","ログイン不可。エラー表示される"],
+["A-7",1,"パスワードリセット一連","PWリセット画面→メール送信→受信リンクから新PW設定→新PWでログイン","メールが届き、新PWでログインできる。旧PWは無効"],
+["A-8",1,"未ログインの直接アクセス","ログアウト状態で #orders / #order/:id / #factory 等へURL直打ち","ログイン画面へリダイレクトされ、データは一切見えない"],
+["A-9",0,"認証画面のレイアウト","ログイン／PWリセット画面を表示","ヘッダー・ナビが非表示。中央カードのフォームのみ（モックと同一）"],
+// ===== B. ダッシュボード =====
+["B-1",1,"KPI: 本日納品","納期=本日の受注（is_draft=no）をシードで用意して表示","KPIカードの件数が実データ件数と一致する"],
+["B-2",1,"KPI: 進行中","受注/印刷中/完成の件数を手で数えて突合","進行中の定義どおりの件数が表示される"],
+["B-3",1,"KPI: 納期3日以内","納期が本日+1〜+3日の案件を用意","件数一致。納品済み・見積もり段階が混入しない"],
+["B-4",1,"KPI: 納期超過","納期が昨日以前の未納品案件を用意","件数一致。納品済み・見積もり段階は超過に数えない"],
+["B-5",1,"KPI: 今月売上見込み","当月対象の受注 total_amount を電卓合計","金額が一致（税込）。下書き(is_draft=yes)は含まれない"],
+["B-6",1,"KPIカードのクリック絞込","各KPIカードをクリック","受注一覧が該当条件（?filter=）で絞り込まれた状態で開く"],
+["B-7",1,"本日納品予定リスト","本日納品予定RGの行をクリック","該当の受注確認（#order/:id）へ遷移する"],
+["B-8",0,"変更履歴の表示","ダッシュボードの変更履歴RGを確認","最新順に並び、日時が YYYY/M/D HH:mm 形式・操作者名つき"],
+["B-9",1,"下書きの除外","起票途中で破棄せず放置したdraft Orderを作る","KPI・本日納品予定のどこにもdraftが現れない"],
+// ===== C. 受注一覧・検索 =====
+["C-1",1,"初期表示と件数","受注一覧を開く","is_draft=no の全件が表示され、件数表示が実件数と一致"],
+["C-2",1,"顧客名検索","顧客名の一部（例:「渡辺」）を入力","部分一致で絞り込まれる。会社名・個人名どちらでもヒット"],
+["C-3",1,"ステータス絞込","ステータスDDで「印刷中」を選択","印刷中のみ表示。件数表示も連動"],
+["C-4",1,"日付From/To絞込（境界含む）","From=受付日当日、To=受付日当日 で絞込","境界日の案件が含まれる（以上/以下判定）。From>Toの場合の挙動も記録"],
+["C-5",1,"タグ絞込","タグDDで「急ぎ」を選択","該当タグを持つ案件のみ表示される"],
+["C-6",0,"複合条件","顧客名＋ステータス＋日付を同時指定","AND条件で正しく絞り込まれる"],
+["C-7",1,"クリアボタン","絞込後にクリアを押す","全条件が解除され全件表示に戻る"],
+["C-8",1,"ページネーション","51件以上のデータで一覧を表示","50件/頁で分割。前/次ボタンで移動でき、端で無効化される"],
+["C-9",1,"ステータスバッジの色","5ステータスの案件を並べて確認","見積=#1E3A8A青／受注=#DC2626赤／印刷中=#B45309黄土／完成=#2A7A44緑／納品済み=#6B7280灰（背景なし文字色のみ）"],
+["C-10",1,"納期超過ラベル","納期超過の「受注」案件と「納品済み」案件を用意","超過中の案件のみ紫#9333EAで「N日経過」表示。納品済み・見積もり段階には出ない。N日数が正しい"],
+["C-11",1,"行クリック遷移","一覧の行をクリック","該当の受注確認（読取専用）へ遷移"],
+["C-12",1,"新規起票ボタン","一覧上部の新規起票ボタンを押す","#order/new（起票フォーム）が開く"],
+["C-13",0,"URLパラメータ絞込","?filter= 付きURLを直接開く（ダッシュボードKPI経由と同じURL）","該当条件で絞り込まれた一覧が開く"],
+// ===== D. 受注新規起票 =====
+["D-1",1,"初期値の自動セット","新規起票を開く","受付日=本日、担当者=ログインユーザーが初期選択されている"],
+["D-2",1,"顧客の選択","顧客DDから既存顧客を選択","選択でき、過去発注パネルにその顧客の履歴が出る"],
+["D-3",1,"新規顧客をその場で登録","BTN_新規顧客→モーダルで登録","モーダルが閉じ、顧客DDに新顧客が即反映・選択済みになる"],
+["D-4",1,"通常明細の追加","「＋通常を追加」を2回押す","明細カードが追加され「明細 #1」「明細 #2」と連番。既定値が入る"],
+["D-5",1,"ページ物明細の追加","「＋ページ物を追加」を押す","紫系の明細が追加され、サイズ/ページ数/表紙仕様/本文仕様の専用欄が出る"],
+["D-6",0,"ページサイズ自由入力","ページ物のサイズで「自由」を選択","選択時のみサイズ自由入力欄が表示される"],
+["D-7",1,"明細の削除","明細#1を削除","該当カードが消え、#N が振り直され、見積サマリーが即再計算される"],
+["D-8",1,"用紙の選択と自由入力","用紙DDで「よく使う紙」から選択／「その他」を選択","よく使う紙が上位グループ表示。その他選択時のみ自由入力欄が出る"],
+["D-9",1,"税抜入力→税込の即時換算","小計(税抜)に 10,000 を入力","税込欄に 11,000（round(税抜×1.1)）が即時表示される"],
+["D-10",1,"税込入力→税抜への正規化","小計(税込)に 11,000 を入力して保存","DBには税抜 10,000（round(税込×100/110)）のみ保存。税込専用フィールドは存在しない"],
+["D-11",0,"単価の自動算出","小計10,000・数量300で入力","単価= round(10000/300)=33 が表示される"],
+["D-12",1,"加工オプションの条件表示","ミシンをチェック→本数選択、ナンバリングをチェック","ミシン=本数(1/2)が選べる。ナンバリング=チェック時のみ from/to 欄が表示される"],
+["D-13",0,"折り・穴・のり・ラミ・野丁式","各加工オプションを設定して保存","保存後の確認画面・印刷ビューに選択どおり表示される"],
+["D-14",1,"納期区分の条件制御","納期区分を 予定/必ず/範囲指定/仮 と切替","範囲指定のみ終了日が有効化。「仮」は納期日未入力でも保存できる。予定/必ずは納期日必須"],
+["D-15",1,"見積サマリーのライブ更新","明細を追加・金額変更・削除しながらサマリーを見る","小計税抜=Σ明細、消費税=round(小計×10%)、税込合計=小計+税 が常にリアルタイムで一致"],
+["D-16",1,"起票時ステータスの制限","起票フォームのステータス選択肢を確認","「見積もり段階」「受注」の2択のみ（印刷中以降は選べない）"],
+["D-17",1,"必須バリデーション","顧客未選択・品名空のまま「保存して起票」","保存されず、必須エラーが表示される（赤の必須マーク項目）"],
+["D-18",1,"保存して起票（正常系）","必須を満たして保存","受注番号 YYMMDD-連番3桁（例 260703-001）が採番され、確認画面へ遷移、トースト表示"],
+["D-19",1,"採番の連番と日替わり","同日中に2件目を起票→（可能なら）日付を跨いで3件目","2件目=-002。翌日は -001 に戻る。欠番・重複がない"],
+["D-20",1,"保存後のDB状態","保存後にBubbleのApp Dataを確認","Order.is_draft=no／全OrderItem.is_committed=yes／FactoryRecord が1件作成／ChangeLog「新規起票」が記録"],
+["D-21",1,"破棄・キャンセル","明細入力後に破棄（またはキャンセル）","draft Order と下書き明細がDBから削除され、一覧・KPIに現れない"],
+["D-22",1,"入力途中のリロード・離脱","明細入力途中でブラウザリロード→再度新規起票を開く","前回の下書き明細が残っておらず、まっさらなフォームで始まる（ページ表示時の掃除WF）"],
+["D-23",0,"添付ファイル","ファイルを2件以上アップ→1件を個別削除","複数添付でき、個別削除が機能。保存後の確認画面でDL可能"],
+["D-24",0,"案件タグの複数選択","タグを2つ以上チェックして保存","保存後、一覧・確認画面・カンバンカードにタグchipが色付きで表示"],
+["D-25",1,"過去発注からのコピー起票","顧客選択後、過去発注の「この仕様でコピー」を押す","明細内容・属性がコピーされた状態の新規起票になる。受注番号は新規採番"],
+// ===== E. 受注確認・ステータス操作 =====
+["E-1",1,"登録内容の表示一致","D-18で起票した案件を開き、入力値と全項目を突合","受付情報・明細・加工・納期・タグ・金額・備考がすべて入力どおり表示"],
+["E-2",1,"読取専用の徹底","確認画面（view）で全input/select/textareaを操作してみる","一切編集できない（pointer-events無効相当）。編集系ボタンのみ操作可"],
+["E-3",1,"工場メモだけは編集可","確認画面で工場メモに入力して保存","view画面でも工場メモ(view-allow)のみ編集・保存でき、再訪で保持"],
+["E-4",1,"ステータス変更ボタン","確認画面のステータス変更ボタンで 受注→印刷中→完成→納品済み と順に変更","バッジが即時更新され、変更履歴に「ステータス変更: 旧→新」が毎回記録される"],
+["E-5",1,"印刷中→started_at 自動セット","受注→印刷中に変更しApp Dataを確認。その後一度戻して再度印刷中へ","初回のみ FactoryRecord.started_at=現在時刻。2回目は上書きされない"],
+["E-6",1,"完成/納品済み→completed_at/by","完成へ変更しApp Data確認","FactoryRecord.completed_at=現在時刻・completed_by=操作ユーザー（未設定時のみ）"],
+["E-7",1,"納品済み→delivered_date","納品済みへ変更","Order.delivered_date=当日が自動セット（既に値がある場合は上書きしない）"],
+["E-8",1,"この仕様でコピー","確認画面の「この仕様でコピー」を押す","明細・属性を引き継いだ新規起票フォームが開く。保存すると別番号の新規受注になる"],
+["E-9",1,"受注の削除","代表ロールで削除を実行","確認を挟んで削除され、一覧・カンバン・KPIから消える"],
+["E-10",1,"帳票への導線","確認画面から見積書ボタン／印刷ビューボタンを押す","それぞれ #quote/:id、#print が該当受注のデータで開く"],
+["E-11",0,"工場進捗の表示","E-5〜E-7実施後に工場進捗セクションを確認","開始/完了時刻（YYYY/M/D HH:mm）・完了担当・実出来高が表示される"],
+["E-12",0,"納期超過表示（詳細画面）","納期超過案件の確認画面を開く","紫「N日経過」が表示される（一覧と同一ルール）"],
+// ===== F. 受注編集（下書きコピー方式） =====
+["F-1",1,"編集開始時の複製","確定済み受注の「編集に進む」を押す","確定明細と同じ値がフォームに表示される（App Data上は is_committed=no の下書きコピーが生成されている）"],
+["F-2",1,"編集中の変更が外に漏れない","明細金額を変更したまま保存せず、別タブ（または別ユーザー）で同案件の確認画面・一覧・カンバンを見る","すべて旧値のまま。編集中の値はどこにも表示されない"],
+["F-3",1,"編集中の明細追加","編集中に「＋通常を追加」して入力→変更を保存","保存後に新明細が確定明細として表示・集計される"],
+["F-4",1,"既存明細の削除（削除予約）","編集中に既存明細を削除→この時点でApp Data確認→変更を保存","削除直後は is_deleted=yes の予約のみで元明細は残存。保存で元明細が実際にDeleteされる"],
+["F-5",1,"編集中に追加した明細の削除","編集中に明細を追加→すぐ削除→保存","保存後に増減なし。ゴミレコードが残らない"],
+["F-6",1,"保存で元IDが温存される","編集前に明細のunique idを控える→編集保存→id再確認","下書きの値がsourceへ書き戻され下書きはDelete。元明細のidが変わらない（QuoteLine等の参照が壊れない）"],
+["F-7",1,"保存後の再計算と履歴","金額を変更して保存","Order.total_amount／subtotal_ex_tax／tax_amount が再計算され、ChangeLog「編集」が記録、確認画面へ戻る"],
+["F-8",1,"編集の破棄","明細変更・追加・削除をしてから破棄","下書きが全Delete。確定明細は編集前と完全に同一（削除予約も無効化）"],
+["F-9",1,"編集画面のステータス選択肢","編集フォームのステータスDDを確認","全5ステータスが選択可能（起票時の2択制限と異なる）"],
+["F-10",1,"編集中リロードで重複しない","編集中にリロード→再度同案件の編集を開く","明細が二重表示されない（残存下書きの掃除が効いている）"],
+["F-11",1,"編集中サマリーの参照元","編集中に金額変更しサマリーを確認","サマリーは下書き（is_committed=no AND is_deleted=no）基準でライブ更新。削除予約分は集計から即除外"],
+["F-12",1,"孤児掃除バックエンドWF","下書きを残したまま24時間放置（またはWFを手動実行）","is_committed=no かつ24h超の明細、is_draft=yes かつ24h超のOrder＋配下が日次で削除される"],
+// ===== G. 金額・消費税・値引き計算 =====
+["G-1",1,"複数明細の合計","明細3件（例 10,000/5,500/333）で起票","小計=15,833、消費税=1,583、税込=17,416 になる（round規則をモックと突合）"],
+["G-2",1,"値引きの基本","小計10,000に値引き1,000","課税対象=9,000、税=900、税込=9,900。値引きは税抜ベースで引かれてから課税"],
+["G-3",1,"値引き>小計の下限保護","小計10,000に値引き15,000を入力","課税対象=0円（max(0, 小計−値引き)）。マイナス金額にならない"],
+["G-4",1,"3フィールドの整合","値引きあり案件のApp Dataを確認","subtotal_ex_tax＋tax_amount＝total_amount が常に成立。tax_amount=round(subtotal_ex_tax×10%)"],
+["G-5",1,"端数処理の突合","小計1,005円（税=100.5円）等の端数ケースを入力","税額の丸め結果がモック（app.js）と完全一致する。切捨て/四捨五入の差異がない"],
+["G-6",1,"数量0・空での安全性","数量を0または空にして金額入力","単価計算がエラー・無限大・NaNにならない。保存も破綻しない"],
+["G-7",0,"値引き表示フラグ","値引き額を入れて0に戻す","show_discount が額>0のときのみ真。0円の値引き行が帳票に出ない"],
+["G-8",1,"顧客集計との列整合","ある顧客の全受注の3値を電卓で合計→顧客一覧/詳細の累計と突合","税抜計・消費税計・税込計の3列がそれぞれ一致（列の縦横で1円もずれない）"],
+["G-9",0,"税込⇄税抜の往復安定性","税込11,000→税抜→再度税込表示を確認。999円等の割り切れない値も試す","往復変換で値が振動しない（保存のたびに1円ずれるバグがない）"],
+["G-10",0,"大きい金額の表示","小計9,999,999円の明細を作成","計算が正しく、¥表示にカンマ・等幅フォントで崩れない"],
+// ===== H. 見積書・PDF出力 =====
+["H-1",1,"見積書の自動生成","明細3件の受注から見積書を開く","OrderItemごとにQuoteLineが自動生成され、行ラベル既定=明細title、行番号が連番"],
+["H-2",1,"見積番号の採番","見積書を作成","Q-YYMMDD-連番3桁（例 Q-260703-001）。同日2件目は-002"],
+["H-3",1,"発行日・有効期限の既定","新規見積書の日付欄を確認","発行日=本日、有効期限=発行日+1ヶ月。どちらも手動変更できる"],
+["H-4",1,"行金額の編集と再計算","QuoteLineの金額を変更","小計・消費税・税込合計が即時再計算される"],
+["H-5",1,"行の表示除外（included）","1行の「見積書に表示」をOFF","その行がPDFプレビューから消え、合計からも除外される。ONに戻すと復帰"],
+["H-6",1,"値引き名目：値引き","名目=「値引き」で値引き行を表示","帳票に「値引き」として−金額が表示される"],
+["H-7",1,"値引き名目：JA全農","名目=「JA全農くみあい飼料㈱広告代負担金」を選択","その名称がそのまま帳票に表示される"],
+["H-8",1,"値引き名目：自由記載","名目=「自由記載」を選択→テキスト入力／空のまま","選択時のみ入力欄が表示。入力名目が帳票に出る。空なら「値引き」と表示"],
+["H-9",1,"値引き行の表示条件","show_discount=ON かつ額>0／OFF／額0 の3パターン","ON+額>0 のときだけ値引き行が帳票に表示される"],
+["H-10",1,"見積書の合計算定","値引き・除外行を混在させる","小計(税抜)=Σ(included行の金額−値引き)、消費税=round(10%)、合計(税込)が受注側と同ロジックで一致"],
+["H-11",1,"帳票体裁（固定情報）","PDFプレビューの体裁を確認","社名「有限会社 渡辺謄写堂」・住所・電話/FAX・印影・インボイス登録番号 T3380002016689・振込先（東邦銀行二本松支店 普通72767/当座0022375）・宛先・発行日（YYYY年M月D日表記）がすべて正しい"],
+["H-12",1,"PDF出力の挙動（勝手にDLされない）","「PDF出力」ボタンを押す","ページ表示しただけでは生成されない。ボタン押下→生成→プレビューポップアップ表示。自動ダウンロードは走らない"],
+["H-13",1,"PDFの明示ダウンロードと保存","プレビュー内のダウンロードボタンを押す","PDFがDLされる。ファイル名=【見積書】_見積番号_顧客名（動的）。QuoteにもPDFが保存されている（Save to Bubble）"],
+["H-14",1,"PDFの版面品質","出力PDFをA4で確認","白紙・欠け・見切れがない（Pause不足の典型不具合）。文字化けなし。1ページに収まる"],
+["H-15",0,"見積ステータスと送付方法","状態を 作成中→発行済→受諾（または失注）と変更、送付方法を保存","保存・再訪で保持される"],
+["H-16",0,"受注への戻り導線","「受注に戻る」を押す","元の受注確認画面へ戻る"],
+["H-17",1,"受注編集後の見積書整合","見積書作成済みの受注を編集（明細金額変更・明細削除）→見積書を再表示","QuoteLineと明細の対応が壊れない。削除された明細の行の扱いが破綻しない（挙動を記録）"],
+// ===== I. 工場カンバン =====
+["I-1",1,"5列の構成","カンバンを開く","見積もり段階→受注→印刷中→完成→納品済み の順に5列。列見出しがOrderStatus色＋件数表示で、件数が実数と一致"],
+["I-2",1,"カードの表示対象と並び","各列のカードを確認","is_draft=no のみ表示。各列内は納期（delivery_date_start）昇順"],
+["I-3",1,"カードの内容","任意のカードを確認","受注番号(等幅)・品名・顧客・用紙×数量・タグchip・納期が表示。本日/明日納期=赤、超過=紫「N日経過」"],
+["I-4",1,"D&Dの基本動作","「受注」列のカードを「印刷中」列へドラッグ&ドロップ","カードが即時移動先列に並び直す。リロード後も維持。Order.statusが更新されている"],
+["I-5",1,"ドロップ時のトースト","I-4のドロップ直後","トースト「ステータス: 印刷中」が右下に表示され約2秒で消える"],
+["I-6",1,"履歴の旧→新が正しい","I-4の後にChangeLogを確認","「カンバン操作: 受注→印刷中」と旧ステータスが正しく記録（新→新になっていない）"],
+["I-7",1,"印刷中ドロップ→開始時刻","初めて印刷中へドロップ→App Data確認→一度戻して再度印刷中へ","初回のみ started_at がセット。2回目のドロップで上書きされない"],
+["I-8",1,"完成/納品済みドロップ→完了時刻","完成列へドロップ","completed_at・completed_by=操作ユーザーがセット（未設定時のみ）"],
+["I-9",1,"納品済みドロップ→納品日","納品済み列へドロップ","delivered_date=当日がセット。一覧・顧客詳細の最終納品日にも反映"],
+["I-10",1,"同一列へのドロップ","カードを同じ列内にドロップ","何も起きない（status不変・ChangeLogも増えない）"],
+["I-11",1,"逆方向の移動","完成→印刷中 へ戻すドロップ","statusは戻るが、既にセット済みの completed_at 等は消えない・上書きされない（仕様どおり）"],
+["I-12",1,"カードから詳細へ","カードをクリック（ドラッグせず）","該当の受注確認へ遷移。ドラッグとクリックが誤発火しない"],
+["I-13",1,"権限：経理はD&D不可","経理ロールでカンバンを開き操作を試す","閲覧は仕様どおり、ドラッグによるステータス変更はできない"],
+["I-14",0,"多件数時の表示","1列に20件以上入れる","列内スクロールで全カードにアクセスできる。横スクロールで5列全て見える"],
+// ===== J. 顧客管理 =====
+["J-1",1,"顧客一覧の検索・絞込","顧客名検索（部分一致）／種別DD絞込／ページネーション","それぞれ機能し件数表示が連動する"],
+["J-2",0,"種別バッジの色","地域・団体と企業・個人の顧客を確認","地域・団体=#1D4ED8青／企業・個人=#92400E茶 の文字色で表示"],
+["J-3",1,"累計売上3値","一覧の税抜/消費税/税込 列を確認（G-8と対）","受注側3フィールドの集計と一致し、税抜+税=税込が行内で成立"],
+["J-4",1,"新規顧客登録（モーダル）","顧客一覧から新規顧客を登録（法人＝会社名のみ／個人＝個人名のみ）","登録後すぐ一覧に反映。法人/個人で名前欄の使い分けが表示に反映される"],
+["J-5",1,"顧客編集","既存顧客の電話・住所等を編集モーダルで変更","保存後、一覧・詳細・起票画面のDDに反映される"],
+["J-6",1,"顧客詳細KPI","取引のある顧客の詳細を開く","KPIタイル（取引件数・累計売上・最終納品日等）が実データと一致。draft・未確定明細が混入しない"],
+["J-7",1,"過去発注履歴","顧客詳細の発注履歴RGを確認→行クリック","確定受注のみ新しい順に表示。クリックで受注確認へ"],
+["J-8",1,"この顧客で新規受注","顧客詳細の「この顧客で新規受注」を押す","顧客がプリセットされた新規起票フォームが開く"],
+["J-9",0,"履歴からの仕様コピー","発注履歴行の「この仕様でコピー」を押す","該当案件の明細を引き継いだ新規起票になる（D-25と同挙動）"],
+["J-10",1,"顧客メモの未保存警告","メモを編集して保存せずに他ページへ移動しようとする","警告が表示される（is_dirty）。保存後は警告なしで遷移できる"],
+["J-11",1,"メモの保存と保持","メモを保存→別ページへ→再訪","保存内容が保持されている。トースト表示"],
+["J-12",0,"モーダルの閉じ動作","顧客モーダルの背景（backdrop）をクリック","モーダルが閉じる。入力途中データの扱い（破棄）を確認・記録"],
+// ===== K. 受注票印刷ビュー =====
+["K-1",1,"印刷レイアウトの内容","受注確認から印刷ビューを開く","A4横。受注ヘッダー・件名・顧客・納期・明細（チェック形式）・合計（税込太字）・確認欄がモックどおり"],
+["K-2",1,"印刷プレビューが開く","「印刷」ボタンを押す","window.print() のブラウザ印刷プレビューが開く（PDFが勝手にDLされない）。プリンタ/PDF保存を選べる"],
+["K-3",1,"印刷時の不要要素除去","印刷プレビュー上で確認","ヘッダー・ナビ・ボタン類が印刷に含まれない（no-print）。A4横1枚に収まる"],
+["K-4",0,"納期の強調表示","納期が近い/超過の案件で印刷ビューを開く","納期が赤字で強調される"],
+["K-5",0,"戻る導線","「受注に戻る」を押す","受注確認へ戻る"],
+// ===== L. 権限・Privacy Rules =====
+["L-1",1,"代表：全操作","代表でログインし、起票/編集/削除/見積/顧客/カンバン/設定/ユーザー管理を一巡","すべて操作できる"],
+["L-2",1,"製版：担当案件の編集のみ","製版でログイン。自分が担当の案件と他人担当の案件で編集を試す","担当案件は編集可、他人担当は不可。ステータス変更は印刷中まわりのみ可"],
+["L-3",1,"工場：カンバン中心","工場でログイン","カンバン操作可。印刷中/完成へのステータス変更可。見積作成・顧客登録は不可"],
+["L-4",1,"事務：起票・見積・顧客","事務でログイン","起票/編集/見積作成/顧客登録が可。削除は条件付き（△）。ユーザー管理・設定は不可"],
+["L-5",1,"経理：閲覧＋設定書出のみ","経理でログイン","全画面の閲覧は可だが、起票/編集/ステータス変更/カンバン操作/見積/顧客編集の操作UIが非表示または無効。設定・データ書出は可"],
+["L-6",1,"削除ボタンの表示制御","5ロールで受注確認画面を開き比較","削除は代表○・事務△のみに表示。製版/工場/経理には出ない"],
+["L-7",1,"Privacy Rules（UI迂回の遮断）","経理（または権限外ロール）でログインし、ブラウザDevToolsのNetworkでBubbleのSearch応答を確認。可能ならURL直打ちで #order/:id/edit も試す","権限外の操作・データがAPIレベルでも取得/実行できない（要素非表示だけの見せかけ制御になっていない）"],
+["L-8",1,"編集URLの直打ち防御","経理ロールで #order/:id/edit をURL直打ち","編集フォームが使えない（リダイレクトまたは読取専用）。保存WFも実行不可"],
+["L-9",1,"無効ユーザーの候補除外","1ユーザーを is_active=no にする","起票フォームの担当者DD・完了担当の候補に表示されなくなる。既存データの表示は壊れない"],
+["L-10",1,"ロール判定のOption Set化","可能ならUser.roleのOption Set値を確認","権限判定がUserRole Option Setで行われている（text比較箇所がない）。表示名変更でも権限が壊れない"],
+["L-11",0,"ユーザー管理","代表で新規ユーザーを招待・ロール設定","招待ユーザーがログインでき、設定ロールの権限で動作する"],
+// ===== M. 変更履歴・監査 =====
+["M-1",1,"全操作の記録網羅","新規起票・編集・ステータス変更（ボタン）・カンバン操作・削除 を一通り実行","それぞれChangeLogに1件ずつ記録される（漏れ・重複なし）"],
+["M-2",1,"記録内容の正確性","M-1の各ログを確認","操作者=実行ユーザー、日時=実行時刻（YYYY/M/D HH:mm）、変更内容の文言（例「ステータス変更: 受注→印刷中」）が正しい"],
+["M-3",0,"履歴の表示箇所の一致","ダッシュボードの履歴と受注確認画面の履歴を見比べる","同一ログが両方に整合して表示される（受注側は当該案件のみ）"],
+["M-4",0,"削除案件のログ","受注を削除した後、履歴表示を確認","削除ログが残る。削除済み案件へのリンクを踏んだ場合の挙動が破綻しない（エラー画面にならない）"],
+// ===== N. 表示フォーマット・モック突合 =====
+["N-1",1,"日付表記（標準）","受注一覧・カンバンの日付を確認","YYYY/M/D（曜）形式。曜日が正しい"],
+["N-2",1,"日付表記（帳票）","見積書PDFの日付を確認","YYYY年M月D日 形式"],
+["N-3",1,"日時表記","変更履歴・工場進捗の時刻を確認","YYYY/M/D HH:mm 形式。タイムゾーンが日本時間"],
+["N-4",0,"金額表記","一覧・サマリー・帳票の金額を確認","¥＋3桁カンマ。数値は等幅で桁が揃う"],
+["N-5",0,"トーストの仕様","保存・ステータス変更・エラーを発生させる","右下表示、通常=黒/成功=緑#3F9D5E/エラー=赤#EF4444、約2秒で自動消去"],
+["N-6",0,"タグchipの配色","全6タグを表示","新規=青/急ぎ=赤/リピート=緑/ご祝儀=黄/特殊紙=紫/重要顧客=橙 の背景＋白文字（一覧の灰統一仕様を採る場合はその旨記録）"],
+["N-7",1,"モック1:1画面突合","シードデータ投入状態で全12画面（ダッシュボード/一覧/起票/確認/編集/見積/カンバン/顧客一覧/顧客詳細/印刷/ログイン/PWリセット）をモックと並べて見比べる","レイアウト・項目・条件表示・計算値がモックと1:1で一致。差異はすべてメモに列挙"],
+["N-8",0,"解像度耐性","1366×768 と 1920×1080 で主要画面を表示","デスクトップ前提の範囲でレイアウト崩れ・横スクロール暴発がない"],
+["N-9",0,"空状態の表示","絞込0件・明細0件・履歴0件の状態を作る","空状態の文言が表示され、レイアウトが崩れない"],
+// ===== O. 異常系・データ整合・運用耐性 =====
+["O-1",1,"2ユーザー同時編集","2アカウントで同じ受注を同時に編集→双方保存","データが破壊されない。後勝ち等の挙動を確認して運用ルールとして記録"],
+["O-2",1,"編集中の外部ステータス変更","Aが編集中に、Bがカンバンで同案件のstatusを変更→Aが保存","statusや時刻メタが不整合にならない。挙動を記録"],
+["O-3",1,"不正値の入力","数量・金額に負数／全角数字／文字列を入力","エラーまたは正規化され、NaN・マイナス請求が保存されない"],
+["O-4",0,"長文入力","品名・備考・メモに200字超を入力","保存でき、一覧・カード・帳票で表示が崩れない（省略表示等）"],
+["O-5",1,"明細0件での保存","明細を1件も追加せず「保存して起票」","仕様どおりの挙動（保存不可のバリデーション、または0円受注として成立）を確認し記録"],
+["O-6",0,"通信断中の操作","開発者ツールでオフラインにして保存操作","ユーザーに失敗が分かる（無言でデータ消失しない）。復帰後に再保存できる"],
+["O-7",0,"存在しないIDのURL","#order/存在しないID をURL直打ち","エラー画面やデータ空白で破綻せず、一覧等へ誘導される"],
+["O-8",1,"休業日と営業日計算","Settings.holidays に休業日を登録","営業日を使う計算・表示が休業日を除外して算出される"],
+["O-9",1,"シードデータの投入検証","watanabe_db_*.csv 投入後にApp Dataを確認","全Data Typeの件数が期待どおり。参照（customer/order/paper等）の欠損・リンク切れがない"],
+["O-10",1,"Settings単一レコード","会社設定を確認・変更","1レコードのみ存在。変更が見積書PDF（社名/振込先/登録番号）に反映される"],
+["O-11",0,"タブ複数起票","新規起票を2タブで同時に開き、それぞれ保存","採番が重複しない。掃除WFが片方の入力中下書きを誤削除しないか確認・記録"],
+];
+
+// ---------- render ----------
+const store = JSON.parse(localStorage.getItem("wt_v3_test") || "{}");
+function save(){ localStorage.setItem("wt_v3_test", JSON.stringify(store)); }
+
+const secWrap = document.getElementById("sections");
+const toc = document.getElementById("toc");
+const fSec = document.getElementById("f-sec");
+
+SECTIONS.forEach(s=>{
+  const tests = TESTS.filter(t=>t[0].startsWith(s.key+"-"));
+  if(!tests.length) return;
+  const sec = document.createElement("section");
+  sec.className="tsec"; sec.id="sec-"+s.key; sec.dataset.key=s.key;
+  sec.innerHTML = `<div class="sec-head"><h2>${s.key}. ${s.name}</h2><span class="goal">${s.goal}</span><span class="sec-prog" data-sec="${s.key}"></span></div><div class="sec-body"></div>`;
+  const body = sec.querySelector(".sec-body");
+  tests.forEach(t=>{
+    const [id,must,ttl,steps,expect] = t;
+    const row = document.createElement("div");
+    row.className="tc"; row.dataset.id=id; row.dataset.sec=s.key; row.dataset.pri=must?"must":"rec";
+    row.innerHTML = `
+      <div class="tid">${id}<span class="pri ${must?"must":"rec"}">${must?"必須":"推奨"}</span></div>
+      <div><div class="ttl">${ttl}</div><div class="steps">手順: ${steps}</div><div class="expect">${expect}</div></div>
+      <div class="judge">
+        <div class="btns"><button class="b-ok">OK</button><button class="b-ng">NG</button></div>
+        <input type="text" class="memo" placeholder="メモ（NG時は必須）">
+      </div>`;
+    const st = store[id] || {};
+    if(st.s==="ok"){row.classList.add("st-ok"); row.querySelector(".b-ok").classList.add("act");}
+    if(st.s==="ng"){row.classList.add("st-ng"); row.querySelector(".b-ng").classList.add("act");}
+    row.querySelector(".memo").value = st.m || "";
+    row.querySelector(".b-ok").onclick=()=>toggle(row,id,"ok");
+    row.querySelector(".b-ng").onclick=()=>toggle(row,id,"ng");
+    row.querySelector(".memo").oninput=e=>{ store[id]=store[id]||{}; store[id].m=e.target.value; save(); };
+    body.appendChild(row);
+  });
+  secWrap.appendChild(sec);
+  toc.insertAdjacentHTML("beforeend", `<a href="#sec-${s.key}">${s.key}. ${s.name} <span class="cnt">(${tests.length})</span></a>`);
+  fSec.insertAdjacentHTML("beforeend", `<option value="${s.key}">${s.key}. ${s.name}</option>`);
+});
+
+function toggle(row,id,v){
+  const cur = (store[id]||{}).s;
+  store[id]=store[id]||{};
+  store[id].s = (cur===v) ? "" : v;
+  save();
+  row.classList.toggle("st-ok", store[id].s==="ok");
+  row.classList.toggle("st-ng", store[id].s==="ng");
+  row.querySelector(".b-ok").classList.toggle("act", store[id].s==="ok");
+  row.querySelector(".b-ng").classList.toggle("act", store[id].s==="ng");
+  updateProgress();
+}
+
+function updateProgress(){
+  let ok=0,ng=0;
+  TESTS.forEach(t=>{ const s=(store[t[0]]||{}).s; if(s==="ok")ok++; else if(s==="ng")ng++; });
+  const all=TESTS.length;
+  document.getElementById("c-ok").textContent=ok+" OK";
+  document.getElementById("c-ng").textContent=ng+" NG";
+  document.getElementById("c-rest").textContent=(all-ok-ng)+" 未実施";
+  document.getElementById("c-all").textContent=all;
+  document.getElementById("pb-ok").style.width=(ok/all*100)+"%";
+  document.getElementById("pb-ng").style.width=(ng/all*100)+"%";
+  SECTIONS.forEach(s=>{
+    const el=document.querySelector(`.sec-prog[data-sec="${s.key}"]`); if(!el)return;
+    const ts=TESTS.filter(t=>t[0].startsWith(s.key+"-"));
+    const done=ts.filter(t=>["ok","ng"].includes((store[t[0]]||{}).s)).length;
+    el.textContent=done+" / "+ts.length;
+  });
+}
+
+// filters
+function applyFilter(){
+  const sec=fSec.value, pri=document.getElementById("f-pri").value,
+        st=document.getElementById("f-st").value,
+        kw=document.getElementById("f-kw").value.trim();
+  document.querySelectorAll(".tc").forEach(row=>{
+    const s=(store[row.dataset.id]||{}).s||"none";
+    let show=true;
+    if(sec && row.dataset.sec!==sec) show=false;
+    if(pri && row.dataset.pri!==pri) show=false;
+    if(st==="none" && s!=="none") show=false;
+    if(st==="ok" && s!=="ok") show=false;
+    if(st==="ng" && s!=="ng") show=false;
+    if(kw && !row.textContent.includes(kw)) show=false;
+    row.classList.toggle("hidden",!show);
+  });
+  document.querySelectorAll("section.tsec").forEach(sc=>{
+    sc.classList.toggle("hidden", !sc.querySelector(".tc:not(.hidden)"));
+  });
+}
+["f-sec","f-pri","f-st"].forEach(i=>document.getElementById(i).onchange=applyFilter);
+document.getElementById("f-kw").oninput=applyFilter;
+
+document.getElementById("btn-export").onclick=()=>{
+  let out="渡辺謄写堂v3 受入テスト結果 "+new Date().toLocaleString("ja-JP")+"\n";
+  let ok=0,ng=0,rest=0;
+  TESTS.forEach(t=>{ const s=(store[t[0]]||{}).s; if(s==="ok")ok++; else if(s==="ng")ng++; else rest++; });
+  out+=`OK ${ok} / NG ${ng} / 未実施 ${rest} / 全${TESTS.length}件\n\n`;
+  TESTS.forEach(t=>{
+    const st=store[t[0]]||{};
+    if(st.s==="ng") out+=`[NG] ${t[0]} ${t[2]}${st.m?" — "+st.m:""}\n`;
+  });
+  out+="\n--- 未実施 ---\n";
+  TESTS.forEach(t=>{ const st=store[t[0]]||{}; if(!st.s) out+=`[未] ${t[0]} ${t[2]}\n`; });
+  navigator.clipboard.writeText(out).then(()=>alert("結果サマリーをクリップボードにコピーしました"));
+};
+document.getElementById("btn-reset").onclick=()=>{
+  if(confirm("全項目の判定・メモをリセットします。よろしいですか？")){
+    localStorage.removeItem("wt_v3_test");
+    location.reload();
+  }
+};
+updateProgress();
+</script>
+</body>
+</html>
