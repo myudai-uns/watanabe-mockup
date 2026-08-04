@@ -344,7 +344,7 @@ SEED_DATA.quotes = [
 
 // ========= DB Layer =========
 const DB = {
-  KEY: 'watanabe_db_v4_0',  // v4.0: 帳票機能追加モック（v3とlocalStorageを分離）
+  KEY: 'watanabe_db_v4_1',  // v4.0: 帳票機能追加モック（v3とlocalStorageを分離。手入力＋引用方式に改訂）
   data: null,
   load() {
     const raw = localStorage.getItem(this.KEY);
