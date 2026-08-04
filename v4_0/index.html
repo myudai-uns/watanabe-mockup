@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>渡辺謄写堂 業務管理システム v4.0 モック（帳票運用）</title>
+<title>渡辺謄写堂 業務管理システム v4.0 (Functional Mockup)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -24,732 +24,154 @@ tailwind.config = {
 </script>
 <style>
   body { font-family: 'Noto Sans JP', sans-serif; background: #F3F4F6; }
-  .tab-btn.active { background: #E87825 !important; color: white !important; font-weight: 700; }
+  .nav-btn.active, .side-link.active { background: #E87825 !important; color: white !important; font-weight: 700; }
+  .scroll-pad { padding-bottom: 40px; }
+  /* v2.6: 受注確認モード（read-only表示） */
+  body.view-mode input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+  body.view-mode input[type="date"]::-webkit-inner-spin-button,
+  body.view-mode input[type="number"]::-webkit-inner-spin-button,
+  body.view-mode input[type="number"]::-webkit-outer-spin-button { display: none !important; -webkit-appearance: none; }
+  body.view-mode input, body.view-mode select, body.view-mode textarea {
+    pointer-events: none !important;
+    background-image: none !important;
+    background-color: transparent !important;
+  }
+  body.view-mode select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    padding-right: 0.5rem !important;
+  }
+  body.view-mode input[type="file"] { display: none; }
+  body.view-mode .edit-only { display: none !important; }
+  body.view-mode button:not(.view-allow) { pointer-events: none; opacity: 0.5; }
+  /* v3: ラベル経由でhidden input/radio/checkboxがトグルできる箇所（タグ・納期区分・加工オプション）を確認モードで操作不可に */
+  body.view-mode label { pointer-events: none !important; cursor: default !important; }
+  /* v2.6: .view-allow は操作可能。背景白は input/select のみに */
+  body.view-mode .view-allow,
+  body.view-mode .view-allow * { pointer-events: auto !important; opacity: 1 !important; }
+  body.view-mode .view-allow input,
+  body.view-mode .view-allow select,
+  body.view-mode .view-allow textarea { background-color: white !important; }
+  [draggable=true] { cursor: grab; }
+  [draggable=true]:active { cursor: grabbing; }
+  .drag-over { background: rgba(232,120,37,0.2) !important; outline: 2px dashed #E87825; }
+  .drag-ghost { opacity: 0.4; }
+  /* Status badges: v2.12 背景なし・文字色のみ。サイズは親要素を継承 */
+  .st { display: inline-block; padding: 0; font-size: inherit; font-weight: 700; white-space: nowrap; background: transparent; }
+  .st-見積もり段階 { color: #1E3A8A; }
+  .st-受注 { color: #DC2626; }  /* v3: 受注は赤色ベース */
+  .st-製版中 { color: #2563EB; }
+  .st-校正中 { color: #7C3AED; }
+  .st-印刷中 { color: #B45309; }
+  .st-完成 { color: #2A7A44; }
+  .st-納品済 { color: #6B7280; }
+  .st-キャンセル { color: #DC2626; }
+  .st-待機 { color: #6B7280; }
+  .st-作業中 { color: #B45309; }
+  .st-出荷待ち { color: #2563EB; }
+  .st-納品済み { color: #6B7280; }
+  .st-経過 { color: #7C3AED; }
 
-  /* ステータス色（背景なし文字色のみ = v3踏襲） */
-  .st { font-weight: 700; white-space: nowrap; }
+  /* Toast */
+  #toast { position: fixed; bottom: 60px; right: 20px; z-index: 100; }
+  .toast-item { background: #1A1A1A; color: white; padding: 10px 16px; border-radius: 6px; margin-top: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.2s; }
+  .toast-item.show { opacity: 1; transform: translateY(0); }
+  .toast-item.ok { background: #3F9D5E; }
+  .toast-item.err { background: #EF4444; }
+
+  /* Print: v2.8 - PDFプレビュー (#quote-pdf-page) のみを印刷対象に。v4: 帳票プレビュー (.print-doc) も対象 */
+  @media print {
+    body { background: white; }
+    body * { visibility: hidden !important; }
+    #quote-pdf-page, #quote-pdf-page *, .print-doc, .print-doc * { visibility: visible !important; }
+    #quote-pdf-page, .print-doc {
+      position: absolute !important;
+      left: 0; top: 0; right: 0;
+      width: 100% !important;
+      max-width: none !important;
+      padding: 12mm !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    .print-page { page-break-after: always; }
+  }
+
+  /* ===== v4.0: 帳票（納品書・請求書・領収書）と帳簿・時系列 ===== */
   .st-未発行 { color: #DC2626; }
+  .st-未請求 { color: #DC2626; }
+  .st-未回収 { color: #DC2626; }
   .st-発行済 { color: #2563EB; }
   .st-入金待ち { color: #B45309; }
   .st-入金済 { color: #2A7A44; }
   .st-現金回収済 { color: #2A7A44; }
-  .st-受注 { color: #DC2626; }
-  .st-印刷中 { color: #B45309; }
-  .st-完成 { color: #2A7A44; }
-  .st-納品済 { color: #6B7280; }
 
-  /* 帳票プレビュー (A4風) */
   .a4doc {
     background: white;
     width: 210mm; max-width: 100%;
-    min-height: 250mm;
-    padding: 18mm 16mm;
+    min-height: 240mm;
+    padding: 16mm 14mm;
     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
     font-size: 13px;
-    color: #1A1A1A;
   }
-  .a4doc table { width: 100%; border-collapse: collapse; }
-  .a4doc .doc-table th { background: #F3F4F6; border: 1px solid #999; padding: 6px 8px; font-weight: 700; }
-  .a4doc .doc-table td { border: 1px solid #999; padding: 6px 8px; }
-  .doc-title { font-size: 26px; font-weight: 900; letter-spacing: 0.5em; text-align: center; }
-
-  /* 領収書は小さめの帳票 */
   .receipt-doc {
     background: white; width: 180mm; max-width: 100%;
     padding: 14mm 14mm; box-shadow: 0 2px 12px rgba(0,0,0,0.12);
     border: 1px solid #ddd; font-size: 13px;
   }
+  .a4doc table, .receipt-doc table { width: 100%; border-collapse: collapse; }
+  .doc-table th { background: #F3F4F6; border: 1px solid #999; padding: 5px 8px; font-weight: 700; }
+  .doc-table td { border: 1px solid #999; padding: 5px 8px; }
+  .doc-title { font-size: 25px; font-weight: 900; letter-spacing: 0.5em; text-align: center; }
 
-  /* タイムライン */
   .tl-line { position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: #E5E7EB; }
   .tl-dot { width: 12px; height: 12px; border-radius: 9999px; margin-top: 4px; flex: none; z-index: 1; }
-
-  .toast-item { background: #1A1A1A; color: white; padding: 10px 16px; border-radius: 6px; margin-top: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.2s; }
-  .toast-item.show { opacity: 1; transform: translateY(0); }
-  #toast { position: fixed; bottom: 40px; right: 20px; z-index: 100; }
-
-  @media print {
-    body { background: white; }
-    body * { visibility: hidden !important; }
-    .print-me, .print-me * { visibility: visible !important; }
-    .print-me { position: absolute !important; left: 0; top: 0; width: 100% !important; box-shadow: none !important; border: none !important; padding: 10mm !important; }
-  }
 </style>
 </head>
 <body class="text-ink-900">
 
-<!-- ======== ヘッダー ======== -->
-<header class="bg-ink-900 text-white sticky top-0 z-50">
+<!-- v2.6: 上部バー（左サイド廃止） -->
+<header class="bg-ink-900 text-white sticky top-0 z-50 no-print">
   <div class="flex items-center justify-between px-6 py-2">
     <div class="flex items-center gap-3">
       <div class="font-bold text-sm">渡辺謄写堂　業務管理システム <span class="text-brand font-black">v4.0</span></div>
-      <span class="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-[11px] px-2 py-0.5 rounded font-bold">イメージ確認用モック / 仕様は変更前提</span>
+      <span class="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-[11px] px-2 py-0.5 rounded font-bold">帳票機能 追加モック / 仕様は変更前提</span>
     </div>
-    <div class="text-xs text-ink-300">本日: 2026-08-04（火）｜ログイン中: <span class="text-white font-bold">渡辺 聡</span></div>
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-ink-300">ログイン中:</span>
+      <a href="#login" id="current-user-link" class="bg-ink-700 text-white px-3 py-1 rounded text-xs font-bold hover:bg-ink-500" title="クリックでログイン画面へ">—</a>
+      <button id="btn-reset" class="px-3 py-1 border border-red-400/50 text-red-300 rounded hover:bg-red-500/20 text-xs">リセット</button>
+    </div>
   </div>
   <nav class="bg-ink-700 px-6 py-2 flex flex-wrap gap-1 text-sm overflow-x-auto">
-    <button data-tab="flow"     class="tab-btn px-3 py-1.5 rounded text-white hover:bg-ink-500">全体フロー</button>
-    <button data-tab="ledger"   class="tab-btn px-3 py-1.5 rounded text-white hover:bg-ink-500">帳簿</button>
-    <button data-tab="delivery" class="tab-btn px-3 py-1.5 rounded text-white hover:bg-ink-500">納品書</button>
-    <button data-tab="invoice"  class="tab-btn px-3 py-1.5 rounded text-white hover:bg-ink-500">請求書</button>
-    <button data-tab="receipt"  class="tab-btn px-3 py-1.5 rounded text-white hover:bg-ink-500">領収書</button>
-    <button data-tab="timeline" class="tab-btn px-3 py-1.5 rounded text-white hover:bg-ink-500">時系列記録表</button>
+    <a href="#dashboard" data-screen="dashboard" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">ダッシュボード</a>
+    <a href="#orders" data-screen="orders" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">受注一覧</a>
+    <a href="#order/new" data-screen="order_new" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">新規受注</a>
+    <a href="#customers" data-screen="customers" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">顧客一覧</a>
+    <a href="#factory" data-screen="factory" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">工場カンバン</a>
+    <span class="self-center text-ink-500 px-1 select-none">|</span>
+    <span class="self-center text-[10px] font-black text-brand bg-brand-light rounded px-1.5 py-0.5 select-none">v4.0</span>
+    <a href="#ledger" data-screen="ledger" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">帳簿</a>
+    <a href="#delivery_notes" data-screen="delivery_notes" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">納品書</a>
+    <a href="#invoices" data-screen="invoices" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">請求書</a>
+    <a href="#receipts" data-screen="receipts" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">領収書</a>
+    <a href="#timeline" data-screen="timeline" class="nav-btn side-link px-3 py-1.5 rounded text-white hover:bg-ink-500">時系列記録表</a>
   </nav>
 </header>
 
-<main id="main" class="p-6 max-w-[1400px] mx-auto pb-20"></main>
+<main id="main" class="scroll-pad p-6 bg-gray-100 min-h-screen">
+  <!-- 動的に描画 -->
+</main>
+
+<!-- v2.5: フッター廃止（stat-info はサイドバーへ移動済み） -->
+
+<!-- Toast container -->
 <div id="toast"></div>
 
-<script>
-// =====================================================================
-// 渡辺謄写堂 v4.0 モック — 帳簿 / 納品書 / 請求書 / 領収書 / 時系列記録表
-// ※イメージ確認用。データはすべてダミー。保存はページ内メモリのみ（再読込でリセット）
-// =====================================================================
+<!-- Modal container -->
+<div id="modal-root"></div>
 
-const COMPANY = {
-  name: '有限会社 渡辺謄写堂',
-  postal: '〒964-0911',
-  address: '福島県二本松市亀谷1-43-3',
-  phone: 'TEL 0243-22-0613',
-  fax: 'FAX 0243-22-0644',
-  invoice_number: 'T3380002016689',
-  bank1: '東邦銀行二本松支店 普通預金 72767',
-  bank2: '当座預金 0022375',
-  holder: '有限会社渡辺謄写堂 代表取締役 渡辺聡',
-};
-
-const TODAY = '2026-08-04';
-
-const CUSTOMERS = {
-  c1: { name: '株式会社 高拡散',        closing: '月末締め・翌月末払い', pay: '掛' },
-  c2: { name: '昭和タクシー株式会社',   closing: '月末締め・翌月末払い', pay: '掛' },
-  c3: { name: '佐々木畳店',             closing: '都度現金',            pay: '現金' },
-  c4: { name: '福島県立 足立高等学校',  closing: '納品ごと請求',        pay: '掛' },
-  c5: { name: 'ワンワールド株式会社',   closing: '納品ごと請求',        pay: '掛' },
-  c7: { name: '福島中央病院',           closing: '月末締め・翌月末払い', pay: '掛' },
-  c8: { name: '二本松市役所 元町支所',  closing: '納品ごと請求',        pay: '掛' },
-  c10:{ name: 'みやざき食堂',           closing: '都度現金',            pay: '現金' },
-  c9: { name: '山田 太郎',              closing: '都度現金',            pay: '現金' },
-};
-
-// 受注（品名・明細・納品日・支払区分）
-const ORDERS = [
-  { no:'260701-001', cust:'c1',  title:'名刺 500枚',            date:'2026-07-01', delivered:'2026-07-02', status:'納品済',
-    items:[{name:'名刺 フミス200kg 4C×4C', qty:500, unit:'枚', price:10}] },
-  { no:'260703-002', cust:'c2',  title:'車内掲示ポスター',      date:'2026-07-03', delivered:'2026-07-06', status:'納品済',
-    items:[{name:'ポスター A2 コート135kg 4C', qty:200, unit:'枚', price:175}] },
-  { no:'260706-001', cust:'c4',  title:'学校案内パンフレット',  date:'2026-07-06', delivered:'2026-07-15', status:'納品済',
-    items:[{name:'パンフレット A4 8P 中綴じ', qty:1000, unit:'部', price:110}, {name:'データ作成費', qty:1, unit:'式', price:10000}] },
-  { no:'260708-003', cust:'c3',  title:'折込チラシ A4',         date:'2026-07-08', delivered:'2026-07-10', status:'納品済',
-    items:[{name:'チラシ A4 再生紙 1C', qty:1000, unit:'枚', price:14}] },
-  { no:'260710-002', cust:'c7',  title:'診療案内チラシ',        date:'2026-07-10', delivered:'2026-07-13', status:'納品済',
-    items:[{name:'チラシ A4 上質90kg 4C×4C', qty:500, unit:'枚', price:16}] },
-  { no:'260715-001', cust:'c10', title:'メニュー表',            date:'2026-07-15', delivered:'2026-07-18', status:'納品済',
-    items:[{name:'メニュー表 A4 コート135kg PP貼り', qty:50, unit:'枚', price:300}] },
-  { no:'260718-002', cust:'c8',  title:'市報折込 お知らせ',     date:'2026-07-18', delivered:'2026-07-22', status:'納品済',
-    items:[{name:'折込チラシ A4 3つ折 4C×4C', qty:2000, unit:'枚', price:40}] },
-  { no:'260722-001', cust:'c1',  title:'会社案内リーフレット',  date:'2026-07-22', delivered:'2026-07-24', status:'納品済',
-    items:[{name:'リーフレット A4 2つ折 4C×4C', qty:500, unit:'部', price:40}] },
-  { no:'260728-001', cust:'c5',  title:'封筒印刷 長3',          date:'2026-07-28', delivered:'2026-07-30', status:'納品済',
-    items:[{name:'長3封筒 スミ1C', qty:1000, unit:'枚', price:12}] },
-  { no:'260801-001', cust:'c1',  title:'名刺 追加 300枚',       date:'2026-08-01', delivered:'2026-08-03', status:'納品済',
-    items:[{name:'名刺 フミス200kg 4C×4C', qty:300, unit:'枚', price:10}] },
-  { no:'260803-001', cust:'c2',  title:'領収証冊子',            date:'2026-08-03', delivered:null, status:'印刷中',
-    items:[{name:'領収証 50組複写 ナンバリング入', qty:30, unit:'冊', price:600}] },
-  { no:'260804-001', cust:'c9',  title:'個人名刺 100枚',        date:'2026-08-04', delivered:null, status:'受注',
-    items:[{name:'名刺 フミス200kg 1C', qty:100, unit:'枚', price:20}] },
-];
-
-// 納品書（納品済の受注から発行）
-const DELIVERY_NOTES = [
-  { id:'D-260702-01', order:'260701-001', date:'2026-07-02', status:'発行済' },
-  { id:'D-260706-01', order:'260703-002', date:'2026-07-06', status:'発行済' },
-  { id:'D-260715-01', order:'260706-001', date:'2026-07-15', status:'発行済' },
-  { id:'D-260710-01', order:'260708-003', date:'2026-07-10', status:'発行済' },
-  { id:'D-260713-01', order:'260710-002', date:'2026-07-13', status:'発行済' },
-  { id:'D-260718-01', order:'260715-001', date:'2026-07-18', status:'発行済' },
-  { id:'D-260722-01', order:'260718-002', date:'2026-07-22', status:'発行済' },
-  { id:'D-260724-01', order:'260722-001', date:'2026-07-24', status:'発行済' },
-  { id:'D-260730-01', order:'260728-001', date:'2026-07-30', status:'発行済' },
-  { id:'D-260803-01', order:'260801-001', date:'2026-08-03', status:'未発行' },
-];
-
-// 請求書（月締め＝顧客×対象月で複数受注をまとめる / 個別＝受注1件ごと）
-const INVOICES = [
-  { id:'INV-2607-001', type:'月締め', cust:'c1', month:'2026-06', orders:[], fixedAmount:27500, issued:'2026-07-01', due:'2026-07-31', status:'入金済',   paidDate:'2026-07-25', note:'6月分（名刺・チラシ2件）' },
-  { id:'INV-2607-002', type:'個別',   cust:'c4', month:null,      orders:['260706-001'], issued:'2026-07-16', due:'2026-08-31', status:'入金済', paidDate:'2026-08-01', note:'学校宛は納品ごとに請求' },
-  { id:'INV-2607-003', type:'個別',   cust:'c8', month:null,      orders:['260718-002'], issued:'2026-07-23', due:'2026-08-31', status:'入金待ち', paidDate:null, note:'市役所会計課経由' },
-  { id:'INV-2608-001', type:'月締め', cust:'c1', month:'2026-07', orders:['260701-001','260722-001'], issued:'2026-08-01', due:'2026-08-31', status:'発行済', paidDate:null },
-  { id:'INV-2608-002', type:'月締め', cust:'c2', month:'2026-07', orders:['260703-002'], issued:'2026-08-01', due:'2026-08-31', status:'発行済', paidDate:null },
-  { id:'INV-2608-003', type:'月締め', cust:'c7', month:'2026-07', orders:['260710-002'], issued:null, due:'2026-08-31', status:'未発行', paidDate:null },
-  { id:'INV-2608-004', type:'個別',   cust:'c5', month:null,      orders:['260728-001'], issued:null, due:'2026-08-31', status:'未発行', paidDate:null },
-];
-
-// 領収書
-const RECEIPTS = [
-  { id:'R-260710-01', cust:'c3',  amount:15400,  date:'2026-07-10', method:'現金',  tadashi:'印刷代として（折込チラシ A4 1,000枚）', order:'260708-003' },
-  { id:'R-260718-01', cust:'c10', amount:16500,  date:'2026-07-18', method:'現金',  tadashi:'印刷代として（メニュー表 50枚）',       order:'260715-001' },
-  { id:'R-260725-01', cust:'c1',  amount:27500,  date:'2026-07-25', method:'振込',  tadashi:'印刷代として（6月分ご請求）',           invoice:'INV-2607-001' },
-  { id:'R-260801-01', cust:'c4',  amount:132000, date:'2026-08-01', method:'振込',  tadashi:'学校案内パンフレット印刷代として',       invoice:'INV-2607-002' },
-];
-
-// ================== 共通ヘルパー ==================
-const $  = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
-const yen = n => '¥' + Number(n).toLocaleString();
-const jd  = iso => { if(!iso) return '—'; const [y,m,d] = iso.split('-'); return `${y}/${m}/${d}`; };
-const orderOf = no => ORDERS.find(o => o.no === no);
-const custName = id => CUSTOMERS[id]?.name || id;
-const orderSubtotal = o => o.items.reduce((s,i) => s + i.qty * i.price, 0);
-const orderTax   = o => Math.floor(orderSubtotal(o) * 0.1);
-const orderTotal = o => orderSubtotal(o) + orderTax(o);
-const invAmount = inv => inv.fixedAmount ?? inv.orders.reduce((s,no) => s + orderTotal(orderOf(no)), 0);
-const stBadge = s => `<span class="st st-${s}">${s}</span>`;
-
-function toast(msg) {
-  const el = document.createElement('div');
-  el.className = 'toast-item';
-  el.textContent = msg;
-  $('#toast').appendChild(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 2500);
-}
-function printDoc(sel) {
-  $$('.print-me').forEach(e => e.classList.remove('print-me'));
-  const el = $(sel);
-  if (el) { el.classList.add('print-me'); window.print(); }
-}
-
-// 会社情報ブロック（帳票右下共通）
-function companyBlock() {
-  return `<div class="text-right text-xs leading-5">
-    <div class="font-black text-base">${COMPANY.name}</div>
-    <div>${COMPANY.postal} ${COMPANY.address}</div>
-    <div>${COMPANY.phone}　${COMPANY.fax}</div>
-    <div>登録番号: ${COMPANY.invoice_number}</div>
-  </div>`;
-}
-
-// ================== 画面: 全体フロー ==================
-function renderFlow() {
-  const step = (n, title, doc, desc, color) => `
-    <div class="flex-1 min-w-[150px] bg-white rounded-lg border-t-4 ${color} shadow p-4">
-      <div class="text-[11px] text-ink-500 font-bold">STEP ${n}</div>
-      <div class="font-black text-lg">${title}</div>
-      ${doc ? `<div class="mt-1 inline-block bg-brand-light text-brand-dark text-xs font-bold px-2 py-0.5 rounded">📄 ${doc}</div>` : ''}
-      <div class="text-xs text-ink-500 mt-2 leading-5">${desc}</div>
-    </div>`;
-  const arrow = `<div class="flex items-center justify-center text-ink-300 text-2xl font-black px-1">→</div>`;
-  return `
-  <div class="mb-6 bg-yellow-50 border border-yellow-300 rounded-lg p-4 text-sm">
-    <span class="font-bold">⚠️ このv4.0モックについて：</span>
-    帳簿・納品書・請求書・領収書・時系列記録表の「運用イメージ」を確認するためのものです。
-    項目名・レイアウト・自動連携の範囲はすべて仮です。触ってみて「ここは違う」「これが欲しい」をお聞かせください。
-  </div>
-
-  <h2 class="text-xl font-black mb-4">v4.0で追加する帳票の流れ（1つの受注が最後まで自動でつながる）</h2>
-  <div class="flex flex-wrap gap-2 items-stretch">
-    ${step(1, '受注・製作', '', 'v3の受注管理・工場カンバンをそのまま利用（本モックでは省略）', 'border-ink-300')}
-    ${arrow}
-    ${step(2, '納品', '納品書', '納品時に受注データから納品書を自動作成 → 印刷して同梱', 'border-brand')}
-    ${arrow}
-    ${step(3, '記帳', '帳簿', '納品と同時に売上帳へ自動記帳。売掛/現金を区分', 'border-blue-500')}
-    ${arrow}
-    ${step(4, '請求', '請求書', '掛のお客様は月末に「月締め請求書」を一括作成。都度請求も可', 'border-purple-500')}
-    ${arrow}
-    ${step(5, '入金・領収', '領収書', '入金消込 → 必要に応じて領収書を発行。現金は納品時に即発行', 'border-ok')}
-  </div>
-
-  <div class="mt-6 grid md:grid-cols-2 gap-4">
-    <div class="bg-white rounded-lg shadow p-5">
-      <div class="font-black mb-2">📊 時系列記録表とは</div>
-      <div class="text-sm text-ink-700 leading-6">
-        1件の受注について「いつ受注し、いつ刷り、いつ納品し、いつ請求し、いつ入金されたか」を1本の時間軸で見られる表です。
-        各帳票の発行やステータス変更が自動で記録されるため、<b>手で記録する作業はありません</b>。
-        「あの仕事、請求まだだっけ？」を一目で確認する画面です。
-      </div>
-    </div>
-    <div class="bg-white rounded-lg shadow p-5">
-      <div class="font-black mb-2">💡 運用がラクになるポイント（案）</div>
-      <ul class="text-sm text-ink-700 leading-6 list-disc pl-5">
-        <li>納品書・請求書・領収書は<b>すべて受注データから自動作成</b>（転記ミスなし）</li>
-        <li>月末の請求書作成は「顧客と月を選ぶだけ」でその月の納品分をまとめて1枚に</li>
-        <li>帳簿は納品・入金のたびに自動で増える（Excel転記が不要に）</li>
-        <li>未請求・未入金は帳簿と時系列記録表で赤く表示</li>
-      </ul>
-    </div>
-  </div>`;
-}
-
-// ================== 画面: 帳簿 ==================
-const ledgerState = { month: '2026-07' };
-function ledgerRows(month) {
-  return ORDERS
-    .filter(o => o.delivered && o.delivered.startsWith(month))
-    .map(o => {
-      const c = CUSTOMERS[o.cust];
-      const inv = INVOICES.find(v => v.orders.includes(o.no));
-      const rec = RECEIPTS.find(r => r.order === o.no);
-      let payst;
-      if (c.pay === '現金') payst = rec ? '現金回収済' : '未回収';
-      else if (inv && inv.status === '入金済') payst = '入金済';
-      else if (inv && (inv.status === '発行済' || inv.status === '入金待ち')) payst = '入金待ち';
-      else payst = '未発行';
-      return { o, c, payst };
-    })
-    .sort((a,b) => a.o.delivered.localeCompare(b.o.delivered));
-}
-function renderLedger() {
-  const rows = ledgerRows(ledgerState.month);
-  const sumAll  = rows.reduce((s,r) => s + orderTotal(r.o), 0);
-  const sumCash = rows.filter(r => r.c.pay === '現金').reduce((s,r) => s + orderTotal(r.o), 0);
-  const sumKake = sumAll - sumCash;
-  const unpaid  = rows.filter(r => r.payst === '入金待ち' || r.payst === '未発行').reduce((s,r) => s + orderTotal(r.o), 0);
-
-  // 顧客別売掛残（全期間・入金済以外）
-  const zan = {};
-  INVOICES.filter(v => v.status !== '入金済' ).forEach(v => { zan[v.cust] = (zan[v.cust] || 0) + invAmount(v); });
-
-  const card = (label, val, sub, color) => `
-    <div class="bg-white rounded-lg shadow p-4">
-      <div class="text-xs text-ink-500 font-bold">${label}</div>
-      <div class="text-2xl font-black ${color}">${val}</div>
-      <div class="text-[11px] text-ink-300">${sub}</div>
-    </div>`;
-
-  return `
-  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-    <h2 class="text-xl font-black">帳簿（売上帳）</h2>
-    <div class="flex items-center gap-2 text-sm">
-      <span class="text-ink-500 font-bold">対象月:</span>
-      <select id="ledger-month" class="border rounded px-3 py-1.5 bg-white font-bold">
-        <option value="2026-06" ${ledgerState.month==='2026-06'?'selected':''}>2026年6月</option>
-        <option value="2026-07" ${ledgerState.month==='2026-07'?'selected':''}>2026年7月</option>
-        <option value="2026-08" ${ledgerState.month==='2026-08'?'selected':''}>2026年8月</option>
-      </select>
-      <button class="bg-white border rounded px-3 py-1.5 font-bold text-ink-500" onclick="toast('CSV出力（モックのため未実装）')">CSV出力</button>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-    ${card('当月売上合計（税込）', yen(sumAll), '納品ベースで自動計上', 'text-ink-900')}
-    ${card('うち掛売上', yen(sumKake), '月締め・都度請求', 'text-blue-700')}
-    ${card('うち現金売上', yen(sumCash), '納品時回収', 'text-ok-dark')}
-    ${card('当月分 未回収', yen(unpaid), '未請求＋入金待ち', unpaid > 0 ? 'text-red-600' : 'text-ink-300')}
-  </div>
-
-  <div class="bg-white rounded-lg shadow overflow-x-auto mb-6">
-    <table class="w-full text-sm">
-      <thead class="bg-ink-900 text-white text-xs">
-        <tr>
-          <th class="px-3 py-2 text-left">納品日</th>
-          <th class="px-3 py-2 text-left">受注No</th>
-          <th class="px-3 py-2 text-left">顧客</th>
-          <th class="px-3 py-2 text-left">品名</th>
-          <th class="px-3 py-2 text-right">税抜</th>
-          <th class="px-3 py-2 text-right">消費税</th>
-          <th class="px-3 py-2 text-right">税込</th>
-          <th class="px-3 py-2 text-center">区分</th>
-          <th class="px-3 py-2 text-center">回収状況</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.length === 0 ? `<tr><td colspan="9" class="px-3 py-8 text-center text-ink-300">この月の売上はありません</td></tr>` : rows.map(r => `
-        <tr class="border-b hover:bg-brand-light/40">
-          <td class="px-3 py-2">${jd(r.o.delivered)}</td>
-          <td class="px-3 py-2 font-mono text-xs">${r.o.no}</td>
-          <td class="px-3 py-2 font-bold">${r.c.name}</td>
-          <td class="px-3 py-2">${r.o.title}</td>
-          <td class="px-3 py-2 text-right">${yen(orderSubtotal(r.o))}</td>
-          <td class="px-3 py-2 text-right text-ink-500">${yen(orderTax(r.o))}</td>
-          <td class="px-3 py-2 text-right font-bold">${yen(orderTotal(r.o))}</td>
-          <td class="px-3 py-2 text-center"><span class="text-xs font-bold ${r.c.pay==='現金' ? 'text-ok-dark' : 'text-blue-700'}">${r.c.pay}</span></td>
-          <td class="px-3 py-2 text-center text-xs">${stBadge(r.payst)}</td>
-        </tr>`).join('')}
-      </tbody>
-      ${rows.length ? `<tfoot class="bg-gray-50 font-black">
-        <tr>
-          <td colspan="4" class="px-3 py-2 text-right">月計</td>
-          <td class="px-3 py-2 text-right">${yen(rows.reduce((s,r)=>s+orderSubtotal(r.o),0))}</td>
-          <td class="px-3 py-2 text-right">${yen(rows.reduce((s,r)=>s+orderTax(r.o),0))}</td>
-          <td class="px-3 py-2 text-right">${yen(sumAll)}</td>
-          <td colspan="2"></td>
-        </tr>
-      </tfoot>` : ''}
-    </table>
-  </div>
-
-  <h3 class="font-black mb-2">顧客別 売掛残高（未入金の請求）</h3>
-  <div class="bg-white rounded-lg shadow overflow-x-auto max-w-xl">
-    <table class="w-full text-sm">
-      <thead class="bg-gray-100 text-xs text-ink-500">
-        <tr><th class="px-3 py-2 text-left">顧客</th><th class="px-3 py-2 text-left">締め条件</th><th class="px-3 py-2 text-right">売掛残</th></tr>
-      </thead>
-      <tbody>
-        ${Object.keys(zan).length === 0 ? `<tr><td colspan="3" class="px-3 py-6 text-center text-ink-300">売掛残はありません</td></tr>` : Object.entries(zan).map(([cid, amt]) => `
-        <tr class="border-b">
-          <td class="px-3 py-2 font-bold">${custName(cid)}</td>
-          <td class="px-3 py-2 text-xs text-ink-500">${CUSTOMERS[cid].closing}</td>
-          <td class="px-3 py-2 text-right font-black text-red-600">${yen(amt)}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>`;
-}
-
-// ================== 画面: 納品書 ==================
-const deliveryState = { selected: 'D-260803-01' };
-function renderDelivery() {
-  const list = DELIVERY_NOTES.slice().sort((a,b) => b.date.localeCompare(a.date));
-  const sel = DELIVERY_NOTES.find(d => d.id === deliveryState.selected) || list[0];
-  const o = sel ? orderOf(sel.order) : null;
-  return `
-  <h2 class="text-xl font-black mb-4">納品書</h2>
-  <div class="grid lg:grid-cols-[380px_1fr] gap-5">
-    <div>
-      <div class="text-xs text-ink-500 font-bold mb-2">納品書一覧（納品済の受注から自動作成）</div>
-      <div class="bg-white rounded-lg shadow divide-y max-h-[70vh] overflow-y-auto">
-        ${list.map(d => { const od = orderOf(d.order); return `
-        <button class="w-full text-left px-4 py-3 hover:bg-brand-light/50 ${d.id===sel.id ? 'bg-brand-light border-l-4 border-brand' : ''}" onclick="deliveryState.selected='${d.id}';render()">
-          <div class="flex justify-between items-center">
-            <span class="font-mono text-xs text-ink-500">${d.id}</span>
-            <span class="text-xs">${stBadge(d.status)}</span>
-          </div>
-          <div class="font-bold text-sm mt-0.5">${custName(od.cust)}</div>
-          <div class="text-xs text-ink-500">${od.title}｜納品 ${jd(d.date)}｜${yen(orderTotal(od))}</div>
-        </button>`; }).join('')}
-      </div>
-    </div>
-
-    <div>
-      <div class="flex gap-2 mb-3">
-        <button class="bg-brand text-white font-bold px-4 py-2 rounded shadow hover:bg-brand-dark" onclick="printDoc('#delivery-doc')">🖨 印刷 / PDF</button>
-        ${sel.status === '未発行' ? `<button class="bg-ok text-white font-bold px-4 py-2 rounded shadow hover:bg-ok-dark" onclick="DELIVERY_NOTES.find(d=>d.id==='${sel.id}').status='発行済';toast('${sel.id} を発行済にしました（時系列記録にも自動追記）');render()">発行済にする</button>` : `<span class="text-sm text-ok-dark font-bold self-center">✓ 発行済</span>`}
-      </div>
-      <div id="delivery-doc" class="a4doc mx-auto">
-        <div class="doc-title mb-6">納　品　書</div>
-        <div class="flex justify-between items-start mb-6">
-          <div>
-            <div class="text-lg font-bold border-b-2 border-ink-900 pb-1 pr-10">${custName(o.cust)}　御中</div>
-            <div class="text-xs mt-3 text-ink-500">下記の通り納品いたしました。</div>
-          </div>
-          <div class="text-xs text-right leading-5">
-            <div>納品書No: ${sel.id}</div>
-            <div>納品日: ${jd(sel.date)}</div>
-            <div>受注No: ${o.no}</div>
-          </div>
-        </div>
-        <table class="doc-table mb-4">
-          <thead><tr><th class="w-1/2">品名</th><th>数量</th><th>単位</th><th>単価</th><th>金額</th></tr></thead>
-          <tbody>
-            ${o.items.map(i => `<tr>
-              <td>${i.name}</td><td class="text-right">${i.qty.toLocaleString()}</td><td class="text-center">${i.unit}</td>
-              <td class="text-right">${yen(i.price)}</td><td class="text-right">${yen(i.qty * i.price)}</td>
-            </tr>`).join('')}
-            ${Array.from({length: Math.max(0, 5 - o.items.length)}).map(() => `<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`).join('')}
-          </tbody>
-        </table>
-        <div class="flex justify-end mb-8">
-          <table class="w-64 doc-table">
-            <tr><td class="bg-gray-100 font-bold">小計</td><td class="text-right">${yen(orderSubtotal(o))}</td></tr>
-            <tr><td class="bg-gray-100 font-bold">消費税(10%)</td><td class="text-right">${yen(orderTax(o))}</td></tr>
-            <tr><td class="bg-gray-100 font-black">合計</td><td class="text-right font-black">${yen(orderTotal(o))}</td></tr>
-          </table>
-        </div>
-        <div class="flex justify-between items-end">
-          <div class="text-xs text-ink-500 border rounded p-3 w-64 h-20">備考</div>
-          ${companyBlock()}
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ================== 画面: 請求書 ==================
-const invoiceState = { selected: 'INV-2608-001', showNew: false };
-function renderInvoice() {
-  const list = INVOICES.slice().reverse();
-  const sel = INVOICES.find(v => v.id === invoiceState.selected) || list[0];
-  const selOrders = sel.orders.map(orderOf).filter(Boolean);
-  const subtotal = selOrders.reduce((s,o) => s + orderSubtotal(o), 0);
-  const tax = selOrders.reduce((s,o) => s + orderTax(o), 0);
-  const total = invAmount(sel);
-
-  return `
-  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-    <h2 class="text-xl font-black">請求書</h2>
-    <button class="bg-brand text-white font-bold px-4 py-2 rounded shadow hover:bg-brand-dark" onclick="invoiceState.showNew=!invoiceState.showNew;render()">＋ 月締め請求書を作成</button>
-  </div>
-
-  ${invoiceState.showNew ? `
-  <div class="bg-white border-2 border-brand rounded-lg p-4 mb-4 flex flex-wrap items-end gap-3">
-    <div><div class="text-xs font-bold text-ink-500 mb-1">顧客（掛のお客様）</div>
-      <select id="new-inv-cust" class="border rounded px-3 py-2 bg-white">
-        ${Object.entries(CUSTOMERS).filter(([,c]) => c.pay==='掛').map(([id,c]) => `<option value="${id}">${c.name}</option>`).join('')}
-      </select></div>
-    <div><div class="text-xs font-bold text-ink-500 mb-1">対象月</div>
-      <select id="new-inv-month" class="border rounded px-3 py-2 bg-white">
-        <option value="2026-07">2026年7月分</option><option value="2026-08">2026年8月分</option>
-      </select></div>
-    <button class="bg-ok text-white font-bold px-4 py-2 rounded" onclick="createMonthlyInvoice()">この月の納品分をまとめて作成</button>
-    <div class="text-xs text-ink-500">→ 対象月に納品した受注が自動で明細に入ります</div>
-  </div>` : ''}
-
-  <div class="grid lg:grid-cols-[400px_1fr] gap-5">
-    <div>
-      <div class="text-xs text-ink-500 font-bold mb-2">請求書一覧</div>
-      <div class="bg-white rounded-lg shadow divide-y max-h-[70vh] overflow-y-auto">
-        ${list.map(v => `
-        <button class="w-full text-left px-4 py-3 hover:bg-brand-light/50 ${v.id===sel.id ? 'bg-brand-light border-l-4 border-brand' : ''}" onclick="invoiceState.selected='${v.id}';render()">
-          <div class="flex justify-between items-center">
-            <span class="font-mono text-xs text-ink-500">${v.id}</span>
-            <span class="text-xs">${stBadge(v.status)}</span>
-          </div>
-          <div class="font-bold text-sm mt-0.5">${custName(v.cust)}
-            <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold ${v.type==='月締め' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${v.type}</span></div>
-          <div class="text-xs text-ink-500">${v.month ? v.month.replace('-','年')+'月分' : (orderOf(v.orders[0])?.title || '')}｜${yen(invAmount(v))}｜期限 ${jd(v.due)}</div>
-        </button>`).join('')}
-      </div>
-    </div>
-
-    <div>
-      <div class="flex gap-2 mb-3 flex-wrap">
-        <button class="bg-brand text-white font-bold px-4 py-2 rounded shadow hover:bg-brand-dark" onclick="printDoc('#invoice-doc')">🖨 印刷 / PDF</button>
-        ${sel.status === '未発行' ? `<button class="bg-ok text-white font-bold px-4 py-2 rounded shadow" onclick="const v=INVOICES.find(x=>x.id==='${sel.id}');v.status='発行済';v.issued=TODAY;toast('${sel.id} を発行しました');render()">発行する</button>` : ''}
-        ${(sel.status === '発行済' || sel.status === '入金待ち') ? `<button class="bg-ok text-white font-bold px-4 py-2 rounded shadow" onclick="const v=INVOICES.find(x=>x.id==='${sel.id}');v.status='入金済';v.paidDate=TODAY;toast('入金を記録しました → 帳簿・時系列にも自動反映');render()">入金を記録</button>` : ''}
-        ${sel.status === '入金済' ? `<span class="text-sm text-ok-dark font-bold self-center">✓ ${jd(sel.paidDate)} 入金済</span>` : ''}
-      </div>
-      <div id="invoice-doc" class="a4doc mx-auto">
-        <div class="doc-title mb-6">御　請　求　書</div>
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <div class="text-lg font-bold border-b-2 border-ink-900 pb-1 pr-10">${custName(sel.cust)}　御中</div>
-            <div class="text-xs mt-3 text-ink-500">毎度ありがとうございます。下記の通りご請求申し上げます。</div>
-            <div class="mt-4 bg-gray-100 border-2 border-ink-900 px-5 py-3 inline-block">
-              <span class="text-xs font-bold mr-3">御請求金額</span>
-              <span class="text-2xl font-black">${yen(total)}</span><span class="text-xs ml-1">（税込）</span>
-            </div>
-          </div>
-          <div class="text-xs text-right leading-5">
-            <div>請求書No: ${sel.id}</div>
-            <div>発行日: ${jd(sel.issued || TODAY)}${sel.issued ? '' : '（未発行・プレビュー）'}</div>
-            ${sel.month ? `<div>対象: ${sel.month.replace('-','年')}月分（月末締め）</div>` : ''}
-            <div class="font-bold">お支払期限: ${jd(sel.due)}</div>
-          </div>
-        </div>
-        <table class="doc-table mb-4">
-          <thead><tr><th>納品日</th><th class="w-1/2">品名</th><th>数量</th><th>金額（税抜）</th></tr></thead>
-          <tbody>
-            ${sel.fixedAmount ? `<tr><td class="text-center">—</td><td>${sel.note || '前月分ご請求'}</td><td class="text-right">1式</td><td class="text-right">${yen(Math.round(sel.fixedAmount/1.1))}</td></tr>`
-            : selOrders.flatMap(o => o.items.map((i, idx) => `
-              <tr>
-                <td class="text-center">${idx===0 ? jd(o.delivered) : ''}</td>
-                <td>${i.name}</td>
-                <td class="text-right">${i.qty.toLocaleString()} ${i.unit}</td>
-                <td class="text-right">${yen(i.qty*i.price)}</td>
-              </tr>`)).join('')}
-            ${Array.from({length: Math.max(0, 6 - (sel.fixedAmount ? 1 : selOrders.reduce((s,o)=>s+o.items.length,0)))}).map(() => `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('')}
-          </tbody>
-        </table>
-        <div class="flex justify-end mb-6">
-          <table class="w-72 doc-table">
-            <tr><td class="bg-gray-100 font-bold">小計（10%対象）</td><td class="text-right">${yen(sel.fixedAmount ? Math.round(sel.fixedAmount/1.1) : subtotal)}</td></tr>
-            <tr><td class="bg-gray-100 font-bold">消費税（10%）</td><td class="text-right">${yen(sel.fixedAmount ? sel.fixedAmount - Math.round(sel.fixedAmount/1.1) : tax)}</td></tr>
-            <tr><td class="bg-gray-100 font-black">合計</td><td class="text-right font-black">${yen(total)}</td></tr>
-          </table>
-        </div>
-        <div class="flex justify-between items-end">
-          <div class="text-xs border rounded p-3 w-80 leading-5">
-            <div class="font-bold mb-1">お振込先</div>
-            <div>${COMPANY.bank1}</div>
-            <div>${COMPANY.bank2}</div>
-            <div>${COMPANY.holder}</div>
-            <div class="text-ink-500 mt-1">※恐れ入りますが振込手数料はご負担願います</div>
-          </div>
-          ${companyBlock()}
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
-function createMonthlyInvoice() {
-  const cust = $('#new-inv-cust').value;
-  const month = $('#new-inv-month').value;
-  const targets = ORDERS.filter(o => o.cust === cust && o.delivered && o.delivered.startsWith(month) && !INVOICES.some(v => v.orders.includes(o.no)));
-  if (targets.length === 0) { toast('対象月に未請求の納品がありません'); return; }
-  const id = 'INV-NEW-' + String(INVOICES.length + 1).padStart(3, '0');
-  INVOICES.push({ id, type:'月締め', cust, month, orders: targets.map(t => t.no), issued: null, due: month === '2026-07' ? '2026-08-31' : '2026-09-30', status:'未発行', paidDate: null });
-  invoiceState.selected = id;
-  invoiceState.showNew = false;
-  toast(`${custName(cust)} の${month.replace('-','年')}月分請求書を作成（${targets.length}件をまとめました）`);
-  render();
-}
-
-// ================== 画面: 領収書 ==================
-const receiptState = { selected: 'R-260801-01' };
-function renderReceipt() {
-  const list = RECEIPTS.slice().sort((a,b) => b.date.localeCompare(a.date));
-  const sel = RECEIPTS.find(r => r.id === receiptState.selected) || list[0];
-  const needStamp = sel.amount >= 50000 && sel.method === '現金';
-  return `
-  <h2 class="text-xl font-black mb-1">領収書</h2>
-  <div class="text-xs text-ink-500 mb-4">現金のお客様は納品時に自動作成。振込のお客様は入金記録時に「発行する」を選んだ場合のみ作成（案）。</div>
-  <div class="grid lg:grid-cols-[380px_1fr] gap-5">
-    <div>
-      <div class="bg-white rounded-lg shadow divide-y max-h-[70vh] overflow-y-auto">
-        ${list.map(r => `
-        <button class="w-full text-left px-4 py-3 hover:bg-brand-light/50 ${r.id===sel.id ? 'bg-brand-light border-l-4 border-brand' : ''}" onclick="receiptState.selected='${r.id}';render()">
-          <div class="flex justify-between items-center">
-            <span class="font-mono text-xs text-ink-500">${r.id}</span>
-            <span class="text-xs font-bold ${r.method==='現金' ? 'text-ok-dark' : 'text-blue-700'}">${r.method}</span>
-          </div>
-          <div class="font-bold text-sm mt-0.5">${custName(r.cust)}</div>
-          <div class="text-xs text-ink-500">${jd(r.date)}｜${yen(r.amount)}</div>
-        </button>`).join('')}
-      </div>
-    </div>
-
-    <div>
-      <div class="flex gap-2 mb-3">
-        <button class="bg-brand text-white font-bold px-4 py-2 rounded shadow hover:bg-brand-dark" onclick="printDoc('#receipt-doc')">🖨 印刷 / PDF</button>
-      </div>
-      <div id="receipt-doc" class="receipt-doc mx-auto">
-        <div class="flex justify-between items-start">
-          <div class="text-xs text-ink-500">No. ${sel.id}</div>
-          <div class="text-xs">発行日: ${jd(sel.date)}</div>
-        </div>
-        <div class="doc-title my-5">領　収　書</div>
-        <div class="text-lg font-bold border-b-2 border-ink-900 pb-1 mb-6 w-3/4">${custName(sel.cust)}　様</div>
-        <div class="bg-gray-100 border-2 border-ink-900 text-center py-4 mb-5">
-          <span class="text-3xl font-black tracking-wider">${yen(sel.amount)}−</span>
-          <span class="text-xs ml-2">（税込）</span>
-        </div>
-        <div class="text-sm mb-1">但し　<span class="border-b border-ink-500 px-2">${sel.tadashi}</span></div>
-        <div class="text-sm mb-6">上記正に領収いたしました（${sel.method}）</div>
-        <div class="text-xs text-ink-500 mb-6">内訳：税抜金額 ${yen(Math.round(sel.amount/1.1))} ／ 消費税(10%) ${yen(sel.amount - Math.round(sel.amount/1.1))}</div>
-        <div class="flex justify-between items-end">
-          ${needStamp
-            ? `<div class="border-2 border-dashed border-ink-300 text-ink-300 text-[10px] w-20 h-20 flex items-center justify-center text-center">収入印紙<br>200円</div>`
-            : `<div class="text-[10px] text-ink-300">${sel.method==='振込' ? '※銀行振込のため収入印紙は不要です' : '※5万円未満のため収入印紙は不要です'}</div>`}
-          ${companyBlock()}
-        </div>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ================== 画面: 時系列記録表 ==================
-const timelineState = { selected: '260706-001' };
-function orderEvents(o) {
-  const ev = [];
-  const c = CUSTOMERS[o.cust];
-  ev.push({ d: o.date, label: '受注', desc: `${c.name}より受注（${o.title}）`, color: 'bg-red-500' });
-  if (o.status !== '受注') ev.push({ d: o.date, label: '製作開始', desc: '製版・印刷工程へ', color: 'bg-amber-500' });
-  if (o.delivered) {
-    ev.push({ d: o.delivered, label: '納品', desc: '納品完了・売上帳へ自動記帳', color: 'bg-ok' });
-    const dn = DELIVERY_NOTES.find(d => d.order === o.no);
-    if (dn && dn.status === '発行済') ev.push({ d: dn.date, label: '納品書発行', desc: `納品書 ${dn.id}`, color: 'bg-brand' });
-  }
-  const inv = INVOICES.find(v => v.orders.includes(o.no));
-  if (inv && inv.issued) ev.push({ d: inv.issued, label: '請求書発行', desc: `${inv.id}（${inv.type}${inv.month ? '・' + inv.month.replace('-','年') + '月分' : ''}）`, color: 'bg-purple-500' });
-  if (inv && inv.paidDate) ev.push({ d: inv.paidDate, label: '入金', desc: `${yen(invAmount(inv))} 入金確認・消込`, color: 'bg-ok-dark' });
-  const rec = RECEIPTS.find(r => r.order === o.no || (inv && r.invoice === inv.id));
-  if (rec) ev.push({ d: rec.date, label: '領収書発行', desc: `領収書 ${rec.id}（${rec.method}）`, color: 'bg-blue-500' });
-  return ev.sort((a,b) => a.d.localeCompare(b.d));
-}
-function stageDates(o) {
-  const inv = INVOICES.find(v => v.orders.includes(o.no));
-  const rec = RECEIPTS.find(r => r.order === o.no || (inv && r.invoice === inv.id));
-  const cash = CUSTOMERS[o.cust].pay === '現金';
-  return {
-    受注: o.date,
-    納品: o.delivered,
-    請求: inv ? inv.issued : (cash ? (o.delivered ? '現金' : null) : null),
-    入金: inv?.paidDate || (cash && rec ? rec.date : null),
-    領収: rec ? rec.date : null,
-  };
-}
-function renderTimeline() {
-  const sel = orderOf(timelineState.selected) || ORDERS[0];
-  const evs = orderEvents(sel);
-  const cell = (v, danger) => v === null || v === undefined
-    ? `<td class="px-2 py-2 text-center ${danger ? 'bg-red-50 text-red-500 font-bold' : 'text-ink-300'}">${danger ? '未' : '—'}</td>`
-    : `<td class="px-2 py-2 text-center">${v === '現金' ? '<span class="text-xs font-bold text-ok-dark">現金</span>' : jd(v)}</td>`;
-
-  return `
-  <h2 class="text-xl font-black mb-1">時系列記録表</h2>
-  <div class="text-xs text-ink-500 mb-4">全受注の「受注 → 納品 → 請求 → 入金 → 領収」を一覧で確認。<span class="text-red-500 font-bold">赤の「未」</span>＝止まっている工程。行クリックで詳細タイムライン。</div>
-
-  <div class="grid lg:grid-cols-[1fr_400px] gap-5">
-    <div class="bg-white rounded-lg shadow overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-ink-900 text-white text-xs">
-          <tr>
-            <th class="px-2 py-2 text-left">受注No / 顧客 / 品名</th>
-            <th class="px-2 py-2">受注</th><th class="px-2 py-2">納品</th>
-            <th class="px-2 py-2">請求</th><th class="px-2 py-2">入金</th><th class="px-2 py-2">領収書</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${ORDERS.slice().sort((a,b) => b.date.localeCompare(a.date)).map(o => {
-            const s = stageDates(o);
-            const cash = CUSTOMERS[o.cust].pay === '現金';
-            const delivered = !!o.delivered;
-            return `
-            <tr class="border-b cursor-pointer hover:bg-brand-light/40 ${o.no===sel.no ? 'bg-brand-light' : ''}" onclick="timelineState.selected='${o.no}';render()">
-              <td class="px-2 py-2">
-                <div class="font-mono text-[10px] text-ink-500">${o.no} ${stBadge(o.status)}</div>
-                <div class="font-bold text-xs">${custName(o.cust)}</div>
-                <div class="text-[11px] text-ink-500">${o.title}</div>
-              </td>
-              ${cell(s.受注)}
-              ${cell(s.納品, false)}
-              ${cell(s.請求, delivered && !s.請求)}
-              ${cell(s.入金, delivered && !!s.請求 && s.請求 !== '現金' && !s.入金)}
-              ${cell(s.領収, false)}
-            </tr>`; }).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="bg-white rounded-lg shadow p-5 h-fit sticky top-28">
-      <div class="font-black mb-1">${sel.title}</div>
-      <div class="text-xs text-ink-500 mb-4">${custName(sel.cust)}｜${sel.no}｜${yen(orderTotal(sel))}（税込）</div>
-      <div class="relative pl-2">
-        <div class="tl-line"></div>
-        ${evs.map(e => `
-        <div class="flex gap-3 mb-4 relative">
-          <div class="tl-dot ${e.color}"></div>
-          <div>
-            <div class="text-xs text-ink-500">${jd(e.d)}</div>
-            <div class="font-bold text-sm">${e.label}</div>
-            <div class="text-xs text-ink-500">${e.desc}</div>
-          </div>
-        </div>`).join('')}
-        ${(() => {
-          const s = stageDates(sel);
-          if (sel.delivered && !s.請求) return `<div class="flex gap-3 relative"><div class="tl-dot bg-red-500 animate-pulse"></div><div><div class="font-bold text-sm text-red-600">⚠ 請求書が未発行です</div><div class="text-xs text-ink-500">請求書タブから発行できます</div></div></div>`;
-          if (s.請求 && s.請求 !== '現金' && !s.入金) return `<div class="flex gap-3 relative"><div class="tl-dot bg-amber-500 animate-pulse"></div><div><div class="font-bold text-sm text-amber-600">入金待ち</div><div class="text-xs text-ink-500">期限が近づくと通知（案）</div></div></div>`;
-          if (!sel.delivered) return `<div class="flex gap-3 relative"><div class="tl-dot bg-gray-300"></div><div><div class="font-bold text-sm text-ink-500">製作中…</div></div></div>`;
-          return `<div class="flex gap-3 relative"><div class="tl-dot bg-ok"></div><div><div class="font-bold text-sm text-ok-dark">✓ この案件は完結しています</div></div></div>`;
-        })()}
-      </div>
-    </div>
-  </div>`;
-}
-
-// ================== ルーター ==================
-let currentTab = 'flow';
-const SCREENS = { flow: renderFlow, ledger: renderLedger, delivery: renderDelivery, invoice: renderInvoice, receipt: renderReceipt, timeline: renderTimeline };
-
-function render() {
-  $('#main').innerHTML = SCREENS[currentTab]();
-  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
-  const lm = $('#ledger-month');
-  if (lm) lm.onchange = () => { ledgerState.month = lm.value; render(); };
-}
-$$('.tab-btn').forEach(b => b.onclick = () => { currentTab = b.dataset.tab; render(); window.scrollTo(0,0); });
-render();
-</script>
+<script src="app.js"></script>
+<script src="v4.js"></script>
 </body>
 </html>
