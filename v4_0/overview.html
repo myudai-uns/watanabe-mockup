@@ -9,34 +9,25 @@
   :root { --brand:#E87825; --brand-dark:#B85D16; --ink:#1A1A1A; --gray:#707070; --light:#FFF4EC; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Noto Sans JP',sans-serif; color:var(--ink); background:#F3F4F6; line-height:1.8; font-size:15px; }
-  .wrap { max-width:900px; margin:0 auto; padding:40px 24px 80px; }
+  .wrap { max-width:860px; margin:0 auto; padding:40px 24px 80px; }
   header.doc { background:var(--ink); color:white; padding:28px 24px; }
-  header.doc .inner { max-width:900px; margin:0 auto; }
+  header.doc .inner { max-width:860px; margin:0 auto; }
   header.doc h1 { font-size:22px; font-weight:900; }
   header.doc .sub { color:#B5B5B5; font-size:13px; margin-top:6px; }
-  header.doc .badge { display:inline-block; background:rgba(234,179,8,.2); color:#FDE047; border:1px solid rgba(234,179,8,.4); font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; margin-top:10px; }
-  h2 { font-size:19px; font-weight:900; border-left:6px solid var(--brand); padding-left:12px; margin:48px 0 16px; }
-  h3 { font-size:15px; font-weight:700; margin:20px 0 8px; color:var(--brand-dark); }
+  h2 { font-size:18px; font-weight:900; border-left:6px solid var(--brand); padding-left:12px; margin:40px 0 12px; }
   p { margin-bottom:10px; }
-  .card { background:white; border:1px solid #E5E7EB; border-radius:8px; padding:20px 24px; margin-bottom:16px; }
-  .basis { background:var(--light); border:1px solid #F3D5BC; border-radius:6px; padding:12px 16px; font-size:13px; margin:10px 0; }
+  .card { background:white; border:1px solid #E5E7EB; border-radius:8px; padding:18px 22px; margin-bottom:14px; }
+  .basis { color:var(--gray); font-size:12.5px; margin-top:8px; }
   .basis b { color:var(--brand-dark); }
   table { width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; background:white; }
   th { background:#1A1A1A; color:white; padding:8px 10px; text-align:left; font-weight:700; }
   td { border:1px solid #D1D5DB; padding:8px 10px; vertical-align:top; }
-  ul { padding-left:22px; margin-bottom:10px; }
+  ul { padding-left:22px; margin-bottom:6px; }
   li { margin-bottom:4px; }
   .flow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:13px; font-weight:700; margin:12px 0; }
   .flow span.step { background:white; border:2px solid var(--brand); border-radius:6px; padding:6px 12px; }
   .flow span.ar { color:#B5B5B5; }
-  .warn { background:#FEF9C3; border:1px solid #FDE047; border-radius:6px; padding:12px 16px; font-size:13px; margin:12px 0; }
-  .tag { display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:10px; margin-right:4px; }
-  .tag.p3 { background:#4B5563; color:white; }
-  .tag.new { background:var(--brand); color:white; }
-  .tag.done { background:#E8F5EE; color:#2A7A44; border:1px solid #A7D8BC; }
-  .toc { background:white; border:1px solid #E5E7EB; border-radius:8px; padding:16px 24px; font-size:14px; }
-  .toc a { color:var(--brand-dark); text-decoration:none; font-weight:700; }
-  .toc ol { padding-left:22px; }
+  .note { background:var(--light); border:1px solid #F3D5BC; border-radius:6px; padding:10px 14px; font-size:13px; margin:10px 0; }
   footer { text-align:center; color:#B5B5B5; font-size:12px; margin-top:60px; }
   @media print { body{background:white} .card{border:none;padding:0 0 16px} header.doc{background:white;color:var(--ink)} }
 </style>
@@ -45,181 +36,106 @@
 <header class="doc">
   <div class="inner">
     <h1>業務管理システム v4.0 機能概要</h1>
-    <div class="sub">帳簿・納品書・請求書・領収書・時系列記録表 ｜ 有限会社 渡辺謄写堂 御中 ｜ 作成: Unsee 三上 ｜ 2026-08-04</div>
-    <div class="badge">議事録・合意済み要件に基づく概要 ／ 仕様は打ち合わせで変更前提</div>
+    <div class="sub">帳簿・納品書・請求書・領収書・時系列記録表 ｜ 有限会社 渡辺謄写堂 御中 ｜ Unsee 三上 ｜ 2026-08-04</div>
   </div>
 </header>
 <div class="wrap">
 
-<div class="toc">
-  <b>本書の位置づけ</b>
-  <p style="font-size:13px; margin-top:6px;">機能要件一覧 v1.0（2026-04-28）で <b>Phase 3（7〜8月実装予定）</b> と合意した「帳簿・納品書・請求書・領収書」（機能No. 5.3〜5.7）を画面単位に分解し、キックオフ以降の議事録での渡辺様のご要望と紐づけて整理したものです。時系列記録表のみ、v4.0で新たにご提案する画面です。</p>
-  <ol>
-    <li><a href="#s1">帳簿作成・編集</a> / <a href="#s2">帳簿一覧</a></li>
-    <li><a href="#s3">納品書作成・編集</a> / <a href="#s4">納品書一覧</a></li>
-    <li><a href="#s5">請求書作成・編集</a> / <a href="#s6">請求書一覧</a></li>
-    <li><a href="#s7">時系列記録表</a></li>
-    <li><a href="#s8">領収書作成・編集</a></li>
-  </ol>
-</div>
-
-<h2 style="margin-top:32px;">根拠資料</h2>
-<div class="card">
-  <table>
-    <tr><th style="width:180px;">資料</th><th>本書で参照している内容</th></tr>
-    <tr><td>4/21 キックオフ議事録</td><td>現行業務フロー、帳簿（4-4）・納品書/請求書（4-5）・領収書（4-3）の現状と要望、共通方針（5-1）、追加機能候補（5-3）</td></tr>
-    <tr><td>4/28 機能要件一覧 v1.0</td><td>5.3 納品書発行 / 5.4 請求書発行 / 5.5 領収書発行 / 5.6 帳簿（売上管理）/ 5.7 伝票・入金状況管理 … いずれも Phase 3</td></tr>
-    <tr><td>5/14 モック確認議事録</td><td>帳票表記ルール（2穴・野丁式等）、値引き名目、振込先・登録番号の扱い</td></tr>
-    <tr><td>5/27 画面・機能確認議事録</td><td>ステータス5項目への整理、顧客累計（税抜/消費税/税込）、変更履歴、「納品書・請求書はPhase 2/3で協議」</td></tr>
-  </table>
-  <div class="warn">⚠ 「時系列記録表」は過去議事録に直接の記載はありません。キックオフで挙がった「未伝票・未入金のリマインド」「変更履歴の自動記録」「伝票・入金状況管理」を1画面に束ねる形の<b>新規ご提案</b>として記載しています。</div>
-</div>
-
-<h2>全体像 — 1つの受注が最後までつながる</h2>
-<div class="card">
-  <p>キックオフ共通方針「<b>一度入力したデータは他帳票へ自動反映（二重三重入力を排除）</b>」に基づき、v4.0の帳票はすべて<b>受注データから自動生成</b>します。現行の「帳簿と納品書・請求書がほぼ同じ内容の二重記入」（4/21議事録 4-5）を解消するのが最大の目的です。</p>
+<div class="card" style="margin-top:8px;">
+  <p><b>方針：機能は増やしません。</b>v4.0でやることは次の3つだけです。</p>
+  <ul>
+    <li>受注データから納品書・請求書・領収書が<b>自動でできる</b>（転記・二重記入をなくす）</li>
+    <li>今まで通り<b>紙に印刷できる</b></li>
+    <li>「伝票出したか・お金もらったか」が<b>一目で見える</b></li>
+  </ul>
   <div class="flow">
-    <span class="step">受注（v3）</span><span class="ar">→</span>
-    <span class="step">納品 ＝ 納品書 自動作成</span><span class="ar">→</span>
-    <span class="step">帳簿へ自動記帳</span><span class="ar">→</span>
-    <span class="step">請求書（月締め／個別）</span><span class="ar">→</span>
+    <span class="step">受注（v3のまま）</span><span class="ar">→</span>
+    <span class="step">納品 → 納品書</span><span class="ar">→</span>
+    <span class="step">帳簿に自動記帳</span><span class="ar">→</span>
+    <span class="step">請求書</span><span class="ar">→</span>
     <span class="step">入金 → 領収書</span>
   </div>
-  <p style="font-size:13px; color:var(--gray);">紙運用のメリット（クリアファイル回覧・手渡し）を残すため、各帳票はすべて印刷／PDF出力に対応します（4/21議事録 5-2 UI方針）。</p>
+  <p class="basis">根拠：4/21キックオフ議事録（帳簿4-4・納品書/請求書4-5・領収書4-3）、4/28機能要件一覧v1.0のPhase 3（5.3〜5.7）。分析・リマインド・メール送付などの追加機能候補は<b>今回は入れません</b>（必要になったら次のフェーズで）。</p>
 </div>
 
-<h2 id="s1">1. 帳簿作成・編集 <span class="tag p3">Phase 3 (5.6)</span></h2>
+<h2>1. 帳簿作成・編集</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>売上帳への記帳を行う画面 — ただし<b>原則は自動</b>です。受注が「納品済み」になった瞬間にシステムが売上を記帳するため、日常業務で渡辺様が帳簿を「書く」作業はなくなります。この画面を使うのは例外時のみです。</p>
+  <p>帳簿は<b>自動で書かれる</b>ので、普段この画面で入力することはありません。使うのは2つだけ。</p>
   <ul>
-    <li><b>手動追加</b>: 受注管理を通らない売上（店頭の現金即売など）を直接1行追加</li>
-    <li><b>編集</b>: 自動記帳された行の金額訂正・品目メモ（使用紙・インク等の仕様メモ）の補記</li>
-    <li><b>反映範囲の選択</b>: 修正時に「帳簿のみ直す」か「受注データごと直す（納品書・請求書にも反映）」かを選択 — キックオフ決定事項「変更時は反映範囲を選択式」に対応</li>
+    <li>受注を通らない売上を1行だけ手で追加する</li>
+    <li>自動で書かれた行の金額・メモを直す</li>
   </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-4「記録項目: 日付、会社・個人名、品目、数量、金額、使用紙・インクなどの仕様メモ」／5-1「一度入力したデータは他帳票へ自動反映」「変更時は反映範囲を選択式（帳簿のみ／全体 等）」</div>
-  <h3>記帳項目（1行あたり）</h3>
-  <p style="font-size:13px;">納品日／受注No／顧客（会社・個人名）／品目／数量／税抜・消費税・税込／区分（掛・現金）／回収状況／仕様メモ</p>
+  <div class="basis"><b>議事録根拠:</b> 「帳簿と納品書・請求書がほぼ同じ内容で二重記入になっている」→ 記帳作業そのものを廃止（4/21 4-5、5-1 自動反映方針）</div>
 </div>
 
-<h2 id="s2">2. 帳簿一覧 <span class="tag p3">Phase 3 (5.6・5.7)</span></h2>
+<h2>2. 帳簿一覧</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>記帳された売上を「月別」「顧客別」「地域別」に見る画面。現状「1年分が紙ファイルで蓄積し、年次決算時に参照するのが大変」（4/21議事録）を置き換え、<b>2026年8月末の決算</b>から使える集計を目指します。</p>
-  <h3>主なビュー</h3>
+  <p>月を選ぶと、その月に納品した分の売上が一覧で出ます（日付・顧客・品名・金額・掛/現金・回収状況）。下に月計。それだけです。</p>
   <ul>
-    <li><b>月別売上帳</b>: 対象月を選ぶと納品ベースの売上一覧＋月計（税抜・消費税・税込）。当月売上・掛/現金内訳・未回収額のサマリー表示</li>
-    <li><b>顧客別</b>: お得意様は個別ページ（v3の顧客別履歴と連動。税抜累計・消費税累計・税込累計は5/27合意済みの項目）</li>
-    <li><b>地域別</b>: 亀谷・元町・東和・岩代・市街等での分類集計（正式な地域リストは先方共有待ち＝5/27対応事項No.11）</li>
-    <li><b>売掛状況</b>: 顧客ごとに「未請求」「請求済・未入金」を分けて表示（5.7 伝票・入金状況管理）</li>
-    <li><b>CSV出力</b>: 決算・税理士提出用の書き出し（8.2 受注データのCSV出力の帳簿版）</li>
+    <li>顧客ごとの過去分は、v3の顧客別履歴ページをそのまま使う（画面を増やさない）</li>
   </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-4「お得意様は個別ページ、それ以外は地域別に分類」「過去発注の呼び出しが最重要用途」「年次決算時に参照するのが大変」／5-3 追加機能候補「月次／エリア別／案件別の売上・原価・粗利分析」</div>
+  <div class="basis"><b>議事録根拠:</b> 記録項目「日付、会社・個人名、品目、数量、金額」（4/21 4-4）／「1年分が紙ファイルで、決算時に参照が大変」→ 月別で見られれば足りる</div>
 </div>
 
-<h2 id="s3">3. 納品書作成・編集 <span class="tag p3">Phase 3 (5.3)</span></h2>
+<h2>3. 納品書作成・編集</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>現行の「手書き3枚複写（控／納品書／請求書）」の納品書部分を置き換えます。受注を「納品済み」にすると納品書が<b>自動で下書き作成</b>され、内容確認 → 印刷 → 現物に同梱、が基本動線です。書く作業は originally 帳簿と二重記入だったため、転記そのものを廃止します。</p>
-  <h3>画面の動き</h3>
+  <p>受注を「納品済み」にすると納品書が自動でできます。開いて確認して印刷するだけ。</p>
   <ul>
-    <li>品名・用紙・数量・単価・金額は受注明細から自動転記（編集は受注側で行い、納品書へ反映）</li>
-    <li>備考欄のみ納品書上で自由編集</li>
-    <li>A4フォーマットに自社情報（社名・住所・TEL/FAX・適格請求書発行事業者 登録番号）を自動印字 — 印影・登録番号等は5/14議事録で「後日共有」→共有済みのものを使用</li>
-    <li>「発行済にする」で発行記録（誰がいつ発行したか）を自動保存 → 時系列記録表へ</li>
-    <li>印刷／PDF出力（3枚複写の「控」はシステム内に電子保存されるため不要に）</li>
+    <li>品名・数量・金額は受注から転記（直すときは受注側を直す）。手で書くのは備考だけ</li>
+    <li>控えはシステム内に残るので、3枚複写の「控」は不要に</li>
   </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-5「3枚複写（控／納品書／請求書）、手書き」「帳簿と記載内容がほぼ同じ → 二重記入になっている」／5.3「納品時に発行する納品書（PDF・印刷）」</div>
+  <div class="basis"><b>議事録根拠:</b> 手書き3枚複写の置き換え（4/21 4-5）、5.3 納品書発行（PDF・印刷）</div>
 </div>
 
-<h2 id="s4">4. 納品書一覧 <span class="tag p3">Phase 3 (5.3・5.7)</span></h2>
+<h2>4. 納品書一覧</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>発行済み・未発行の納品書を一覧管理する画面。現行運用の「伝票有無（×は後から要発行）」チェックをそのままステータスとして再現します。</p>
-  <h3>主な機能</h3>
-  <ul>
-    <li>納品済み案件が自動で並ぶ（納品日順）。<b>未発行＝赤表示</b>で「×」の出し忘れを防止</li>
-    <li>顧客名・期間・発行状況での絞り込み検索</li>
-    <li>一覧から1クリックでプレビュー → 印刷 ／ 該当受注へジャンプ</li>
-  </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-5「『伝票有無（×は後から要発行）』のステータスもここで管理」／5.7「『伝票出した/未発行』のチェック」／5-3「未伝票…のリマインド」</div>
+  <p>納品した案件が日付順に並び、<b>未発行のものだけ赤く</b>出ます。現行の「×（後から要発行）」チェックの置き換えです。</p>
+  <div class="basis"><b>議事録根拠:</b> 「伝票有無（×は後から要発行）のステータス管理」（4/21 4-5、要件5.7）</div>
 </div>
 
-<h2 id="s5">5. 請求書作成・編集 <span class="tag p3">Phase 3 (5.4)</span></h2>
+<h2>5. 請求書作成・編集</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>手書き3枚複写の請求書部分を置き換えます。作成方法は2通り（このうち月締めの運用詳細は<b>要すり合わせ</b>）。</p>
+  <p>未請求の納品分から選んで1枚にまとめるだけ。月末にまとめれば月締め請求、1件だけ選べば都度請求になります（方式の区別なし）。</p>
   <ul>
-    <li><b>個別請求</b>: 受注1件ごとに発行。納品と同時に請求する取引先向け</li>
-    <li><b>月締め請求</b>: 顧客と対象月を選ぶだけで、その月に納品した<b>未請求分が自動で1枚に集約</b>。掛のお得意様向け</li>
+    <li>明細・金額は受注から転記。振込先・登録番号は自動印字</li>
+    <li>「発行する」「入金を記録」の2ボタンで状態を進める</li>
   </ul>
-  <h3>画面の動き</h3>
-  <ul>
-    <li>御請求金額（税込）を大きく表示、明細は納品日・品名・金額（受注データから自動転記）</li>
-    <li>消費税欄は10%対象小計・消費税額を区分表示（インボイス対応）。登録番号・振込先（東邦銀行二本松支店ほか）・振込名義を自動印字 — 5/14議事録「振込先、振込名義は後日共有」→共有済み情報を使用</li>
-    <li>値引き表示は見積書と同ルール（通常非表示・必要時のみ／名目は「値引き」「広告料名目」「自由記載」＝5/14合意）を踏襲予定</li>
-    <li>「発行する」→ 発行日・支払期限を記録。「入金を記録」→ 入金消込、続けて領収書発行に進める</li>
-    <li>印刷／PDF出力（将来: メール送付＝5.4記載）</li>
-  </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-5（現行3枚複写）／5.4「請求書の発行（PDF・印刷・メール送付）」／4-2 見積書の振込先・登録番号関連の合意を流用</div>
-  <div class="warn">要すり合わせ: どの顧客が月締めか（締め日・支払サイト）、個別請求との使い分けルール。現行の顧客ごとの請求慣行をヒアリングの上で確定します。</div>
+  <div class="basis"><b>議事録根拠:</b> 手書き3枚複写の置き換え（4/21 4-5）、5.4 請求書発行。振込先・登録番号は5/14議事録で共有済みの情報を使用</div>
 </div>
 
-<h2 id="s6">6. 請求書一覧 <span class="tag p3">Phase 3 (5.4・5.7)</span></h2>
+<h2>6. 請求書一覧</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>請求書の状態（<b>未発行 → 発行済 → 入金済</b>）と支払期限を一覧管理し、「受取（金銭受領済みか）」の現行チェックを置き換えます。未入金の見落とし防止が主目的です。</p>
-  <h3>主な機能</h3>
-  <ul>
-    <li>ステータス・顧客・期間での絞り込み。未入金は金額つきで強調表示</li>
-    <li>支払期限超過の案件を赤表示（将来: Gmail・Googleカレンダー連携のリマインド＝キックオフ追加機能候補）</li>
-    <li>入金記録はこの一覧からも実行可能。入金済にすると帳簿・時系列記録表へ自動反映</li>
-  </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-5「『受取（金銭受領済みか）』のステータスもここで管理」／5.7「『入金済/未入金』のチェック」／5-3「未伝票・未入金のリマインド（Gmail・Googleカレンダー連携）」</div>
+  <p>請求書が「未発行 → 発行済 → 入金済」のどこにあるかの一覧。<b>未入金だけ赤く</b>出ます。現行の「受取（金銭受領済みか）」チェックの置き換えです。</p>
+  <div class="basis"><b>議事録根拠:</b> 「受取ステータスの管理」（4/21 4-5）、5.7 入金状況管理</div>
 </div>
 
-<h2 id="s7">7. 時系列記録表 <span class="tag new">v4.0 新規提案</span></h2>
+<h2>7. 時系列記録表</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>1件の受注について「いつ受注し、いつ刷り、いつ納品し、いつ請求し、いつ入金されたか」を1本の時間軸で確認する画面です。<b>各画面での操作が自動で記録される</b>ため、手で記録する作業はありません。</p>
-  <h3>主な機能</h3>
-  <ul>
-    <li><b>一覧（マトリクス）</b>: 全案件 × 「受注／納品／請求／入金／領収書」の日付一覧。止まっている工程は赤の「未」表示 —「あの仕事、請求まだだっけ？」に一目で回答</li>
-    <li><b>詳細タイムライン</b>: 行をクリックすると、その案件の受注 → 製作開始 → 完成 → 納品 → 納品書 → 請求書 → 入金 → 領収書を縦の時間軸で表示。次にやるべきこと（例:「請求書が未発行です」）を提示</li>
-    <li>「未完了のみ表示」絞り込み／顧客・品名検索</li>
-  </ul>
-  <div class="basis"><b>関連する合意事項:</b> 過去議事録に「時系列記録表」そのものの記載はありませんが、1.15「変更履歴の自動記録（いつ・誰が・何を）」、5/27ダッシュボード「直近の変更履歴」、5.7 伝票・入金状況管理、5-3「未伝票・未入金のリマインド」を1画面に統合する位置づけです。</div>
+  <p>案件ごとに「受注・納品・請求・入金・領収書」の日付が横に並ぶ表です。止まっている所は赤の「未」。行をクリックするとその案件の経過が縦に見えます。<b>全部自動記録で、入力は一切ありません。</b></p>
+  <div class="basis"><b>関連根拠:</b> 議事録に直接の記載はなし。「変更履歴の自動記録」（要件1.15）と「伝票・入金チェック」（5.7）を1画面で見えるようにしたもの。不要なら外せます</div>
 </div>
 
-<h2 id="s8">8. 領収書作成・編集 <span class="tag p3">Phase 3 (5.5・優先度最後)</span></h2>
+<h2>8. 領収書作成・編集</h2>
 <div class="card">
-  <h3>役割</h3>
-  <p>現行の「手書き2枚複写・現金手渡し時に発行」を置き換えます。キックオフで<b>優先度は最後</b>と合意済みのため、v4.0では最小構成です。</p>
-  <h3>画面の動き（案）</h3>
+  <p>現金のお客様に手渡す領収書を印刷する画面。金額・宛名は自動、手で書くのは<b>但し書きだけ</b>です。</p>
   <ul>
-    <li><b>現金のお客様</b>: 納品（＝現金受領）のタイミングで自動作成 → 印刷して手渡し</li>
-    <li><b>振込のお客様</b>: 請求書の入金記録時に「領収書も発行するか」を選択（希望時のみ）</li>
-    <li>金額・宛名は自動転記。<b>但し書きのみ編集可</b>（例:「メニュー表印刷代として」）</li>
-    <li>税抜・消費税の内訳を印字（インボイス対応）。5万円以上の現金受領時は収入印紙欄を自動表示、振込時は「印紙不要」注記</li>
-    <li>2枚複写の「控」はシステム内保存で代替。発行履歴は一覧・時系列記録表から参照</li>
+    <li>振込のお客様には、求められたときだけ発行</li>
   </ul>
-  <div class="basis"><b>議事録根拠:</b> 4-3「手書き2枚複写、現金手渡し時に発行」「電子版なし」「優先度は最後」／5.5「現金支払い時の領収書発行」／5-3「PDF自動生成（将来的に領収書も）」</div>
+  <div class="basis"><b>議事録根拠:</b> 「手書き2枚複写・現金手渡し時に発行」「優先度は最後」（4/21 4-3）→ 最小構成</div>
 </div>
 
-<h2>渡辺様への確認事項（次回打ち合わせ）</h2>
+<h2>渡辺様に確認したいこと</h2>
 <div class="card">
   <table>
-    <tr><th style="width:160px;">項目</th><th>確認したいこと</th></tr>
-    <tr><td>請求の締め運用</td><td>月締めのお客様はどこか。締め日（月末以外の有無）・支払サイト（翌月末等）</td></tr>
-    <tr><td>帳簿の分類</td><td>地域別分類の正式リスト（5/27対応事項No.11の続き）。決算時に税理士へ渡す形式</td></tr>
-    <tr><td>納品書の運用</td><td>納品書を付けない取引（口頭・常連）があるか。控えの紙保管を残すか</td></tr>
-    <tr><td>領収書</td><td>発行タイミング（納品時自動でよいか）。但し書きの定型パターン</td></tr>
-    <tr><td>過去データ</td><td>現行の紙帳簿をどこまで遡って取り込むか（機能要件8.5では直近1年分を想定）</td></tr>
+    <tr><th style="width:150px;">項目</th><th>確認内容</th></tr>
+    <tr><td>請求のまとめ方</td><td>月末にまとめて請求するお客様はどこか（締め日・支払期限の慣行）</td></tr>
+    <tr><td>納品書</td><td>納品書を付けない取引があるか</td></tr>
+    <tr><td>領収書</td><td>但し書きのよく使う文言</td></tr>
   </table>
-  <p style="font-size:13px; color:var(--gray);">動作イメージは <a href="./index.html" style="color:var(--brand-dark); font-weight:700;">v4.0 機能モック</a>（v3に5画面を追加した状態）で確認できます。</p>
+  <p style="font-size:13px; color:var(--gray);">動作イメージ: <a href="./index.html" style="color:var(--brand-dark); font-weight:700;">v4.0 モック</a>（v3に5画面を追加した状態）</p>
 </div>
 
-<footer>渡辺謄写堂 業務管理システム v4.0 機能概要 ｜ Unsee ｜ 2026-08-04 ｜ 本書は要件確定前の概要であり、打ち合わせにより変更されます</footer>
+<footer>渡辺謄写堂 業務管理システム v4.0 機能概要 ｜ Unsee ｜ 2026-08-04 ｜ 要件確定前の概要のため打ち合わせにより変更されます</footer>
 </div>
 </body>
 </html>

@@ -152,26 +152,8 @@ Screens.ledger = {
     const month = this.month;
     const rows = v4LedgerOrders(month).map(({ o, dd }) => ({ o, dd, b: v4Billing(o) }));
     const sumAll  = rows.reduce((s, r) => s + (r.o.total_amount || 0), 0);
-    const sumCash = rows.filter(r => r.b.cash).reduce((s, r) => s + (r.o.total_amount || 0), 0);
-    const sumKake = sumAll - sumCash;
     const unpaid  = rows.filter(r => ['未請求', '未発行', '入金待ち', '未回収'].includes(r.b.status))
                         .reduce((s, r) => s + (r.o.total_amount || 0), 0);
-
-    // 顧客別売掛（未請求 = 納品済み・掛・請求書なし / 請求済未入金 = 発行済請求書）
-    const zan = {};
-    DB.all('orders').forEach(o => {
-      const dd = v4DeliveredDate(o); if (!dd) return;
-      const b = v4Billing(o);
-      if (!b.cash && b.status === '未請求') {
-        zan[o.customer_id] = zan[o.customer_id] || { un: 0, billed: 0 };
-        zan[o.customer_id].un += o.total_amount || 0;
-      }
-    });
-    DB.all('invoices').filter(v => v.status === '発行済').forEach(v => {
-      zan[v.customer_id] = zan[v.customer_id] || { un: 0, billed: 0 };
-      zan[v.customer_id].billed += v4InvoiceAmount(v);
-    });
-    const zanRows = Object.entries(zan).sort((a, b) => (b[1].un + b[1].billed) - (a[1].un + a[1].billed));
 
     const card = (label, val, sub, color) => `
       <div class="bg-white rounded shadow-sm p-4 border">
@@ -188,16 +170,13 @@ Screens.ledger = {
         <select id="ledger-month" class="border rounded px-3 py-1.5 bg-white font-bold">
           ${v4Months().map(m => `<option value="${m}" ${m === month ? 'selected' : ''}>${m.replace('-', '年')}月</option>`).join('')}
         </select>
-        <button id="ledger-csv" class="bg-white border rounded px-3 py-1.5 font-bold text-ink-500 hover:bg-gray-50">CSV出力</button>
       </div>
     </div>
-    <p class="text-sm text-ink-500 mb-4">納品と同時に自動で記帳されます（手入力なし）。金額は税込受注金額から自動計算。</p>
+    <p class="text-sm text-ink-500 mb-4">納品と同時に自動で記帳されます（手入力なし）。</p>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+    <div class="grid grid-cols-2 gap-3 mb-5 max-w-xl">
       ${card('当月売上合計（税込）', fmt.money(sumAll), '納品ベースで自動計上', 'text-ink-900')}
-      ${card('うち掛売上', fmt.money(sumKake), '月締め・都度請求', 'text-blue-700')}
-      ${card('うち現金売上', fmt.money(sumCash), '納品時に回収', 'text-ok-dark')}
-      ${card('当月分 未回収', fmt.money(unpaid), '未請求＋入金待ち＋未回収', unpaid > 0 ? 'text-red-600' : 'text-ink-300')}
+      ${card('当月分 未回収', fmt.money(unpaid), '未請求＋入金待ち', unpaid > 0 ? 'text-red-600' : 'text-ink-300')}
     </div>
 
     <div class="bg-white rounded shadow-sm overflow-x-auto mb-6 border">
@@ -239,36 +218,10 @@ Screens.ledger = {
           </tr>
         </tfoot>` : ''}
       </table>
-    </div>
-
-    <h2 class="font-black mb-2">顧客別 売掛状況（全期間）</h2>
-    <div class="bg-white rounded shadow-sm overflow-x-auto max-w-2xl border">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-100 text-xs text-ink-500">
-          <tr>
-            <th class="px-3 py-2 text-left">顧客</th>
-            <th class="px-3 py-2 text-left">支払条件</th>
-            <th class="px-3 py-2 text-right">未請求</th>
-            <th class="px-3 py-2 text-right">請求済・未入金</th>
-            <th class="px-3 py-2 text-right">売掛計</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${zanRows.length === 0 ? `<tr><td colspan="5" class="px-3 py-6 text-center text-ink-300">売掛はありません</td></tr>` : zanRows.map(([cid, z]) => `
-          <tr class="border-b">
-            <td class="px-3 py-2 font-bold"><a href="#customer/${cid}" class="hover:underline">${esc(fmt.customer(cid))}</a></td>
-            <td class="px-3 py-2 text-xs text-ink-500">${esc(DB.find('customers', cid)?.payment_terms || '')}</td>
-            <td class="px-3 py-2 text-right ${z.un ? 'text-red-600 font-bold' : 'text-ink-300'}">${fmt.money(z.un)}</td>
-            <td class="px-3 py-2 text-right ${z.billed ? 'text-amber-600 font-bold' : 'text-ink-300'}">${fmt.money(z.billed)}</td>
-            <td class="px-3 py-2 text-right font-black">${fmt.money(z.un + z.billed)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
     </div>`;
   },
   bind() {
     $('#ledger-month')?.addEventListener('change', (e) => { this.month = e.target.value; App.render(); });
-    $('#ledger-csv')?.addEventListener('click', () => toast('CSV出力はモックのため未実装です'));
   },
 };
 
@@ -379,8 +332,7 @@ Screens.invoices = {
           <span class="font-mono text-xs text-ink-500">${esc(v.invoice_number)}</span>
           <span class="text-xs">${v4StatusBadge(v.status)}</span>
         </div>
-        <div class="font-bold text-sm mt-0.5">${esc(fmt.customer(v.customer_id))}
-          <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold ${v.type === '月締め' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}">${v.type}</span></div>
+        <div class="font-bold text-sm mt-0.5">${esc(fmt.customer(v.customer_id))}</div>
         <div class="text-xs text-ink-500">${v.target_month ? v.target_month.replace('-', '年') + '月分' : esc(DB.find('orders', (v.order_ids || [])[0])?.title || v.memo || '')}｜${fmt.money(v4InvoiceAmount(v))}｜期限 ${fmt.dateW(v.due_date)}</div>
       </button>`).join('');
 
@@ -453,9 +405,9 @@ Screens.invoices = {
     return `
     <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
       <h1 class="text-2xl font-black">請求書</h1>
-      <button id="inv-new-monthly" class="bg-brand text-white font-bold px-4 py-2 rounded shadow hover:bg-brand-dark">＋ 月締め請求書を作成</button>
+      <button id="inv-new-monthly" class="bg-brand text-white font-bold px-4 py-2 rounded shadow hover:bg-brand-dark">＋ 請求書を作成</button>
     </div>
-    <p class="text-sm text-ink-500 mb-4">掛のお客様は「顧客と月を選ぶだけ」で当月納品分をまとめて1枚に。都度請求（個別）も可能です。</p>
+    <p class="text-sm text-ink-500 mb-4">顧客と月を選ぶと未請求の納品分がまとまって1枚に。月末にまとめれば月締め、1件だけなら都度請求になります。</p>
     <div class="grid lg:grid-cols-[400px_1fr] gap-5">
       <div><div class="bg-white rounded shadow-sm border divide-y max-h-[75vh] overflow-y-auto">${listHtml || '<div class="p-6 text-ink-300 text-center">なし</div>'}</div></div>
       <div>${doc}</div>
@@ -500,7 +452,7 @@ Screens.invoices = {
     const months = v4Months();
     openModal(`
       <div class="p-6">
-        <h2 class="text-lg font-black mb-4">月締め請求書を作成</h2>
+        <h2 class="text-lg font-black mb-4">請求書を作成</h2>
         <div class="grid gap-4">
           <label class="block">
             <div class="text-xs font-bold text-ink-500 mb-1">顧客（掛のお客様）</div>
@@ -683,7 +635,6 @@ Screens.timeline = {
       .filter(o => o.status !== '見積もり段階')
       .sort((a, b) => (b.received_date || '').localeCompare(a.received_date || ''));
     if (q) orders = orders.filter(o => (fmt.customer(o.customer_id) + (o.title || '') + o.order_number).includes(q));
-    if (this.onlyOpen) orders = orders.filter(o => { const s = this.stages(o); return !(s.dd && s.入金 && (s.b.cash || s.b.status === '入金済')); });
     const shown = orders.slice(0, 30);
 
     const sel = DB.find('orders', this.selectedId) || shown[0];
@@ -732,9 +683,6 @@ Screens.timeline = {
 
     <div class="flex items-center gap-3 mb-3 flex-wrap text-sm">
       <input id="tl-q" value="${esc(this.q)}" placeholder="顧客名・品名・受注Noで絞込" class="border rounded px-3 py-1.5 w-64 bg-white">
-      <label class="flex items-center gap-1.5 font-bold text-ink-500 cursor-pointer">
-        <input id="tl-open" type="checkbox" ${this.onlyOpen ? 'checked' : ''}> 未完了のみ表示
-      </label>
       <span class="text-xs text-ink-300">${orders.length}件中 ${shown.length}件を表示</span>
     </div>
 
@@ -774,7 +722,6 @@ Screens.timeline = {
     $$('[data-tl]').forEach(r => r.addEventListener('click', () => { this.selectedId = r.dataset.tl; App.render(); }));
     const q = $('#tl-q');
     q?.addEventListener('input', debounce(() => { this.q = q.value; App.render(); }, 300));
-    $('#tl-open')?.addEventListener('change', (e) => { this.onlyOpen = e.target.checked; App.render(); });
   },
 };
 
