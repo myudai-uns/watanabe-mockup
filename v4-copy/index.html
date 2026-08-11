@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渡辺謄写堂 業務管理システム v4 — Bubble Inspector 付き</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { 'sans': ['Noto Sans JP', 'sans-serif'] },
+      colors: {
+        brand: { DEFAULT: '#E87825', dark: '#B85D16', light: '#FFF4EC' },
+        ok: { DEFAULT: '#3F9D5E', dark: '#2A7A44', light: '#E8F5EE' },
+        ink: { 900: '#1A1A1A', 700: '#3A3A3A', 500: '#707070', 300: '#B5B5B5' },
+      },
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Noto Sans JP', sans-serif; background: #F3F4F6; }
+  /* 正規UI（Bubble版）に合わせたナビ帯のグレー */
+  .nav-bar { background: #545454; }
+  .nav-btn.active, .side-link.active { background: #E87825 !important; color: white !important; font-weight: 700; }
+  .scroll-pad { padding-bottom: 40px; }
+  /* v2.6: 受注確認モード（read-only表示） */
+  body.view-mode input[type="date"]::-webkit-calendar-picker-indicator { display: none !important; }
+  body.view-mode input[type="date"]::-webkit-inner-spin-button,
+  body.view-mode input[type="number"]::-webkit-inner-spin-button,
+  body.view-mode input[type="number"]::-webkit-outer-spin-button { display: none !important; -webkit-appearance: none; }
+  body.view-mode input, body.view-mode select, body.view-mode textarea {
+    pointer-events: none !important;
+    background-image: none !important;
+    background-color: transparent !important;
+  }
+  body.view-mode select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    padding-right: 0.5rem !important;
+  }
+  body.view-mode input[type="file"] { display: none; }
+  body.view-mode .edit-only { display: none !important; }
+  body.view-mode button:not(.view-allow) { pointer-events: none; opacity: 0.5; }
+  /* v3: ラベル経由でhidden input/radio/checkboxがトグルできる箇所（タグ・納期区分・加工オプション）を確認モードで操作不可に */
+  body.view-mode label { pointer-events: none !important; cursor: default !important; }
+  /* v2.6: .view-allow は操作可能。背景白は input/select のみに */
+  body.view-mode .view-allow,
+  body.view-mode .view-allow * { pointer-events: auto !important; opacity: 1 !important; }
+  body.view-mode .view-allow input,
+  body.view-mode .view-allow select,
+  body.view-mode .view-allow textarea { background-color: white !important; }
+  [draggable=true] { cursor: grab; }
+  [draggable=true]:active { cursor: grabbing; }
+  .drag-over { background: rgba(232,120,37,0.2) !important; outline: 2px dashed #E87825; }
+  .drag-ghost { opacity: 0.4; }
+  /* Status badges: v2.12 背景なし・文字色のみ。サイズは親要素を継承 */
+  .st { display: inline-block; padding: 0; font-size: inherit; font-weight: 700; white-space: nowrap; background: transparent; }
+  .st-見積もり段階 { color: #1E3A8A; }
+  .st-受注 { color: #DC2626; }  /* v3: 受注は赤色ベース */
+  .st-製版中 { color: #2563EB; }
+  .st-校正中 { color: #7C3AED; }
+  .st-印刷中 { color: #B45309; }
+  .st-完成 { color: #2A7A44; }
+  .st-納品済 { color: #6B7280; }
+  .st-キャンセル { color: #DC2626; }
+  .st-待機 { color: #6B7280; }
+  .st-作業中 { color: #B45309; }
+  .st-出荷待ち { color: #2563EB; }
+  .st-納品済み { color: #6B7280; }
+  .st-経過 { color: #7C3AED; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 60px; right: 20px; z-index: 100; }
+  .toast-item { background: #1A1A1A; color: white; padding: 10px 16px; border-radius: 6px; margin-top: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: all 0.2s; }
+  .toast-item.show { opacity: 1; transform: translateY(0); }
+  .toast-item.ok { background: #3F9D5E; }
+  .toast-item.err { background: #EF4444; }
+
+  /* Print: v2.8 - PDFプレビュー (#quote-pdf-page) のみを印刷対象に。v4: 帳票プレビュー (.print-doc) も対象 */
+  @media print {
+    body { background: white; }
+    body * { visibility: hidden !important; }
+    #quote-pdf-page, #quote-pdf-page *, .print-doc, .print-doc * { visibility: visible !important; }
+    #quote-pdf-page, .print-doc {
+      position: absolute !important;
+      left: 0; top: 0; right: 0;
+      width: 100% !important;
+      max-width: none !important;
+      padding: 12mm !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+    .print-page { page-break-after: always; }
+  }
+
+  /* ===== v4.0: 帳票（納品書・請求書・領収書）と帳簿・時系列 ===== */
+  .st-未発行 { color: #DC2626; }
+  .st-未請求 { color: #DC2626; }
+  .st-未回収 { color: #DC2626; }
+  .st-発行済 { color: #2563EB; }
+  .st-入金待ち { color: #B45309; }
+  .st-入金済 { color: #2A7A44; }
+  .st-現金回収済 { color: #2A7A44; }
+
+  .a4doc {
+    background: white;
+    width: 210mm; max-width: 100%;
+    min-height: 240mm;
+    padding: 16mm 14mm;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    font-size: 13px;
+  }
+  .receipt-doc {
+    background: white; width: 180mm; max-width: 100%;
+    padding: 14mm 14mm; box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+    border: 1px solid #ddd; font-size: 13px;
+  }
+  /* ===== 納品書・請求書：実物の複写伝票に合わせた横長レイアウト ===== */
+  .slip-doc {
+    --navy: #111; --navy-d: #111; --sky: #DDDDDD; --sky-l: #EFEFEF;
+    background: #fff; width: 250mm; max-width: 100%;
+    padding: 8mm; box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    color: #111; font-size: 13px;
+  }
+  /* 3行構成: ①種別＋顧客名 ②振込先／会社概要 ③明細表 */
+  .slip-row1 { display: flex; gap: 4mm; align-items: stretch; }
+  .slip-row2 { display: flex; gap: 6mm; align-items: flex-start; margin: 3mm 0; }
+  .slip-row3 { margin-top: 1mm; }
+  .slip-tab {
+    flex: none; width: 15mm; background: var(--navy); color: #fff;
+    writing-mode: vertical-rl; font-weight: 900; font-size: 22px;
+    letter-spacing: .28em; display: flex; align-items: center; justify-content: center;
+  }
+  .slip-addr {
+    flex: 1; border: 1.5px solid var(--navy); border-radius: 5mm;
+    padding: 4mm 5mm 3mm; min-height: 26mm; position: relative;
+  }
+  .slip-pay { flex: 1; min-width: 0; }
+  .pay-box { border: 1px solid var(--navy); padding: 2.5mm 3mm; font-size: 12px; line-height: 1.6; }
+  .pay-box .pay-ttl { font-weight: 900; margin-bottom: 1mm; }
+  .pay-box .tadashi { font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--navy); padding-bottom: 1mm; min-height: 8mm; }
+  /* 領収書は地紋の上に載るため、表と枠は白地を敷いて可読性を確保 */
+  .slip-doc.v4-guilloche .pay-box,
+  .slip-doc.v4-guilloche .slip-addr,
+  .slip-doc.v4-guilloche table.slip-table td { background: rgba(255,255,255,.82); }
+  .slip-addr .rule { height: 3px; background: #D5D5D5; margin: 3mm 0; }
+  .slip-addr .nm { font-size: 19px; font-weight: 700; color: #111; min-height: 26px; padding-right: 14mm; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slip-addr .sama { position: absolute; right: 5mm; bottom: 7mm; font-size: 20px; font-weight: 700; }
+  .slip-corp { flex: none; width: 96mm; line-height: 1.5; }
+  .corp-img { display: block; width: 100%; margin-top: 2mm; }
+  .slip-corp .date { border-bottom: 1.5px solid var(--navy); font-size: 15px; letter-spacing: .3em; padding-bottom: 1mm; }
+  .slip-corp .band { background: var(--navy); color: #fff; font-weight: 900; font-size: 18px; padding: 1.5mm 3mm; margin-top: 2mm; display: flex; align-items: center; justify-content: center; gap: 2mm; }
+  .slip-corp .band small { font-size: 9px; line-height: 1.1; font-weight: 700; }
+  .slip-corp .meta { font-size: 11px; text-align: center; }
+  .slip-corp .seal {
+    flex: none; width: 22mm; height: 22mm; border-radius: 50%;
+    border: 2px solid #C0392B; color: #C0392B; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 900; text-align: center; line-height: 1.15; opacity: .85; transform: rotate(-8deg);
+  }
+  .slip-lead { font-size: 16px; font-weight: 700; margin: 3mm 0 0; }
+  table.slip-table { width: 100%; border-collapse: collapse; }
+  table.slip-table th, table.slip-table td { border: 1px solid var(--navy); padding: 1.6mm 2mm; }
+  table.slip-table th { background: var(--sky); color: #111; font-weight: 700; font-size: 14px; letter-spacing: .5em; text-align: center; }
+  table.slip-table td { height: 8mm; }
+  table.slip-table .amt { text-align: right; font-variant-numeric: tabular-nums; width: 34mm; }
+  table.slip-table .qty { text-align: right; width: 22mm; }
+  table.slip-table .prc { text-align: right; width: 22mm; }
+  table.slip-table .lbl { text-align: center; font-size: 15px; font-weight: 700; letter-spacing: .5em; }
+  table.slip-table tr.grand td { background: var(--sky-l); font-weight: 900; }
+
+  /* ===== 領収書：実物の複写伝票に合わせたレイアウト ===== */
+  .rc-doc {
+    --navy: #111; background: #fff; width: 200mm; max-width: 100%;
+    padding: 4mm 0 6mm; box-shadow: 0 2px 12px rgba(0,0,0,.12);
+    color: #111; font-size: 13px; position: relative;
+  }
+  .rc-inner { padding: 0 10mm; }
+  .rc-title { text-align: center; font-size: 30px; font-weight: 700; letter-spacing: .5em; margin: 4mm 0 0; text-indent: .5em; }
+  .rc-date { text-align: right; font-size: 15px; letter-spacing: .3em; margin: 6mm 0 4mm; padding-right: 6mm; }
+  .rc-addr { border-bottom: 1.2px solid #111; display: flex; align-items: flex-end; gap: 4mm; padding-bottom: 1mm; }
+  .rc-addr .nm { flex: 1; font-size: 19px; font-weight: 700; text-align: right; padding-right: 2mm; }
+  .rc-addr .sama { font-size: 19px; font-weight: 700; padding-right: 34mm; }
+  .rc-lead { font-size: 17px; margin: 2mm 0 3mm; }
+  .rc-amount { display: flex; border: 1.5px solid #111; border-radius: 3mm; margin: 0 0 0 22mm; max-width: 120mm; }
+  .rc-amount .lbl { width: 26mm; text-align: center; font-size: 17px; font-weight: 700; letter-spacing: .4em; padding: 2.5mm 0; text-indent: .4em; border-right: 1.2px solid #111; }
+  .rc-amount .val { flex: 1; text-align: right; font-size: 22px; font-weight: 700; padding: 2mm 4mm; letter-spacing: .06em; }
+  .rc-tadashi { font-size: 17px; margin: 5mm 0 0; }
+  .rc-tadashi .txt { border-bottom: 1px solid #111; display: inline-block; min-width: 70mm; padding: 0 2mm; font-weight: 700; }
+  .rc-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; margin-top: 6mm; }
+  table.rc-bd { border-collapse: collapse; width: 62mm; font-size: 12px; }
+  table.rc-bd th, table.rc-bd td { border: 1px solid #111; padding: 1.2mm 2mm; height: 6mm; }
+  table.rc-bd th { width: 26mm; text-align: center; font-weight: 700; letter-spacing: .2em; }
+  table.rc-bd td { text-align: right; }
+  .rc-corp { width: 100mm; line-height: 1.5; }
+  .rc-corp .band { background: var(--navy); color: #fff; font-weight: 900; font-size: 17px; padding: 1.2mm 3mm; display: flex; align-items: center; justify-content: center; gap: 2mm; }
+  .rc-corp .band small { font-size: 9px; line-height: 1.1; font-weight: 700; }
+  .rc-corp .meta { font-size: 11px; text-align: center; }
+  .rc-corp .seal {
+    flex: none; width: 24mm; height: 24mm; border-radius: 50%;
+    border: 2px solid #C0392B; color: #C0392B; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 900; text-align: center; line-height: 1.15; opacity: .85; transform: rotate(-6deg);
+  }
+  .rc-doc.v4-guilloche .rc-amount, .rc-doc.v4-guilloche table.rc-bd th,
+  .rc-doc.v4-guilloche table.rc-bd td { background: rgba(255,255,255,.75); }
+
+  .a4doc table, .receipt-doc table { width: 100%; border-collapse: collapse; }
+  .doc-table th { background: #F3F4F6; border: 1px solid #999; padding: 5px 8px; font-weight: 700; }
+  .doc-table td { border: 1px solid #999; padding: 5px 8px; }
+  .doc-title { font-size: 25px; font-weight: 900; letter-spacing: 0.5em; text-align: center; }
+
+  /* 社印（仮）: 実際の印影画像に差し替え前提 */
+  .v4-seal {
+    width: 46px; height: 46px; border: 2px solid #C0392B; border-radius: 6px;
+    color: #C0392B; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900; line-height: 1.1; letter-spacing: .02em;
+    writing-mode: vertical-rl; opacity: .85;
+  }
+  /* 偽造防止模様: 渡辺様ご提供の地紋画像 */
+  .v4-guilloche {
+    background-image: url("assets/receipt_bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  /* 領収書は一旦ゴシック体で統一 */
+  .receipt-doc { font-family: "Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif; }
+  /* ===== Bubble Element Inspector (v4-copy) — 右ドックの独立ウィンドウ ===== */
+  body.bbl-reserve { padding-right: 372px; }
+  #bbl-win { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; z-index: 9998; display: none; flex-direction: column;
+    background: linear-gradient(180deg,#0c0e16,#0a0b10); color: #EDF0F7; border-left: 1px solid rgba(255,255,255,.14);
+    box-shadow: -18px 0 50px -24px rgba(0,0,0,.7); font-family: 'Noto Sans JP', sans-serif; font-size: 11px; }
+  #bbl-win.act { display: flex; }
+  #bbl-win .winbar { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
+  #bbl-win .winbar .ttl { font-weight: 900; font-size: 12.5px; }
+  #bbl-win .winbar .sp { margin-left: auto; }
+  #bbl-win .winbar .tg { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 10.5px; cursor: pointer; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 4px 9px; }
+  #bbl-win .winbar .tg input { width: 13px; height: 13px; accent-color: #E87825; }
+  #bbl-win .body { padding: 12px 14px; overflow-y: auto; flex: 1; }
+  #bbl-win .legend { display: flex; flex-wrap: wrap; gap: 5px 9px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  #bbl-win .legend .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: #AEB6C8; }
+  #bbl-win .legend .lg b { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  #bbl-win .cleg { font-size: 9px; font-weight: 700; color: #0c0e16; border-radius: 4px; padding: 1px 5px; }
+  #bbl-win .empty { color: #6E7689; padding: 22px 6px; text-align: center; line-height: 1.7; }
+  #bbl-win .hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #bbl-win .hdr .cat { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #0c0e16; }
+  #bbl-win .hdr .typ { font-size: 17px; font-weight: 900; }
+  #bbl-win .tag { font-family: monospace; font-size: 10px; color: #6E7689; margin-bottom: 6px; }
+  #bbl-win h5 { font-size: 11px; font-weight: 900; color: #FFD9B8; margin: 11px 0 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.1); }
+  #bbl-win .sty { background: rgba(255,217,184,.07); border: 1px solid rgba(255,217,184,.2); border-radius: 9px; padding: 8px 10px; margin: 4px 0; }
+  #bbl-win .sty .nm { font-size: 13px; font-weight: 900; color: #FFD9B8; }
+  #bbl-win .sty .mt { font-family: monospace; font-size: 10px; color: #AEB6C8; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+  #bbl-win .sty .sw { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(255,255,255,.35); }
+  #bbl-win .sty .cond { font-size: 9.5px; color: #f6c177; margin-top: 4px; line-height: 1.4; }
+  #bbl-win .chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  #bbl-win .chips .chip { font-size: 10px; font-weight: 700; color: #0c0e16; border-radius: 5px; padding: 1px 6px; }
+  #bbl-win .chips .arr { color: #6E7689; }
+  #bbl-win .r { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dotted rgba(255,255,255,.06); }
+  #bbl-win .r .k { color: #8b93a6; flex-shrink: 0; }
+  #bbl-win .r .v { color: #EDF0F7; text-align: right; font-family: monospace; font-size: 10.5px; word-break: break-all; }
+  #bbl-win .r .v.dim { color: #5f6779; }
+  #bbl-win .note { font-size: 9.5px; color: #6E7689; margin-top: 12px; line-height: 1.6; }
+  #bbl-fab { position: fixed; top: 10px; right: 10px; z-index: 9999; display: none; cursor: pointer;
+    background: #0c0e16; color: #FFD9B8; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; padding: 7px 12px;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 12px; font-weight: 900; box-shadow: 0 8px 24px -10px rgba(0,0,0,.6); }
+  #bbl-fab.act { display: block; }
+</style>
+</head>
+<body class="text-ink-900">
+
+<!-- v2.6: 上部バー（左サイド廃止） -->
+<header class="bg-ink-900 text-white sticky top-0 z-50 no-print">
+  <div class="flex items-center justify-between px-6 py-2">
+    <div class="flex items-center gap-3">
+      <div class="font-bold text-sm">渡辺謄写堂　業務管理システム</div>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-ink-300">ログイン中：</span>
+      <a href="#login" id="current-user-link" class="bg-white text-ink-900 border border-white px-3 py-1 rounded text-xs font-bold hover:bg-gray-200" title="クリックでログイン画面へ">—</a>
+      <button id="btn-reset" class="ml-2 text-ink-500 hover:text-white text-[11px] underline">リセット</button>
+    </div>
+  </div>
+  <nav class="nav-bar px-6 py-2 flex flex-wrap gap-2 text-sm overflow-x-auto">
+    <a href="#dashboard" data-screen="dashboard" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">ダッシュボード</a>
+    <a href="#orders" data-screen="orders" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">受注一覧</a>
+    <a href="#order/new" data-screen="order_new" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">新規受注</a>
+    <a href="#customers" data-screen="customers" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">顧客一覧</a>
+    <a href="#factory" data-screen="factory" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">工場カンバン</a>
+    <a href="#ledger" data-screen="ledger" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">帳簿</a>
+    <a href="#delivery_notes" data-screen="delivery_notes" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">納品書・請求書</a>
+    <a href="#receipts" data-screen="receipts" class="nav-btn side-link px-4 py-2 rounded text-white font-bold hover:bg-white/10">領収書</a>
+  </nav>
+</header>
+
+<main id="main" class="scroll-pad p-6 bg-gray-100 min-h-screen">
+  <!-- 動的に描画 -->
+</main>
+
+<!-- v2.5: フッター廃止（stat-info はサイドバーへ移動済み） -->
+
+<!-- Toast container -->
+<div id="toast"></div>
+
+<!-- Modal container -->
+<div id="modal-root"></div>
+
+<script src="app.js"></script>
+<div id="bbl-win">
+  <div class="winbar">
+    <span class="ttl">🫧 Bubble Element Inspector</span>
+    <span class="sp"></span>
+    <label class="tg"><input type="checkbox" id="bbl-toggle" checked> ON</label>
+  </div>
+  <div class="body">
+    <div class="legend">
+      <span class="lg"><b style="background:#2563EB"></b>Visual</span>
+      <span class="lg"><b style="background:#16A34A"></b>Input</span>
+      <span class="lg"><span class="cleg" style="background:#64748b">Group</span></span>
+      <span class="lg"><span class="cleg" style="background:#E87825">RG</span></span>
+      <span class="lg"><span class="cleg" style="background:#F59E0B">Table</span></span>
+      <span class="lg"><span class="cleg" style="background:#A855F7">Popup</span></span>
+      <span class="lg"><span class="cleg" style="background:#06B6D4">FloatGrp</span></span>
+      <span class="lg"><span class="cleg" style="background:#EC4899">GroupFocus</span></span>
+    </div>
+    <div id="bbl-content"><div class="empty">ダッシュボードの要素にマウスを載せると、<br>種別・Style・所属コンテナ・位置/幅/高さ/Margin/<br>Responsive/Conditional をここに表示します。</div></div>
+    <div class="note">対象＝画面本体(#main)の要素のみ。ヘッダー/ナビ等は除外。実線=対象要素 / 点線=最も近いコンテナ。<br>右のこのウィンドウ分だけ画面を確保するため、アプリUIには重なりません。OFFで通常操作に戻ります。</div>
+    <div class="note" id="bbl-offnote" style="color:#f6c177;display:none">▶ #dashboard または #orders（受注一覧）に移動すると判定が有効になります。</div>
+  </div>
+</div>
+
+<button id="bbl-fab">🫧 Inspector を表示</button>
+
+<script src="v4.js"></script>
+<script>
+/* ===== Bubble Element Inspector (dashboard only / right docked window) ===== */
+(function(){
+  var COL = { visual:'#2563EB', input:'#16A34A', container:'#E8A54B' };
+  var CATJP = { visual:'Visual element', input:'Input form', container:'Container' };
+  var CCOL = { 'Group':'#64748b', 'Repeating Group':'#E87825', 'Table':'#F59E0B', 'Popup':'#A855F7', 'FloatingGroup':'#06B6D4', 'GroupFocus':'#EC4899' };
+  // 操作ボタンのWF（idベース・要件§3に基づく推定。JSリスナー駆動でinline onclickが無いため）
+var V4WF = {
+  "order|btn-make-dnote": {
+    "t": "btn_納品書を作成 is clicked",
+    "a": "この受注の顧客・明細をカスタムステートに載せ、Go to page dnote_edit（新規）",
+    "g": "WF_受注確認_納品書を作成",
+    "o": "btn_納品書を作成（Page: order）",
+    "p": "/order",
+    "n": "",
+    "s": [
+      "Set state ／ 対象: Page order ／ 引用元受注 = Current page's Order",
+      "Go to page... ／ Destination: dnote_edit ／ parameter order = Current page's Order's unique id"
+    ],
+    "r": "3"
+  },
+  "ledger|f-q": {
+    "t": "input_顧客名検索's value is changed",
+    "a": "RG_帳簿 の検索条件に 顧客名 contains を追加",
+    "g": "WF_帳簿_顧客名検索",
+    "o": "input_顧客名検索（Page: ledger）",
+    "p": "/ledger",
+    "n": "Data source の constraint に「顧客's 名前 contains input_顧客名検索's value」を追加（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "8"
+  },
+  "ledger|f-area": {
+    "t": "DD_地域's value is changed",
+    "a": "RG_帳簿 の検索条件に 顧客の地域 = を追加",
+    "g": "WF_帳簿_地域絞込",
+    "o": "DD_地域（Page: ledger）",
+    "p": "/ledger",
+    "n": "Data source の constraint に「顧客's 地域 = DD_地域's value」を追加（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "9"
+  },
+  "delivery_notes|f-q": {
+    "t": "input_顧客名検索's value is changed",
+    "a": "RG_納品書 の検索条件に 顧客名 contains を追加",
+    "g": "WF_納品請求一覧_顧客名検索",
+    "o": "input_顧客名検索（Page: dnotes）",
+    "p": "/dnotes",
+    "n": "constraint「顧客's 名前 contains input_顧客名検索's value」（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "13"
+  },
+  "delivery_notes|f-kind": {
+    "t": "DD_種別 / DD_地域's value is changed",
+    "a": "RG_納品書 の検索条件に 顧客の種別・地域 = を追加",
+    "g": "WF_納品請求一覧_種別地域絞込",
+    "o": "DD_種別／DD_地域（Page: dnotes）",
+    "p": "/dnotes",
+    "n": "constraint「顧客's 種別 = DD_種別's value」「顧客's 地域 = DD_地域's value」（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "14"
+  },
+  "dn_edit|f-quote": {
+    "t": "DD_受注引用's value is changed",
+    "a": "顧客・納品日をセットし、受注明細を明細RGへコピー",
+    "g": "WF_納品請求_受注引用",
+    "o": "DD_受注引用（Page: dnote_edit）",
+    "p": "/dnote_edit",
+    "n": "",
+    "s": [
+      "Set state ／ 顧客 = DD_受注引用's value's 顧客",
+      "Set state ／ 納品日 = DD_受注引用's value's 納品日",
+      "Set state ／ 明細 = DD_受注引用's value's 明細（品名・数量・単価・金額）",
+      "Display list ／ Element: RG_明細 ／ Data: Set state 明細"
+    ],
+    "r": "17"
+  },
+  "dn_edit|add-it": {
+    "t": "btn_明細を追加 is clicked",
+    "a": "明細リスト（カスタムステート）に空行を1件追加。削除は該当行を除外",
+    "g": "WF_納品請求_明細追加 ／ WF_納品請求_明細削除",
+    "o": "btn_明細を追加／btn_明細削除（Page: dnote_edit）",
+    "p": "/dnote_edit",
+    "n": "",
+    "s": [
+      "Set state ／ btn_明細を追加 ／ 明細 = 明細:plus item（空の明細）",
+      "Set state ／ btn_明細削除 ／ 明細 = 明細:minus item（Current cell's 明細）"
+    ],
+    "r": "19"
+  },
+  "dn_edit|f-save": {
+    "t": "btn_保存 is clicked",
+    "a": "納品書番号と請求書番号を同時に採番して1件として保存する",
+    "g": "WF_納品請求_保存（請求書番号を同時採番）",
+    "o": "btn_保存（Page: dnote_edit）",
+    "p": "/dnote_edit",
+    "n": "",
+    "s": [
+      "Create a new thing... ／ Only when Current page's DeliveryNote is empty ／ Type: DeliveryNote ／ 納品書番号 = D-YYMMDD-NN、請求書番号 = I-YYMMDD-NN を同時採番"
+    ],
+    "r": "22"
+  },
+  "dn_edit|f-print-dn": {
+    "t": "btn_納品書印刷 is clicked",
+    "a": "プレビューを納品書に切り替えて grp_納品書プレビュー をPDF出力",
+    "g": "WF_納品請求_納品書印刷",
+    "o": "btn_納品書印刷（Page: dnote_edit）",
+    "p": "/dnote_edit",
+    "n": "",
+    "s": [
+      "Set state ／ プレビュー種別 = 納品書",
+      "Add a pause before next action ／ 3,000 ms（描画完了待ち）",
+      "Element PDF（PDF & Screenshot Pro）／ Element ID = dnote_pdf ／ Save to Bubble = ON・Download = ON"
+    ],
+    "r": "24"
+  },
+  "dn_edit|f-print-iv": {
+    "t": "btn_請求書印刷 is clicked",
+    "a": "プレビューを請求書に切り替えて grp_請求書プレビュー をPDF出力（別ファイル）",
+    "g": "WF_納品請求_請求書印刷",
+    "o": "btn_請求書印刷（Page: dnote_edit）",
+    "p": "/dnote_edit",
+    "n": "",
+    "s": [
+      "Set state ／ プレビュー種別 = 請求書",
+      "Add a pause before next action ／ 3,000 ms（描画完了待ち）",
+      "Element PDF（PDF & Screenshot Pro）／ Element ID = invoice_pdf ／ 納品書とは別ファイル名で出力"
+    ],
+    "r": "25"
+  },
+  "dn_edit|f-del": {
+    "t": "btn_削除 is clicked",
+    "a": "確認のうえ DeliveryNote を Delete し、Go to page dnotes",
+    "g": "WF_納品請求_削除",
+    "o": "btn_削除（Page: dnote_edit）",
+    "p": "/dnote_edit",
+    "n": "",
+    "s": [
+      "Show ／ Element: POP_削除確認",
+      "Delete a list of things... ／ List: この納品書の DeliveryNoteItem",
+      "Delete a thing... ／ Thing: Current page's DeliveryNote",
+      "Go to page... ／ Destination: dnotes"
+    ],
+    "r": "29"
+  },
+  "rc_edit|f-quote": {
+    "t": "DD_請求書引用's value is changed",
+    "a": "宛先と税込金額をセットし、内訳の現金に全額を入れる",
+    "g": "WF_領収書_請求書引用",
+    "o": "DD_請求書引用（Page: receipt_edit）",
+    "p": "/receipt_edit",
+    "n": "",
+    "s": [
+      "Set state ／ 宛先 = DD_請求書引用's value's 顧客",
+      "Set state ／ 金額 = DD_請求書引用's value's 税込合計",
+      "Set state ／ 現金 = Set state 金額"
+    ],
+    "r": "30"
+  },
+  "rc_edit|f-tadashi": {
+    "t": "—",
+    "a": "但し書きを自由に入力する",
+    "g": "—（入力のみ・WFなし）",
+    "o": "input_但し書き（Page: receipt_edit）",
+    "p": "/receipt_edit",
+    "n": "input_但し書きに直接入力する",
+    "s": [],
+    "r": "32"
+  },
+  "rc_edit|f-print": {
+    "t": "btn_印刷 is clicked",
+    "a": "grp_領収書プレビュー をPDF出力",
+    "g": "WF_領収書_印刷",
+    "o": "btn_印刷（Page: receipt_edit）",
+    "p": "/receipt_edit",
+    "n": "",
+    "s": [
+      "Add a pause before next action ／ 3,000 ms（描画完了待ち）",
+      "Element PDF（PDF & Screenshot Pro）／ Element ID = receipt_pdf ／ Save to Bubble = ON・Download = ON"
+    ],
+    "r": "36"
+  },
+  "rc_edit|f-save": {
+    "t": "btn_保存 is clicked",
+    "a": "領収書番号を採番して Receipt を Create/Update し、Go to page receipts",
+    "g": "WF_領収書_保存",
+    "o": "btn_保存（Page: receipt_edit）",
+    "p": "/receipt_edit",
+    "n": "",
+    "s": [
+      "Create a new thing... ／ Only when 新規 ／ Type: Receipt ／ 領収書番号 = R-YYMMDD-NN を採番（宛先・発行日・金額・但し書き・現金・小切手）",
+      "Make changes to a thing... ／ Only when 既存 ／ Thing: Current page's Receipt",
+      "Go to page... ／ Destination: receipts"
+    ],
+    "r": "37"
+  },
+  "rc_edit|f-del": {
+    "t": "btn_削除 is clicked",
+    "a": "確認のうえ Receipt を Delete し、Go to page receipts",
+    "g": "WF_領収書_削除",
+    "o": "btn_削除（Page: receipt_edit）",
+    "p": "/receipt_edit",
+    "n": "",
+    "s": [
+      "Show ／ Element: POP_削除確認",
+      "Delete a thing... ／ Thing: Current page's Receipt",
+      "Go to page... ／ Destination: receipts"
+    ],
+    "r": "38"
+  },
+  "receipts|f-q": {
+    "t": "input_顧客名検索's value is changed",
+    "a": "RG_領収書 の検索条件に 顧客名 contains を追加",
+    "g": "WF_領収書一覧_顧客名検索",
+    "o": "input_顧客名検索（Page: receipts）",
+    "p": "/receipts",
+    "n": "constraint「顧客's 名前 contains input_顧客名検索's value」（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "40"
+  },
+  "receipts|f-kind": {
+    "t": "DD_種別 / DD_地域's value is changed",
+    "a": "RG_領収書 の検索条件に 顧客の種別・地域 = を追加",
+    "g": "WF_領収書一覧_種別地域絞込",
+    "o": "DD_種別／DD_地域（Page: receipts）",
+    "p": "/receipts",
+    "n": "constraint「顧客's 種別 = DD_種別's value」「顧客's 地域 = DD_地域's value」（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "41"
+  },
+  "ledger|f-kind": {
+    "t": "DD_地域's value is changed",
+    "a": "RG_帳簿 の検索条件に 顧客の地域 = を追加",
+    "g": "WF_帳簿_地域絞込",
+    "o": "DD_地域（Page: ledger）",
+    "p": "/ledger",
+    "n": "Data source の constraint に「顧客's 地域 = DD_地域's value」を追加（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "9"
+  },
+  "delivery_notes|f-area": {
+    "t": "DD_種別 / DD_地域's value is changed",
+    "a": "RG_納品書 の検索条件に 顧客の種別・地域 = を追加",
+    "g": "WF_納品請求一覧_種別地域絞込",
+    "o": "DD_種別／DD_地域（Page: dnotes）",
+    "p": "/dnotes",
+    "n": "constraint「顧客's 種別 = DD_種別's value」「顧客's 地域 = DD_地域's value」（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "14"
+  },
+  "receipts|f-area": {
+    "t": "DD_種別 / DD_地域's value is changed",
+    "a": "RG_領収書 の検索条件に 顧客の種別・地域 = を追加",
+    "g": "WF_領収書一覧_種別地域絞込",
+    "o": "DD_種別／DD_地域（Page: receipts）",
+    "p": "/receipts",
+    "n": "constraint「顧客's 種別 = DD_種別's value」「顧客's 地域 = DD_地域's value」（Ignore empty constraints = ON）",
+    "s": [],
+    "r": "41"
+  }
+};
+  var WFMAP = {
+    'btn-login':{t:'btn-login clicked', a:'ユーザー認証(email/password) → 成功で Go to page dashboard', g:'#dashboard'},
+    'btn-save':{t:'btn-save clicked', a:'バリデーション→採番(YYMMDD-NNN)→Order作成/更新(+OrderItem/FactoryRecord)→ChangeLog→Go to page order(view)', g:'#order/:id'},
+    'btn-cancel':{t:'btn-cancel clicked', a:'編集を破棄して 確認画面/一覧へ戻る', g:'戻る'},
+    'btn-add-item':{t:'btn-add-item clicked', a:'通常明細を追加（RGに OrderItem type=normal を1行）', g:'—'},
+    'btn-add-page-item':{t:'btn-add-page-item clicked', a:'ページ物明細を追加（OrderItem type=page）', g:'—'},
+    'btn-new-customer':{t:'btn-new-customer clicked', a:'新規顧客モーダルを開く（POP_NewCustomer 表示）', g:'POP_NewCustomer'},
+    'btn-new-customer-top':{t:'clicked', a:'新規顧客モーダルを開く（POP_NewCustomer）', g:'POP_NewCustomer'},
+    'btn-delete':{t:'btn-delete clicked', a:'確認後 Order を削除（関連 FactoryRecord/Quote も削除）→ 一覧へ', g:'#orders'},
+    'btn-quote':{t:'btn-quote clicked', a:'見積書へ（未作成なら採番 Q-YYMMDD-NNN し Quote作成）→ Go to page quote', g:'#quote/:id'},
+    'btn-spec-copy':{t:'btn-spec-copy clicked', a:'この仕様でコピー：顧客/明細/メモ/タグを複製し Go to page order/new（納期リセット）', g:'#order/new'},
+    'btn-edit-fields':{t:'clicked', a:'編集モードへ（custom state mode=edit）', g:'mode=edit'},
+    'btn-edit-fields-inline':{t:'clicked', a:'編集モードへ（mode=edit）', g:'mode=edit'},
+    'btn-edit-customer':{t:'clicked', a:'顧客編集モーダルを開く（POP_EditCustomer）', g:'POP_EditCustomer'},
+    'btn-new-with':{t:'clicked', a:'この顧客で新規受注：顧客プリセットで Go to page order/new', g:'#order/new'},
+    'btn-print':{t:'btn-print clicked', a:'印刷（ブラウザ印刷ダイアログ起動）', g:'print'},
+    'btn-print-quote':{t:'clicked', a:'PDF出力（印刷ダイアログ／PDFプラグイン）', g:'print/PDF'},
+    'btn-send-quote':{t:'clicked', a:'送信済にする（Quote.status=発行済 に更新）', g:'status'},
+    'btn-pr-send':{t:'clicked', a:'見積 送付処理（status/履歴更新）', g:'status'},
+    'btn-save-memo':{t:'clicked', a:'メモ保存（Customer.notes を更新）', g:'save'},
+    'btn-filter-clear':{t:'clicked', a:'フィルタ条件を全クリア', g:'—'},
+    'btn-clear-quick':{t:'clicked', a:'クイック絞込を解除', g:'—'},
+    'pg-prev':{t:'clicked', a:'前ページ（custom state page − 1）', g:'—'},
+    'pg-next':{t:'clicked', a:'次ページ（custom state page + 1）', g:'—'},
+    'current-user-link':{t:'clicked', a:'Go to page login', g:'#login'},
+    'btn-reset':{t:'clicked', a:'データをリセット（localStorage 初期化）', g:'—'}
+  };
+
+  var win = document.getElementById('bbl-win');
+  var content = document.getElementById('bbl-content');
+  var offnote = document.getElementById('bbl-offnote');
+  var toggle = document.getElementById('bbl-toggle');
+  var fab = document.getElementById('bbl-fab');
+  var mainEl = document.getElementById('main');
+  var enabled = true;
+  var cur = null, curOutline = '', curC = null, curCOutline = '';
+  var SKIP = '__skip__';
+
+  // ---- Text Style catalog（共通の見た目＝共通のStyle名）----
+  /* v3 Bubble実装ハンドオフ §1-3〜1-7 で定義済みの Style。ここに在るものは新規作成せず引用する。 */
+  var KNOWN_STYLES = {
+    'Heading XL':1,'Subheading':1,'Bold SM':1,'Body SM':1,'Body XS':1,'Mono XS':1,'Mono SM':1,
+    'Label':1,'Field Label':1,'Caption':1,'Caption XS':1,'Section Title':1,'Status badge':1,
+    'Tag chip':1,'Overdue label':1,'Required mark':1,'Item-No badge':1,'Total amount':1,
+    'Page-item label':1,'Kind badge':1,'Column title':1,
+    'Button – Primary':1,'Button – Secondary':1,'Button – Danger（枠付き）':1,'Button – Danger（text）':1,
+    'Button – Page (紫)':1,'Button – Add (normal)':1,'Button – Ghost brand（枠あり）':1,
+    'Button – Ghost brand（枠なし）':1,'Button – Dark':1,
+    'Field – Base':1,'Checkbox – Default':1,'Radio – Default':1,'Uploader – Default':1,
+    'Group – Card':1,'Group – Card（clickable）':1,'Group – Title Bar':1,'Group – Section':1,
+    'Repeating Group – List':1,'RG – Row':1,'Popup – Modal':1,'Popup – Backdrop':1,
+    'FloatingGroup – Card':1,'Toast – Default':1,'Toast – OK':1,'Toast – Error':1,
+    'Link – Nav':1,'Link – Inline':1,'Divider':1,'Page – Base':1
+  };
+  var STYLE_FULL = {
+    '14/400/#707070':'Caption', '12/700/#707070':'Label',
+    '14/700/#1A1A1A':'Bold SM', '24/900/#1A1A1A':'Heading XL', '14/400/#1A1A1A':'Body SM',
+    '12/400/#707070':'Caption XS', '16/700/#FFFFFF':'Section Title',
+    '12/400/#1A1A1A/mono':'Mono XS', '12/400/#1A1A1A':'Body XS',
+    /* v3.1 受注一覧で追加 */
+    '14/400/#1A1A1A/mono':'Mono SM', '12/700/#1A1A1A':'Field Label',
+    '12/700/#FFFFFF':'Tag chip', '12/700/#9333EA':'Overdue label',
+    /* v3.1 受注新規起票で追加 */
+    '12/700/#DC2626':'Required mark', '12/900/#FFFFFF':'Item-No badge',
+    '18/900/#E87825':'Total amount', '18/700/#1A1A1A':'Subheading',
+    '12/700/#7E22CE':'Page-item label', '16/700/#1A1A1A':'Section Title',
+    /* Mono SM の太/淡 変種を同名に統一 */
+    '14/700/#1A1A1A/mono':'Mono SM', '14/400/#707070/mono':'Mono SM',
+    /* モックの色揺れを既存へ統一 */
+    '12/400/#6D6D6D':'Caption XS', '12/700/#3A3A3A':'Field Label',
+    /* v3.1 残り全画面の精査：新規2 + 統合 */
+    '14/700/#1D4ED8':'Kind badge', '14/700/#92400E':'Kind badge',
+    '16/900/#1E40AF':'Column title', '16/900/#B91C1C':'Column title', '16/900/#CA8A04':'Column title',
+    '16/900/#2A7A44':'Column title', '16/900/#1A1A1A':'Column title',
+    '24/900/#1A1A1A/mono':'Heading XL',                 /* 受注/見積番号 大見出し */
+    '12/400/#707070/mono':'Mono XS',                    /* カンバン番号・電話/FAX */
+    '14/700/#FFFFFF':'Tag chip',                        /* カンバンのタグ(14px) */
+    '18/900/#1A1A1A/mono':'Total amount', '18/900/#707070/mono':'Total amount',
+    '24/900/#E87825':'Total amount', '18/900/#1A1A1A':'Total amount',
+    '18/700/#DC2626':'Subheading',                      /* 印刷の納期強調(赤) */
+    '16/400/#707070':'Caption'                          /* 空状態メッセージ */
+  };
+  var STYLE_CORE = { '24/900':'Heading XL' };
+
+  function rgbToHex(c){ var m=(c||'').match(/\d+/g); if(!m) return c; return '#'+m.slice(0,3).map(function(n){return (+n).toString(16).padStart(2,'0');}).join('').toUpperCase(); }
+  function textStyle(el){
+    var cs=getComputedStyle(el);
+    var size=Math.round(parseFloat(cs.fontSize)), weight=cs.fontWeight, color=rgbToHex(cs.color);
+    var mono=/mono/i.test(cs.fontFamily), italic=cs.fontStyle==='italic', underline=/underline/.test(cs.textDecorationLine||'');
+    var sig=size+'/'+weight+'/'+color+(mono?'/mono':'')+(italic?'/i':'')+(underline?'/u':'');
+    var core=size+'/'+weight+(mono?'/mono':'');
+    var isStatus=!!(el.className && (' '+el.className+' ').indexOf(' st ')>=0) || (el.className && /\bst-/.test(el.className));
+    var name, cond=false;
+    if(isStatus){ name='Status badge'; cond=true; }
+    else if(STYLE_FULL[sig]){ name=STYLE_FULL[sig]; }
+    else if(STYLE_CORE[core]){ name=STYLE_CORE[core]; cond=true; }
+    else { name='Text '+size+'·'+weight+(mono?' mono':'')+(italic?' italic':''); }
+    // 白太字はシグネチャ衝突するので背景/文脈で出し分け（Tag chip=色背景 / Header title=ヘッダー / Section Title=濃色帯）
+    if(weight==='700' && color==='#FFFFFF' && (size===14||size===16)){
+      name = !isTransparent(cs.backgroundColor) ? 'Tag chip' : ((el.closest&&el.closest('header')) ? 'Header title' : 'Section Title');
+    }
+    return { name:name, size:size, weight:weight, color:color, mono:mono, cond:cond };
+  }
+
+  function V(t){ return {cat:'visual', type:t}; }
+  function I(t){ return {cat:'input', type:t}; }
+  function hasText(el){ return (el.textContent||'').trim().length>0; }
+  function hasDirectText(el){ for(var i=0;i<el.childNodes.length;i++){ var n=el.childNodes[i]; if(n.nodeType===3 && n.textContent.trim().length>0) return true; } return false; }
+
+  function classify(el){
+    if(!el || el.nodeType!==1) return null;
+    if(win.contains(el)) return null;
+    var tag=el.tagName;
+    if(tag==='TEXTAREA') return I('Multiline Input');
+    if(tag==='SELECT') return I('Dropdown');
+    if(tag==='INPUT'){
+      var ty=(el.getAttribute('type')||'text').toLowerCase();
+      if(ty==='checkbox') return I('Checkbox');
+      if(ty==='radio') return I('RadioButtons');
+      if(ty==='range') return I('SliderInput');
+      if(['date','time','datetime-local','month','week'].indexOf(ty)>=0) return I('Date/Time Picker');
+      if(ty==='file'){ var ac=el.getAttribute('accept')||''; return I(/image/.test(ac)?'PictureUploader':'FileUploader'); }
+      if(ty==='search') return I('SearchBox');
+      var hint=((el.placeholder||'')+(el.id||'')+(el.name||'')).toLowerCase();
+      if(/検索|search/.test(hint)) return I('SearchBox');
+      return I('Input');
+    }
+    if(tag==='IMG') return V('Image');
+    if(tag==='SVG'||tag==='svg') return V('Icon');
+    if(tag==='VIDEO') return V('Video');
+    if(tag==='IFRAME'){ var s=el.getAttribute('src')||''; return V(/maps\.|google\.[^/]+\/maps/.test(s)?'Map':'HTML'); }
+    if(tag==='HR') return V('Shape');
+    if(el.getAttribute('role')==='alert' || /\b(alert|toast)\b/.test(el.className||'')) return V('Alert');
+    if(tag==='BUTTON') return V('Button');
+    if(tag==='A') return V('Link');
+    if(tag==='I' && /\b(icon|fa-|material)\b/.test(el.className||'')) return V('Icon');
+    var textTags=['SPAN','P','H1','H2','H3','H4','H5','H6','TD','TH','LI','LABEL','STRONG','B','SMALL','EM','CODE','TIME','DT','DD'];
+    if(textTags.indexOf(tag)>=0 && hasText(el)) return V('Text');
+    if(tag==='DIV' && hasDirectText(el) && !/\brounded-t\b/.test(el.className||'')) return V('Text'); // rounded-tのタイトル帯はコンテナ扱い
+    return null;
+  }
+
+  function isFixedSticky(el){ try{ var p=getComputedStyle(el).position; return p==='fixed'||p==='sticky'; }catch(e){ return false; } }
+  function containerType(el){
+    if(!el || el.nodeType!==1 || el===mainEl) return el===mainEl?null:SKIP;
+    var tag=el.tagName;
+    if(tag==='TABLE') return 'Table';
+    if(['THEAD','TBODY','TFOOT','TR','TD','TH','COLGROUP','COL','CAPTION'].indexOf(tag)>=0) return SKIP;
+    if(tag==='UL'||tag==='OL') return 'Repeating Group';
+    if(tag==='LI') return SKIP;
+    if((el.closest && el.closest('#modal-root')) || el.getAttribute('role')==='dialog' || /\b(modal|popup)\b/.test(el.className||'')) return 'Popup';
+    if(el.id==='toast') return 'FloatingGroup';
+    if(/\bgroup-?focus\b/.test(el.className||'')) return 'GroupFocus';
+    if(/\bkanban-col\b/.test(el.className||'')) return 'Group'; // カンバン列（Drop Area）は空でもコンテナ認識
+    var groupTags=['DIV','SECTION','FORM','ARTICLE','ASIDE','HEADER','FOOTER','NAV','A','BUTTON','LABEL'];
+    if(groupTags.indexOf(tag)>=0 && el.childElementCount>0){
+      if(tag==='HEADER') return 'Group'; // RE_HeaderNav（sticky だが Reusable として扱う）
+      if(isFixedSticky(el)) return 'FloatingGroup';
+      if(el.id) return 'Group';
+      if(/\b(bg-(white|ink|red|brand|ok|blue|gray|green|yellow|amber)|shadow|border-2|card)\b/.test(el.className||'')) return 'Group';
+      var dsp=getComputedStyle(el).display; // レイアウトGroup（flex/gridで子2つ以上）も Group として扱う
+      if((dsp==='flex'||dsp==='inline-flex'||dsp==='grid') && el.childElementCount>=2) return 'Group';
+    }
+    return SKIP;
+  }
+  function containerInfo(el){
+    var types=[], inner=null, node=el.parentElement, guard=0;
+    while(node && node!==mainEl && node!==document.body && node.id!=='modal-root' && guard++<50){
+      var ct=containerType(node);
+      if(ct && ct!==SKIP){ types.push({t:ct,node:node}); if(!inner) inner=node; }
+      node=node.parentElement;
+    }
+    return { types:types, inner:inner };
+  }
+
+  // ---- 非Text要素の Style名解決 ----
+  function isTransparent(raw){ return raw==='rgba(0, 0, 0, 0)' || raw==='transparent'; }
+  function inputStyleName(t){
+    if(t==='Checkbox') return 'Checkbox';
+    if(t==='RadioButtons') return 'Radio';
+    if(t==='FileUploader') return 'File Uploader';
+    if(t==='PictureUploader') return 'PictureUploader';
+    if(t==='SliderInput') return 'SliderInput';
+    return 'Field – Base'; // Input/Multiline/Dropdown/SearchBox/Date
+  }
+  function buttonStyleName(el){
+    var cs=getComputedStyle(el); var bgRaw=cs.backgroundColor; var bg=rgbToHex(bgRaw); var col=rgbToHex(cs.color); var bw=parseFloat(cs.borderTopWidth)||0;
+    if(!isTransparent(bgRaw)){
+      if(bg==='#E87825') return 'Primary';
+      if(bg==='#7E22CE') return 'Page (紫)';
+      if(bg==='#1A1A1A') return 'Dark';
+      return 'Button';
+    }
+    if(col==='#EF4444'||col==='#DC2626') return 'Danger'+(bw>0?'（枠付き）':'（text）');
+    if(col==='#FFFFFF') return 'Add (normal)';
+    if(col==='#E87825') return 'Ghost brand'+(bw>0?'（枠あり）':'（枠なし）');
+    var rm=col.match(/^#(..)(..)(..)$/); if(rm){var R=parseInt(rm[1],16),G=parseInt(rm[2],16),B=parseInt(rm[3],16); if(R>150&&R-G>40&&R-B>40) return 'Danger'+(bw>0?'（枠付き）':'（text）');}
+    if(bw>0) return 'Secondary';
+    return 'Button';
+  }
+  function linkStyleInfo(el){
+    var cs=getComputedStyle(el); var white=(rgbToHex(cs.backgroundColor)==='#FFFFFF');
+    var hasBorder=(parseFloat(cs.borderTopWidth)||0)>0; var rad=parseFloat(cs.borderTopLeftRadius)||0; var shadow=cs.boxShadow!=='none';
+    if(white && (hasBorder||shadow) && rad>0 && el.childElementCount>0) return {name:'Group – Card（clickable）', detail:'カード型リンク（navigate）', color:'#64748b'};
+    if((el.closest&&el.closest('nav'))||/\bnav-btn\b/.test(el.className||'')) return {name:'Link – Nav', detail:'ナビゲーションリンク', color:'#2563EB'};
+    return {name:'Link', detail:'リンク要素', color:'#2563EB'};
+  }
+  function containerStyleName(el, ctype){
+    if(el.tagName==='HEADER') return 'RE_HeaderNav（Reusable・全ページ共通）';
+    if(el.tagName==='NAV') return 'Group – Nav bar';
+    if(ctype==='Table') return 'Table';
+    if(ctype==='Repeating Group') return 'Repeating Group – List';
+    if(ctype==='Popup') return 'Popup – Modal';
+    if(ctype==='FloatingGroup') return 'FloatingGroup – Card';
+    if(ctype==='GroupFocus') return 'GroupFocus';
+    var cs=getComputedStyle(el); var bgRaw=cs.backgroundColor; var bg=rgbToHex(bgRaw);
+    var shadow=cs.boxShadow!=='none'; var rad=parseFloat(cs.borderTopLeftRadius)||0;
+    if(bg==='#FFFFFF' && (shadow||rad>0)) return 'Group – Card';
+    if(!isTransparent(bgRaw) && bg!=='#FFFFFF') return 'Group – Title Bar';
+    return 'Group – Section';
+  }
+  function identify(el){
+    var r=classify(el); if(r) return r;
+    if(el===mainEl) return null;
+    var ct=containerType(el);
+    if(ct && ct!==SKIP) return { cat:'container', type:ct, ctype:ct };
+    return null;
+  }
+  function resolveStyle(t, r){
+    if(r.type==='Text'){ var ts=textStyle(t); return {name:ts.name, detail:ts.size+'px / w'+ts.weight+' / '+ts.color+(ts.mono?' mono':''), color:ts.color, cond:ts.cond}; }
+    if(r.cat==='input'){ return {name:inputStyleName(r.type), detail:'Input form（'+r.type+'）', color:'#16A34A'}; }
+    if(r.type==='Button'){ var bn=buttonStyleName(t); var cs=getComputedStyle(t); var sw=isTransparent(cs.backgroundColor)?rgbToHex(cs.color):rgbToHex(cs.backgroundColor); return {name:'Button – '+bn, detail:'Button form', color:sw}; }
+    if(r.type==='Link'){ return linkStyleInfo(t); }
+    if(r.cat==='container'){ return {name:containerStyleName(t, r.ctype), detail:'Container（'+r.type+'）', color:CCOL[r.ctype]||'#E8A54B'}; }
+    return {name:r.type, detail:'（専用Styleなし）', color:'#6E7689'};
+  }
+
+  function pxr(n){ return Math.round(n)+'px'; }
+  function drow(k,v){ return '<div class="r"><span class="k">'+k+'</span><span class="v'+(v==='—'||v==='auto'?' dim':'')+'">'+v+'</span></div>'; }
+
+  function parentBox(parent){ var pr=parent.getBoundingClientRect(), pcs=getComputedStyle(parent); var padL=parseFloat(pcs.paddingLeft)||0, padR=parseFloat(pcs.paddingRight)||0; return {pr:pr, padL:padL, padR:padR, cw:pr.width-padL-padR}; }
+  function widthMode(t, rc, cls){
+    if(!!t.style.width || /\bw-\[/.test(cls)) return 'Fixed';
+    if(/\b(w-full|flex-1|grow|col-span-\d)\b/.test(cls)) return 'Fill container';
+    var p=t.parentElement; if(p){ var m=parentBox(p); if(m.cw>0 && rc.width>=m.cw-2) return 'Fill container'; } // 親幅いっぱい＝Fill（テキスト/コンテナは基本これ）
+    return 'Fit to content';
+  }
+  function posAlign(t, rc){
+    var p=t.parentElement; if(!p) return 'left';
+    var m=parentBox(p); if(m.cw<=0) return 'left';
+    if(rc.width>=m.cw-2) return 'left'; // Fill（stretch）は left 扱い
+    var lg=rc.left-(m.pr.left+m.padL), rg=(m.pr.right-m.padR)-rc.right;
+    if(Math.abs(lg-rg)<4) return 'center';
+    return rg<lg?'right':'left';
+  }
+  function containerLayout(cs, el){
+    for(var i=0;i<el.children.length;i++){ if(getComputedStyle(el.children[i]).position==='absolute') return 'Align to parent'; }
+    var disp=cs.display;
+    if(disp.indexOf('flex')>=0) return (cs.flexDirection.indexOf('column')>=0?'Column':'Row')+(cs.flexWrap==='wrap'?' (wrap)':'');
+    if(disp==='grid'){ var cols=(cs.gridTemplateColumns||'').split(' ').filter(Boolean).length; return 'Row'+(cols?'（grid '+cols+'列）':''); }
+    return 'Column';
+  }
+
+  function elDetails(t, ci, st, r){
+    var rc=t.getBoundingClientRect(), cs=getComputedStyle(t);
+    var cls=(typeof t.className==='string')?t.className:'';
+    var tag=t.tagName.toLowerCase();
+    // content
+    var content;
+    if(tag==='input'||tag==='select'||tag==='textarea'){ content=(t.value||t.getAttribute('placeholder')||'（入力値）'); }
+    else { var tx=(t.textContent||'').trim().replace(/\s+/g,' '); content= tx? (tx.length>24?tx.slice(0,24)+'…':tx) : '—'; }
+    // configure（Bubble要素種別）
+    var configure=(r?r.type:'')+(t.type?(' / type='+t.type):'');
+    // width sizing：明示的な固定幅のみ Fixed、それ以外は全て Fill container
+    var fixedW=!!t.style.width || /\bw-\[/.test(cls);
+    var wMode= fixedW?'Fixed':'Fill container';
+    var minW=(cs.minWidth==='0px'||cs.minWidth==='auto')?'—':cs.minWidth;
+    var maxW=(cs.maxWidth==='none')?'—':cs.maxWidth;
+    // height sizing
+    var fixedH=!!t.style.height || /\bh-(\d|\[)/.test(cls);
+    var hMode= fixedH?'Fixed':'Fill / 100%';
+    var minH=(cs.minHeight==='0px'||cs.minHeight==='auto')?(/min-h-screen/.test(cls)?'100vh':'—'):cs.minHeight;
+    var maxH=(cs.maxHeight==='none')?'—':cs.maxHeight;
+    // layout
+    var posv=posAlign(t,rc);
+    var parent=t.parentElement, idx='—';
+    if(parent){ var sib=[].slice.call(parent.children); idx=(sib.indexOf(t)+1)+' / '+sib.length; }
+    var orderCls=cls.split(/\s+/).filter(function(c){return /^(\w+:)?order-/.test(c);}).join(' ');
+    var order= orderCls? orderCls : ('DOM順 '+idx);
+    var pad=cs.paddingTop+' '+cs.paddingRight+' '+cs.paddingBottom+' '+cs.paddingLeft;
+    var mar=cs.marginTop+' '+cs.marginRight+' '+cs.marginBottom+' '+cs.marginLeft;
+    // appearance（= Style）
+    var sname= st?st.name:'—';
+    var bw=parseFloat(cs.borderTopWidth)||0;
+    var border= bw>0? (Math.round(bw)+'px '+cs.borderTopStyle+' '+rgbToHex(cs.borderTopColor)) : 'none';
+    var bg= isTransparent(cs.backgroundColor)?'transparent':rgbToHex(cs.backgroundColor);
+    var shadow= cs.boxShadow==='none'?'none':'有';
+    return {
+      content:content, configure:configure,
+      wMode:wMode, wPx:(fixedW?pxr(rc.width):'auto'), minW:minW, maxW:maxW,
+      hMode:hMode, hPx:(fixedH?pxr(rc.height):'auto'), minH:minH, maxH:maxH,
+      pos:posv, order:order, pad:pad, mar:mar,
+      sname:sname, opacity:cs.opacity, border:border, bg:bg, shadow:shadow
+    };
+  }
+
+  function shortJC(v){ return ({'flex-start':'start','flex-end':'end','space-between':'between','space-around':'around','space-evenly':'evenly','center':'center','normal':'—','stretch':'stretch'})[v]||v; }
+  function shortAI(v){ return ({'flex-start':'start','flex-end':'end','center':'center','stretch':'stretch','baseline':'baseline','normal':'—'})[v]||v; }
+  function groupDetails(t, r, st){
+    var rc=t.getBoundingClientRect(), cs=getComputedStyle(t);
+    var cls=(typeof t.className==='string')?t.className:'';
+    var ctype=r.ctype||'Group';
+    var isList=(ctype==='Repeating Group'||ctype==='Table');
+    var fixedW=!!t.style.width||/\bw-\[/.test(cls); var wMode=fixedW?'Fixed':'Fill container';
+    var fixedH=!!t.style.height||/\bh-(\d|\[)/.test(cls);
+    var hMode=fixedH?'Fixed':'Fill / 100%';
+    var disp=cs.display, gap='—', align='—';
+    if(disp.indexOf('flex')>=0){
+      align='justify:'+shortJC(cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
+      if(cs.columnGap&&cs.columnGap!=='normal'&&parseFloat(cs.columnGap)>0) gap=cs.columnGap;
+    } else if(disp==='grid'){
+      align='justify:'+shortJC(cs.justifyItems||cs.justifyContent)+' / align:'+shortAI(cs.alignItems);
+      if(cs.gap&&cs.gap!=='normal'&&parseFloat(cs.gap)>0) gap=cs.gap.replace(/ .*/,'');
+    }
+    var layout=containerLayout(cs,t);
+    var pos=posAlign(t,rc);
+    var parent=t.parentElement, idx='—'; if(parent){var sib=[].slice.call(parent.children);idx=(sib.indexOf(t)+1)+' / '+sib.length;}
+    var order=cls.split(/\s+/).filter(function(c){return /^(\w+:)?order-/.test(c);}).join(' ')||('DOM順 '+idx);
+    var bw=parseFloat(cs.borderTopWidth)||0;
+    return {
+      typeContent: isList?'list（行データ）':'—（固定Group/非リスト）',
+      dataSource: isList?'リスト（受注/履歴 等）':'—',
+      width: wMode+(fixedW?' / '+pxr(rc.width):' / auto'),
+      height: ((st&&st.name==='Group – Title Bar')||/\brounded-t\b/.test(cls)) ? 'max 32px' : (hMode+(fixedH?' / '+pxr(rc.height):' / auto')),
+      pos:pos, order:order, layout:layout, align:align, gap:gap,
+      pad:cs.paddingTop+' '+cs.paddingRight+' '+cs.paddingBottom+' '+cs.paddingLeft,
+      mar:cs.marginTop+' '+cs.marginRight+' '+cs.marginBottom+' '+cs.marginLeft,
+      sname: st?st.name:'—', opacity:cs.opacity,
+      border: bw>0?(Math.round(bw)+'px '+cs.borderTopStyle+' '+rgbToHex(cs.borderTopColor)):'none',
+      bg: isTransparent(cs.backgroundColor)?'transparent':rgbToHex(cs.backgroundColor),
+      shadow: cs.boxShadow==='none'?'none':'有'
+    };
+  }
+
+  function wfInfo(el){
+    var node=el, guard=0;
+    while(node && node!==mainEl && guard++<8){
+      if(node.id){
+        var _sc = (typeof Router !== 'undefined' && Router.currentScreen) || '';
+        var _v4 = V4WF[_sc + '|' + node.id];
+        if(_v4) return _v4;
+        if(WFMAP[node.id]) return WFMAP[node.id];
+      }
+      var ds=node.getAttribute&&(node.getAttribute('data-status')||node.getAttribute('data-set-status'));
+      if(ds) return {t:'ステータスボタン clicked', a:'Order.status を「'+ds+'」に変更＋開始/完了/納品時刻を自動記録＋ChangeLog', g:'status'};
+      var ncls=(typeof node.className==='string')?node.className:'';
+      if(node.getAttribute&&node.getAttribute('data-copy-from')) return {t:'この内容でコピー clicked', a:'過去発注の全明細を現在の起票フォームにコピー（OrderItem複製・同画面）', g:'—'};
+      if(/\bbtn-copy-order\b/.test(ncls)) return {t:'この仕様でコピー clicked', a:'顧客プリセットで過去発注の明細を複製し Go to page order/new（納期リセット）', g:'#order/new'};
+      if(/\bbtn-remove-item\b/.test(ncls)) return {t:'明細削除 clicked', a:'この明細(OrderItem)をフォームから削除＋合計/消費税を再計算', g:'—'};
+      if(/\bbtn-remove-attach\b/.test(ncls)) return {t:'添付削除 clicked', a:'添付ファイルを削除（attachments から除外）', g:'—'};
+      if(/\bqp-include\b/.test(ncls)) return {t:'採用パターン clicked', a:'この見積パターンを採用(accepted)に設定＋受注合計に同期', g:'—'};
+      var oc=(node.getAttribute&&node.getAttribute('onclick'))||'';
+      var href=(node.tagName==='A'&&node.getAttribute('href'))||'';
+      if(oc){
+        if(/#order\//.test(oc)) return {t:'行(セル)が clicked', a:"Go to page order（受注確認）／ send Current cell's Order（mode=view）", g:'#order/:id'};
+        var hm=oc.match(/#([\w\/?=&-]+)/);
+        if(hm) return {t:'clicked', a:'Go to page '+hm[1].split(/[\/?]/)[0], g:'#'+hm[1]};
+        return {t:'clicked', a:oc.slice(0,46), g:'—'};
+      }
+      if(href.charAt(0)==='#'){
+        var h=href.slice(1);
+        if(/^orders\?filter=/.test(h)) return {t:'カードが clicked', a:'Go to page orders（受注一覧）／ URL param filter='+h.split('filter=')[1], g:href};
+        if(/^order\//.test(h)) return {t:'clicked', a:'Go to page order（受注確認）／ send Order', g:href};
+        return {t:'clicked', a:'Go to page '+h.split(/[\/?]/)[0], g:href};
+      }
+      if(node.getAttribute&&node.getAttribute('draggable')==='true') return {t:'Drag & Drop（列間移動）', a:'Order.status を移動先列の値に変更＋開始/完了/納品時刻を自動記録', g:'status'};
+      node=node.parentElement;
+    }
+    var btn=el.closest&&el.closest('button');
+    if(btn) return {t:'button clicked', a:'（WFは要件§3に準拠／JSハンドラ駆動。自動検出なし＝実装で確定）', g:'—'};
+    return null;
+  }
+
+  function tableSig(headers){
+    var h=headers.join('|');
+    if(/受注番号/.test(h)&&/品目/.test(h)&&/状態/.test(h)&&!/受付日/.test(h)) return {dt:'Order', src:'本日納期 かつ status≠納品済み の受注', f:['order_number','customer.company_name','items[0]（用紙×数量）','Σ items.quantity','status']};
+    if(/受注番号/.test(h)&&/受付日/.test(h)&&/顧客/.test(h)&&/金額/.test(h)&&/状態/.test(h)) return {dt:'Order', src:'全受注（受付日降順）＋各フィルタ', f:['order_number','received_date','customer','title / tags','Σ quantity','delivered_date','total_amount','status']};
+    if(/顧客名/.test(h)&&/種別/.test(h)&&/地域/.test(h)) return {dt:'Customer', src:'全顧客＋検索/種別フィルタ（売上は受注集計）', f:['company_name / individual_name','kind','area','phone','fax','Σ税抜','Σ消費税','Σ税込=累計売上','最終納品日']};
+    if(/受注番号/.test(h)&&/品名/.test(h)&&/金額/.test(h)&&/状態/.test(h)&&!/顧客/.test(h)) return {dt:'Order', src:'この顧客の全受注（受付日降順）', f:['order_number','received_date','title / tags','Σ quantity','delivered_date','total_amount','status']};
+    return null;
+  }
+  function dataBinding(el){
+    // v3-copy: data-ds-* による明示アノテーション（集計値・計算値など、行データに紐づかない表示の Data source を明示）
+    if(el.closest){
+      var ann=el.closest('[data-ds-src]');
+      if(ann) return {
+        dt: ann.getAttribute('data-ds-dt')||'—',
+        src: ann.getAttribute('data-ds-src')||'',
+        field: ann.getAttribute('data-ds-field')||null,
+        head: ann.getAttribute('data-ds-head')||'集計/計算値'
+      };
+    }
+    var ul=el.closest('ul');
+    if(ul){
+      var prev=ul.previousElementSibling;
+      if(prev && /変更履歴|履歴/.test(prev.textContent||'')){
+        var field=null, li=el.closest('li');
+        if(li && el!==ul){
+          if(el.tagName==='SPAN'){ var sp=el.parentElement.querySelectorAll('span'); field=(sp[0]===el)?'changed_by（→User.name＝操作者）':'changed_at（日時）'; }
+          else if(el.querySelector && el.querySelector('span')){ field='changed_by / changed_at（操作者・日時）'; }
+          else { field='change_summary（内容）'; }
+        }
+        return {dt:'ChangeLog', src:'直近の変更履歴（changed_at 降順・8件）', field:field};
+      }
+    }
+    var table=el.closest('table');
+    if(table){
+      var headers=[].map.call(table.querySelectorAll('thead th'),function(th){return th.textContent.trim();});
+      var sig=tableSig(headers); if(!sig) return null;
+      var field=null, td=el.closest('td');
+      if(td) field=sig.f[td.cellIndex]||'—';
+      else if(el.closest('th')) field='（列見出し）';
+      return {dt:sig.dt, src:sig.src, field:field};
+    }
+    return null;
+  }
+
+  function pluginInfo(el){
+    if(!el || !el.closest) return null;
+    // 工場カンバン（Draggable Elements）
+    if(el.closest('[draggable="true"], .kanban-card')) return {name:'DragDrop Group', plugin:'Draggable Elements（公式・無料）', role:"カード本体。Data＝Current cell's Order（ドロップ時の更新対象）。※親の列＝Drop Area（同プラグイン）"};
+    if(el.closest('.kanban-col')) return {name:'Drop Area', plugin:'Draggable Elements（公式・無料）', role:'列のドロップ枠（列ごとに1つ＝status識別）。ドロップ時WFで status を変更'};
+    // 見積書PDF（PDFプラグイン）
+    if(el.closest('#btn-print-quote, #btn-print')) return {name:'PDF出力ボタン', plugin:'PDF & Screenshot Pro（BEP）', role:'PDF専用ページへ遷移→Page load の Element PDF で生成（§5-B）。ブラウザ印刷ではなくPDF生成'};
+    if(el.closest('#quote-pdf-page')) return {name:'PDF Body', plugin:'PDF & Screenshot Pro（BEP）', role:"PDF/IMG要素(Element ID=quote_pdf・A4縦760×1123)。Page loadの「Element PDF」で生成→Save to Bubble+Download。前後にPause(3s/2s)。詳細§5-B"};
+    return null;
+  }
+
+  function renderContent(t, r, ci, st){
+    var d; try{ d=(r.cat==='container')?groupDetails(t,r,st):elDetails(t,ci,st,r); }catch(e){ d=null; }
+    var chips = ci.types.length
+      ? ci.types.slice().reverse().map(function(c,i){ return (i?'<span class="arr">›</span>':'')+'<span class="chip" style="background:'+(CCOL[c.t]||'#64748b')+'">'+c.t+'</span>'; }).join('')
+      : '<span style="color:#6E7689">画面直下（コンテナなし）</span>';
+    var html='';
+    var pl=pluginInfo(t);
+    var catColor= pl?'#10B981':(COL[r.cat]||'#64748b');
+    var catLabel= pl?'🧩 Plugin':(CATJP[r.cat]||r.cat);
+    var typeLabel= pl?pl.name:r.type;
+    html += '<div class="hdr"><span class="cat" style="background:'+catColor+'">'+catLabel+'</span><span class="typ"'+(pl?' style="color:#34D399"':'')+'>'+typeLabel+'</span></div>';
+    html += '<div class="tag">&lt;'+t.tagName.toLowerCase()+(t.type?(' type="'+t.type+'"'):'')+'&gt;</div>';
+    if(st){
+      var _known = !!KNOWN_STYLES[st.name];
+      var _badge = _known
+        ? '<span style="margin-left:8px;font-size:9.5px;font-weight:700;color:#0c0e16;background:#7ED9A5;border-radius:4px;padding:1px 6px">既存Style（§1-3 定義済み・引用）</span>'
+        : '<span style="margin-left:8px;font-size:9.5px;font-weight:700;color:#0c0e16;background:#F6C177;border-radius:4px;padding:1px 6px">新規Style（要追加）</span>';
+      html += '<div class="sty"><div class="nm">▦ Style: '+st.name+_badge+'</div>'
+            + '<div class="mt"><span class="sw" style="background:'+(st.color||'#6E7689')+'"></span>'+(st.detail||'')+'</div>'
+            + (st.cond?'<div class="cond">* Color is conditional (status / alert-driven). One shared Style + conditional color.</div>':'')
+            + '</div>';
+    }
+    if(pl){ html += '<h5 style="color:#7be0b4">🧩 Plugin要素（要プラグイン）</h5>'+drow('プラグイン',pl.plugin)+drow('役割',pl.role); }
+    var wf=wfInfo(t);
+    if(wf){ html += '<h5>⚙ Workflow（WF）</h5>';
+      if(wf.g && wf.o){ html += drow('WF名',wf.g)+drow('記述元オブジェクト',wf.o)+drow('ページURL',wf.p||'—')+drow('機能一覧の行','Ph2機能一覧 '+wf.r+'行目'); }
+      html += drow('event (trigger)',wf.t)+drow('action',wf.a);
+      if(wf.n) html += drow('WFなし（実現方法）', wf.n);
+      if(wf.s && wf.s.length){ for(var _i=0;_i<wf.s.length;_i++) html += drow('WF step'+(_i+1), wf.s[_i]); }
+      if(!wf.o) html += drow('navigate to',wf.g);
+    }
+    var db=dataBinding(t);
+    if(db){ html += '<h5>🗂 Data source（'+(db.head||'行データ')+'）</h5>'+drow('Type of content (DT)',db.dt)+drow('data source',db.src)+(db.field?drow('この要素 ＝',db.dt+'.'+db.field):''); }
+    html += '<h5>所属コンテナ（外→内・'+ci.types.length+'層）</h5><div class="chips">'+chips+'</div>';
+    if(d && r.cat==='container'){
+      html += '<h5>📦 Group / Container</h5>'+drow('Type of content',d.typeContent)+drow('data source',d.dataSource)
+            + '<h5>↔↕ Size</h5>'+drow('width',d.width)+drow('height',d.height)
+            + '<h5>▦ Layout</h5>'+drow('position',d.pos)+drow('order',d.order)+drow('container layout',d.layout)+drow('container alignment',d.align)+drow('gap',d.gap)+drow('padding',d.pad)+drow('margin',d.mar)
+            + '<h5>🎨 Appearance（＝Style）</h5>'+drow('style','＝ Style（'+d.sname+'）')+drow('Apperance','opacity '+d.opacity+'　＝Style')+drow('border',d.border+'　＝Style')+drow('background',d.bg+'　＝Style')+drow('shadow',d.shadow+'　＝Style');
+    } else if(d){
+      html += '<h5>📝 Content</h5>'+drow('content',d.content)+drow('configure',d.configure)
+            + '<h5>↔ Size – Width</h5>'+drow('sizewidth (Fixed/Fit/Fill)',d.wMode)+drow('sizewidth (px)',d.wPx)+drow('Min width',d.minW)+drow('Max width',d.maxW)
+            + '<h5>↕ Size – Height</h5>'+drow('sizeHeight (Fixed/Fit/Fill)',d.hMode)+drow('sizeHeight (px)',d.hPx)+drow('Min height',d.minH)+drow('Max height',d.maxH)
+            + '<h5>▦ Layout</h5>'+drow('layout position',d.pos)+drow('layout order',d.order)+drow('layout spacing – padding',d.pad)+drow('layout spacing – margin',d.mar)
+            + '<h5>🎨 Appearance（＝Style）</h5>'+drow('text','＝ Style（'+d.sname+'）')+drow('apperance','opacity '+d.opacity+'　＝Style')+drow('border',d.border+'　＝Style')+drow('background',d.bg+'　＝Style')+drow('shadow',d.shadow+'　＝Style');
+    }
+    content.innerHTML = html;
+  }
+
+  function setEmpty(){ content.innerHTML='<div class="empty">各画面の要素にマウスを載せると、<br>種別・Style・Workflow・所属コンテナ・Content/Size(W·H)/<br>Layout/Appearance(＝Style) をここに表示します。</div>'; }
+
+  function onDashboard(){ return true; } // 全画面で有効（login〜印刷ビューまで）
+
+  function clearHL(){
+    if(cur){ cur.style.outline=curOutline; cur=null; }
+    if(curC){ curC.style.outline=curCOutline; curC=null; }
+  }
+
+  function setActive(){
+    win.classList.toggle('act', enabled);
+    fab.classList.toggle('act', !enabled);
+    document.body.classList.toggle('bbl-reserve', enabled);
+    var off = enabled && !onDashboard();
+    offnote.style.display = off ? 'block' : 'none';
+    if(!enabled || off){ clearHL(); setEmpty(); }
+  }
+
+  toggle.addEventListener('change', function(){ enabled=toggle.checked; setActive(); });
+  fab.addEventListener('click', function(){ enabled=true; toggle.checked=true; setActive(); });
+  window.addEventListener('hashchange', function(){ clearHL(); setActive(); });
+  window.addEventListener('resize', function(){ if(cur){ /* recompute on next move */ } });
+
+  document.addEventListener('mousemove', function(e){
+    if(!enabled || !onDashboard()) return;
+    var t=e.target;
+    if(!t || !t.closest || win.contains(t) || !(t.closest('#main')||t.closest('#modal-root')||t.closest('header'))) return;
+    var r=identify(t);
+    if(!r) return;
+    if(t===cur) return;
+    if(cur) cur.style.outline=curOutline;
+    cur=t; curOutline=t.style.outline; t.style.outline='2px solid '+(COL[r.cat]||'#64748b'); t.style.outlineOffset='1px';
+    var ci=containerInfo(t);
+    if(ci.inner!==curC){ if(curC) curC.style.outline=curCOutline; curC=ci.inner; if(curC){ curCOutline=curC.style.outline; curC.style.outline='2px dashed #94a3b8'; curC.style.outlineOffset='2px'; } }
+    var st=resolveStyle(t, r);
+    renderContent(t, r, ci, st);
+  }, true);
+
+  setActive();
+  // デバッグ用API（他画面のプロパティ抽出に使用）
+  try{ window.__BBL = { identify:identify, resolveStyle:resolveStyle, elDetails:elDetails, groupDetails:groupDetails, containerInfo:containerInfo }; }catch(e){}
+})();
+</script>
+</body>
+</html>

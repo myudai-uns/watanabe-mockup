@@ -1,0 +1,501 @@
+{
+  "_note": "Ph2機能一覧の行番号をキーに、WF名・記述元オブジェクト・ページURL・WFなし・WFstep1..N を定義する。スプレッドシートのG〜N列とv4-copyのインスペクタは、ここから生成する。ステップ先頭はBubbleのアクション検索名。",
+  "rows": {
+    "3": {
+      "wf": "WF_受注確認_納品書を作成",
+      "obj": "btn_納品書を作成（Page: order）",
+      "el": "order|btn-make-dnote",
+      "event": "btn_納品書を作成 is clicked",
+      "action": "この受注の顧客・明細をカスタムステートに載せ、Go to page dnote_edit（新規）",
+      "page": "/order",
+      "steps": [
+        "Set state ／ 対象: Page order ／ 引用元受注 = Current page's Order",
+        "Go to page... ／ Destination: dnote_edit ／ parameter order = Current page's Order's unique id"
+      ],
+      "nowf": ""
+    },
+    "4": {
+      "wf": "WF_受注_納品日を記録",
+      "obj": "DD_ステータス（Page: order）",
+      "el": "order|status",
+      "event": "DD_ステータス's value is changed",
+      "action": "納品済み→Order.納品日=Current date／他へ戻す→Order.納品日を空にする",
+      "page": "/order",
+      "steps": [
+        "Make changes to a thing... ／ Thing: Current page's Order ／ ステータス = DD_ステータス's value",
+        "Make changes to a thing... ／ Only when DD_ステータス's value is 納品済み ／ 納品日 = Current date/time",
+        "Make changes to a thing... ／ Only when DD_ステータス's value is not 納品済み ／ 納品日 = （空にする）",
+        "Create a new thing... ／ Type: ChangeLog ／ 内容 = ステータス変更"
+      ],
+      "nowf": ""
+    },
+    "5": {
+      "wf": "WF_カンバン_納品日を記録",
+      "obj": "DropArea_納品済み（Page: factory）",
+      "el": "factory|dropzone",
+      "event": "DropArea_納品済み で Dropped on",
+      "action": "Order.ステータス=納品済み、Order.納品日=Current date",
+      "page": "/factory",
+      "steps": [
+        "Make changes to a thing... ／ Thing: Current dragged Order ／ ステータス = DropArea's ステータス",
+        "Make changes to a thing... ／ Only when DropArea が 納品済み ／ 納品日 = Current date/time",
+        "Make changes to a thing... ／ Only when それ以外 ／ 納品日 = （空にする）"
+      ],
+      "nowf": ""
+    },
+    "6": {
+      "wf": "WF_帳簿_自動記帳",
+      "obj": "DropArea_納品済み／DD_ステータス（共通ワークフロー）",
+      "el": "factory|ledger",
+      "event": "ステータスが納品済みになったとき",
+      "action": "同じOrderの帳簿行が無ければ Create a new LedgerEntry（取消時は Delete）",
+      "page": "/factory ・ /order",
+      "steps": [
+        "Create a new thing... ／ Only when ステータス is 納品済み and Do a search for LedgerEntry（受注 = this Order）:count is 0 ／ Type: LedgerEntry（受注・顧客・品目・税抜小計・受付日・納品日）",
+        "Delete a list of things... ／ Only when ステータス is not 納品済み ／ List: Do a search for LedgerEntry（受注 = this Order）"
+      ],
+      "nowf": ""
+    },
+    "7": {
+      "wf": "WF_帳簿_一覧表示",
+      "obj": "RG_帳簿（Page: ledger）",
+      "el": "ledger|rg",
+      "event": "Page load",
+      "action": "RG_帳簿 の Data source = Search for LedgerEntries（納品日 降順）",
+      "page": "/ledger",
+      "steps": [],
+      "nowf": "RG_帳簿 の Data source = Do a search for LedgerEntry（Sort by 納品日 descending）"
+    },
+    "8": {
+      "wf": "WF_帳簿_顧客名検索",
+      "obj": "input_顧客名検索（Page: ledger）",
+      "el": "ledger|f-q",
+      "event": "input_顧客名検索's value is changed",
+      "action": "RG_帳簿 の検索条件に 顧客名 contains を追加",
+      "page": "/ledger",
+      "steps": [],
+      "nowf": "Data source の constraint に「顧客's 名前 contains input_顧客名検索's value」を追加（Ignore empty constraints = ON）"
+    },
+    "9": {
+      "wf": "WF_帳簿_地域絞込",
+      "obj": "DD_地域（Page: ledger）",
+      "el": "ledger|f-area",
+      "event": "DD_地域's value is changed",
+      "action": "RG_帳簿 の検索条件に 顧客の地域 = を追加",
+      "page": "/ledger",
+      "steps": [],
+      "nowf": "Data source の constraint に「顧客's 地域 = DD_地域's value」を追加（Ignore empty constraints = ON）"
+    },
+    "10": {
+      "wf": "WF_帳簿_受注詳細へ遷移",
+      "obj": "RG_帳簿 > grp_行（Page: ledger）",
+      "el": "ledger|row",
+      "event": "grp_行 is clicked",
+      "action": "Go to page order（Current cell's LedgerEntry's 受注）",
+      "page": "/ledger",
+      "steps": [
+        "Go to page... ／ Destination: order ／ Data to send: Current cell's LedgerEntry's 受注"
+      ],
+      "nowf": ""
+    },
+    "11": {
+      "wf": "—（合計表示は廃止）",
+      "obj": "—",
+      "el": "",
+      "event": "",
+      "action": "帳簿の合計金額表示は不要との判断で削除",
+      "page": "—",
+      "steps": [],
+      "nowf": "（合計表示は廃止）"
+    },
+    "12": {
+      "wf": "WF_納品請求一覧_一覧表示",
+      "obj": "RG_納品書（Page: dnotes）",
+      "el": "delivery_notes|rg",
+      "event": "Page load",
+      "action": "RG_納品書 の Data source = Search for DeliveryNotes（納品日 降順）",
+      "page": "/dnotes",
+      "steps": [],
+      "nowf": "RG_納品書 の Data source = Do a search for DeliveryNote（Sort by 納品日 descending）"
+    },
+    "13": {
+      "wf": "WF_納品請求一覧_顧客名検索",
+      "obj": "input_顧客名検索（Page: dnotes）",
+      "el": "delivery_notes|f-q",
+      "event": "input_顧客名検索's value is changed",
+      "action": "RG_納品書 の検索条件に 顧客名 contains を追加",
+      "page": "/dnotes",
+      "steps": [],
+      "nowf": "constraint「顧客's 名前 contains input_顧客名検索's value」（Ignore empty constraints = ON）"
+    },
+    "14": {
+      "wf": "WF_納品請求一覧_種別地域絞込",
+      "obj": "DD_種別／DD_地域（Page: dnotes）",
+      "el": "delivery_notes|f-kind",
+      "event": "DD_種別 / DD_地域's value is changed",
+      "action": "RG_納品書 の検索条件に 顧客の種別・地域 = を追加",
+      "page": "/dnotes",
+      "steps": [],
+      "nowf": "constraint「顧客's 種別 = DD_種別's value」「顧客's 地域 = DD_地域's value」（Ignore empty constraints = ON）"
+    },
+    "15": {
+      "wf": "WF_納品請求一覧_編集へ遷移",
+      "obj": "RG_納品書 > grp_行（Page: dnotes）",
+      "el": "delivery_notes|row",
+      "event": "grp_行 is clicked",
+      "action": "Go to page dnote_edit（Current cell's DeliveryNote）",
+      "page": "/dnotes",
+      "steps": [
+        "Go to page... ／ Destination: dnote_edit ／ Data to send: Current cell's DeliveryNote"
+      ],
+      "nowf": ""
+    },
+    "16": {
+      "wf": "WF_納品請求一覧_新規作成",
+      "obj": "btn_新規作成（Page: dnotes）",
+      "el": "delivery_notes|new",
+      "event": "btn_新規作成 is clicked",
+      "action": "Go to page dnote_edit（データ無し＝新規）",
+      "page": "/dnotes",
+      "steps": [
+        "Go to page... ／ Destination: dnote_edit ／ Data to send: （なし＝新規）"
+      ],
+      "nowf": ""
+    },
+    "17": {
+      "wf": "WF_納品請求_受注引用",
+      "obj": "DD_受注引用（Page: dnote_edit）",
+      "el": "dn_edit|f-quote",
+      "event": "DD_受注引用's value is changed",
+      "action": "顧客・納品日をセットし、受注明細を明細RGへコピー",
+      "page": "/dnote_edit",
+      "steps": [
+        "Set state ／ 顧客 = DD_受注引用's value's 顧客",
+        "Set state ／ 納品日 = DD_受注引用's value's 納品日",
+        "Set state ／ 明細 = DD_受注引用's value's 明細（品名・数量・単価・金額）",
+        "Display list ／ Element: RG_明細 ／ Data: Set state 明細"
+      ],
+      "nowf": ""
+    },
+    "18": {
+      "wf": "—（入力のみ・WFなし）",
+      "obj": "input_宛先／DD_顧客名（Page: dnote_edit）",
+      "el": "",
+      "event": "",
+      "action": "受注を選ばずに直接入力して作成できる",
+      "page": "/dnote_edit",
+      "steps": [],
+      "nowf": "DD_顧客名・input_各項目に直接入力する（受注を選ばずに作成できる）"
+    },
+    "19": {
+      "wf": "WF_納品請求_明細追加 ／ WF_納品請求_明細削除",
+      "obj": "btn_明細を追加／btn_明細削除（Page: dnote_edit）",
+      "el": "dn_edit|add-it",
+      "event": "btn_明細を追加 is clicked",
+      "action": "明細リスト（カスタムステート）に空行を1件追加。削除は該当行を除外",
+      "page": "/dnote_edit",
+      "steps": [
+        "Set state ／ btn_明細を追加 ／ 明細 = 明細:plus item（空の明細）",
+        "Set state ／ btn_明細削除 ／ 明細 = 明細:minus item（Current cell's 明細）"
+      ],
+      "nowf": ""
+    },
+    "20": {
+      "wf": "—（入力のみ・WFなし）",
+      "obj": "input_金額（Page: dnote_edit）",
+      "el": "dn_edit|amount",
+      "event": "",
+      "action": "金額は手入力。数量×単価の自動計算はしない",
+      "page": "/dnote_edit",
+      "steps": [],
+      "nowf": "input_金額に直接入力する（数量×単価の自動計算はしない）"
+    },
+    "21": {
+      "wf": "—（式で算出・WFなし）",
+      "obj": "txt_税抜小計／txt_消費税／txt_税込合計（Page: dnote_edit）",
+      "el": "dn_edit|totals",
+      "event": "",
+      "action": "明細の金額:sum を丸め、消費税10%を加えて合計を組み立てる",
+      "page": "/dnote_edit",
+      "steps": [],
+      "nowf": "式で算出。txt_税抜小計 = 明細's 金額:sum:rounded to 0 ／ txt_消費税 = 税抜小計 × 0.1:rounded to 0 ／ txt_税込合計 = 税抜小計 + 消費税"
+    },
+    "22": {
+      "wf": "WF_納品請求_保存（請求書番号を同時採番）",
+      "obj": "btn_保存（Page: dnote_edit）",
+      "el": "dn_edit|f-save",
+      "event": "btn_保存 is clicked",
+      "action": "納品書番号と請求書番号を同時に採番して1件として保存する",
+      "page": "/dnote_edit",
+      "steps": [
+        "Create a new thing... ／ Only when Current page's DeliveryNote is empty ／ Type: DeliveryNote ／ 納品書番号 = D-YYMMDD-NN、請求書番号 = I-YYMMDD-NN を同時採番"
+      ],
+      "nowf": ""
+    },
+    "23": {
+      "wf": "WF_納品請求_保存",
+      "obj": "btn_保存（Page: dnote_edit）",
+      "el": "dn_edit|f-save2",
+      "event": "btn_保存 is clicked",
+      "action": "DeliveryNote を Create/Update し、Go to page dnotes",
+      "page": "/dnote_edit",
+      "steps": [
+        "Create a new thing... ／ Only when 新規 ／ Type: DeliveryNote（22の採番を含む）",
+        "Make changes to a thing... ／ Only when 既存 ／ Thing: Current page's DeliveryNote",
+        "Schedule API Workflow on a list... ／ List: Set state 明細 ／ 各行に DeliveryNoteItem を作成",
+        "Go to page... ／ Destination: dnotes"
+      ],
+      "nowf": ""
+    },
+    "24": {
+      "wf": "WF_納品請求_納品書印刷",
+      "obj": "btn_納品書印刷（Page: dnote_edit）",
+      "el": "dn_edit|f-print-dn",
+      "event": "btn_納品書印刷 is clicked",
+      "action": "プレビューを納品書に切り替えて grp_納品書プレビュー をPDF出力",
+      "page": "/dnote_edit",
+      "steps": [
+        "Set state ／ プレビュー種別 = 納品書",
+        "Add a pause before next action ／ 3,000 ms（描画完了待ち）",
+        "Element PDF（PDF & Screenshot Pro）／ Element ID = dnote_pdf ／ Save to Bubble = ON・Download = ON"
+      ],
+      "nowf": ""
+    },
+    "25": {
+      "wf": "WF_納品請求_請求書印刷",
+      "obj": "btn_請求書印刷（Page: dnote_edit）",
+      "el": "dn_edit|f-print-iv",
+      "event": "btn_請求書印刷 is clicked",
+      "action": "プレビューを請求書に切り替えて grp_請求書プレビュー をPDF出力（別ファイル）",
+      "page": "/dnote_edit",
+      "steps": [
+        "Set state ／ プレビュー種別 = 請求書",
+        "Add a pause before next action ／ 3,000 ms（描画完了待ち）",
+        "Element PDF（PDF & Screenshot Pro）／ Element ID = invoice_pdf ／ 納品書とは別ファイル名で出力"
+      ],
+      "nowf": ""
+    },
+    "26": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "img_会社情報（Page: dnote_edit）",
+      "el": "dn_edit|corp",
+      "event": "",
+      "action": "社印を含む会社情報画像を帳票右上に表示",
+      "page": "/dnote_edit",
+      "steps": [],
+      "nowf": "img_会社情報 を帳票右上に配置する（社印を含む画像）"
+    },
+    "27": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "img_会社情報（Page: dnote_edit）",
+      "el": "",
+      "event": "",
+      "action": "登録番号は会社情報画像に含まれる",
+      "page": "/dnote_edit",
+      "steps": [],
+      "nowf": "登録番号は img_会社情報 に含まれる"
+    },
+    "28": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "grp_納品書プレビュー（Page: dnote_edit）",
+      "el": "dn_edit|preview",
+      "event": "",
+      "action": "実物の複写伝票に合わせた3行構成のレイアウト",
+      "page": "/dnote_edit",
+      "steps": [],
+      "nowf": "grp_納品書プレビュー のレイアウト設定（実物の複写伝票に合わせた3行構成）"
+    },
+    "29": {
+      "wf": "WF_納品請求_削除",
+      "obj": "btn_削除（Page: dnote_edit）",
+      "el": "dn_edit|f-del",
+      "event": "btn_削除 is clicked",
+      "action": "確認のうえ DeliveryNote を Delete し、Go to page dnotes",
+      "page": "/dnote_edit",
+      "steps": [
+        "Show ／ Element: POP_削除確認",
+        "Delete a list of things... ／ List: この納品書の DeliveryNoteItem",
+        "Delete a thing... ／ Thing: Current page's DeliveryNote",
+        "Go to page... ／ Destination: dnotes"
+      ],
+      "nowf": ""
+    },
+    "30": {
+      "wf": "WF_領収書_請求書引用",
+      "obj": "DD_請求書引用（Page: receipt_edit）",
+      "el": "rc_edit|f-quote",
+      "event": "DD_請求書引用's value is changed",
+      "action": "宛先と税込金額をセットし、内訳の現金に全額を入れる",
+      "page": "/receipt_edit",
+      "steps": [
+        "Set state ／ 宛先 = DD_請求書引用's value's 顧客",
+        "Set state ／ 金額 = DD_請求書引用's value's 税込合計",
+        "Set state ／ 現金 = Set state 金額"
+      ],
+      "nowf": ""
+    },
+    "31": {
+      "wf": "—（入力のみ・WFなし）",
+      "obj": "DD_顧客名／input_金額（Page: receipt_edit）",
+      "el": "",
+      "event": "",
+      "action": "請求書を選ばずに直接入力して作成できる",
+      "page": "/receipt_edit",
+      "steps": [],
+      "nowf": "DD_顧客名・input_金額に直接入力する（請求書を選ばずに作成できる）"
+    },
+    "32": {
+      "wf": "—（入力のみ・WFなし）",
+      "obj": "input_但し書き（Page: receipt_edit）",
+      "el": "rc_edit|f-tadashi",
+      "event": "",
+      "action": "但し書きを自由に入力する",
+      "page": "/receipt_edit",
+      "steps": [],
+      "nowf": "input_但し書きに直接入力する"
+    },
+    "33": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "img_会社情報（Page: receipt_edit）",
+      "el": "rc_edit|corp",
+      "event": "",
+      "action": "社印を含む会社情報画像を表示",
+      "page": "/receipt_edit",
+      "steps": [],
+      "nowf": "img_会社情報 を配置する（社印を含む画像）"
+    },
+    "34": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "grp_領収書プレビュー の背景（Page: receipt_edit）",
+      "el": "rc_edit|preview",
+      "event": "",
+      "action": "渡辺様ご提供の地紋画像を背景に敷く",
+      "page": "/receipt_edit",
+      "steps": [],
+      "nowf": "grp_領収書プレビュー の Background に地紋画像を設定する"
+    },
+    "35": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "grp_領収書プレビュー（Page: receipt_edit）",
+      "el": "",
+      "event": "",
+      "action": "一旦ゴシック体で表示",
+      "page": "/receipt_edit",
+      "steps": [],
+      "nowf": "Font を Noto Sans JP（ゴシック体）に設定する"
+    },
+    "36": {
+      "wf": "WF_領収書_印刷",
+      "obj": "btn_印刷（Page: receipt_edit）",
+      "el": "rc_edit|f-print",
+      "event": "btn_印刷 is clicked",
+      "action": "grp_領収書プレビュー をPDF出力",
+      "page": "/receipt_edit",
+      "steps": [
+        "Add a pause before next action ／ 3,000 ms（描画完了待ち）",
+        "Element PDF（PDF & Screenshot Pro）／ Element ID = receipt_pdf ／ Save to Bubble = ON・Download = ON"
+      ],
+      "nowf": ""
+    },
+    "37": {
+      "wf": "WF_領収書_保存",
+      "obj": "btn_保存（Page: receipt_edit）",
+      "el": "rc_edit|f-save",
+      "event": "btn_保存 is clicked",
+      "action": "領収書番号を採番して Receipt を Create/Update し、Go to page receipts",
+      "page": "/receipt_edit",
+      "steps": [
+        "Create a new thing... ／ Only when 新規 ／ Type: Receipt ／ 領収書番号 = R-YYMMDD-NN を採番（宛先・発行日・金額・但し書き・現金・小切手）",
+        "Make changes to a thing... ／ Only when 既存 ／ Thing: Current page's Receipt",
+        "Go to page... ／ Destination: receipts"
+      ],
+      "nowf": ""
+    },
+    "38": {
+      "wf": "WF_領収書_削除",
+      "obj": "btn_削除（Page: receipt_edit）",
+      "el": "rc_edit|f-del",
+      "event": "btn_削除 is clicked",
+      "action": "確認のうえ Receipt を Delete し、Go to page receipts",
+      "page": "/receipt_edit",
+      "steps": [
+        "Show ／ Element: POP_削除確認",
+        "Delete a thing... ／ Thing: Current page's Receipt",
+        "Go to page... ／ Destination: receipts"
+      ],
+      "nowf": ""
+    },
+    "39": {
+      "wf": "WF_領収書一覧_一覧表示",
+      "obj": "RG_領収書（Page: receipts）",
+      "el": "receipts|rg",
+      "event": "Page load",
+      "action": "RG_領収書 の Data source = Search for Receipts（発行日 降順）",
+      "page": "/receipts",
+      "steps": [],
+      "nowf": "RG_領収書 の Data source = Do a search for Receipt（Sort by 発行日 descending）"
+    },
+    "40": {
+      "wf": "WF_領収書一覧_顧客名検索",
+      "obj": "input_顧客名検索（Page: receipts）",
+      "el": "receipts|f-q",
+      "event": "input_顧客名検索's value is changed",
+      "action": "RG_領収書 の検索条件に 顧客名 contains を追加",
+      "page": "/receipts",
+      "steps": [],
+      "nowf": "constraint「顧客's 名前 contains input_顧客名検索's value」（Ignore empty constraints = ON）"
+    },
+    "41": {
+      "wf": "WF_領収書一覧_種別地域絞込",
+      "obj": "DD_種別／DD_地域（Page: receipts）",
+      "el": "receipts|f-kind",
+      "event": "DD_種別 / DD_地域's value is changed",
+      "action": "RG_領収書 の検索条件に 顧客の種別・地域 = を追加",
+      "page": "/receipts",
+      "steps": [],
+      "nowf": "constraint「顧客's 種別 = DD_種別's value」「顧客's 地域 = DD_地域's value」（Ignore empty constraints = ON）"
+    },
+    "42": {
+      "wf": "WF_領収書一覧_編集へ遷移",
+      "obj": "RG_領収書 > grp_行（Page: receipts）",
+      "el": "receipts|row",
+      "event": "grp_行 is clicked",
+      "action": "Go to page receipt_edit（Current cell's Receipt）",
+      "page": "/receipts",
+      "steps": [
+        "Go to page... ／ Destination: receipt_edit ／ Data to send: Current cell's Receipt"
+      ],
+      "nowf": ""
+    },
+    "43": {
+      "wf": "—（式で算出・WFなし）",
+      "obj": "txt_税抜小計／txt_消費税／txt_税込合計（Page: receipts）",
+      "el": "receipts|totals",
+      "event": "",
+      "action": "税込金額から税抜と消費税を逆算して表示",
+      "page": "/receipts",
+      "steps": [],
+      "nowf": "式で算出。txt_税抜小計 = 金額 ÷ 1.1:rounded to 0 ／ txt_消費税 = 金額 − 税抜小計 ／ txt_税込合計 = 金額"
+    },
+    "44": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "grp_見積書プレビュー（Page: quote）",
+      "el": "quote|preview",
+      "event": "",
+      "action": "ご提供のPDFに合わせて見積書のレイアウトを変更",
+      "page": "/quote",
+      "steps": [],
+      "nowf": "grp_見積書プレビュー のレイアウト設定（ご提供PDFに準拠）"
+    },
+    "45": {
+      "wf": "—（表示のみ・WFなし）",
+      "obj": "img_会社情報（Page: quote）",
+      "el": "quote|corp",
+      "event": "",
+      "action": "見積書右上の会社情報を画像で表示",
+      "page": "/quote",
+      "steps": [],
+      "nowf": "img_会社情報 を見積書右上に配置する"
+    }
+  }
+}
